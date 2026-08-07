@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { NInput, NButton, NAlert } from 'naive-ui'
+import { NInput, NButton, NAlert, NIcon } from 'naive-ui'
+import { UserAvatar } from '@vicons/carbon'
 import AuthForm from '@/components/common/AuthForm/AuthForm.vue'
 import FormField from '@/components/common/FormField/FormField.vue'
 
@@ -99,6 +100,9 @@ async function handleRegister() {
         attr-type="submit"
         class="mt-2"
       >
+        <template #icon>
+          <NIcon><UserAvatar /></NIcon>
+        </template>
         Create Account
       </NButton>
     </form>

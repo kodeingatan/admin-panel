@@ -239,6 +239,144 @@ Design system menggunakan **Naive UI** sebagai komponen utama dengan Tailwind CS
 
 ---
 
+## Icons
+
+### Icon Library
+- **Library**: `@vicons/carbon` (Carbon Design System)
+- **Wrapper**: Naive UI `NIcon`
+- **Render Pattern**: `h(NIcon, null, { default: () => h(IconName) })`
+
+### Icon Sizes (mapped to component context)
+
+| Context | Size | Icon Token |
+|---------|------|------------|
+| Button Small | 14px | sm |
+| Button Default | 16px | md |
+| Button Large | 20px | lg |
+| Menu Item | 16px | md |
+| Dropdown Item | 16px | md |
+| Input Prefix | 16px | md |
+| Card Header | 20px | lg |
+
+### Button Icons (Standard Mapping)
+
+| Button Action | Icon | Import |
+|---------------|------|--------|
+| Sign In / Login | `Login` | `@vicons/carbon` |
+| Sign Up / Register | `UserAvatar` | `@vicons/carbon` |
+| Add / Create | `Add` | `@vicons/carbon` |
+| Edit | `Edit` | `@vicons/carbon` |
+| Delete | `TrashCan` | `@vicons/carbon` |
+| Search | `Search` | `@vicons/carbon` |
+| Refresh | `Refresh` | `@vicons/carbon` |
+| Export / Download | `Download` | `@vicons/carbon` |
+| Import / Upload | `Upload` | `@vicons/carbon` |
+| Settings | `Settings` | `@vicons/carbon` |
+| Back / Arrow Left | `ArrowLeft` | `@vicons/carbon` |
+| Forward / Arrow Right | `ArrowRight` | `@vicons/carbon` |
+| Close | `Close` | `@vicons/carbon` |
+| Check / Confirm | `Checkmark` | `@vicons/carbon` |
+
+### Menu Item Icons (Current Mapping)
+
+| Menu Item | Icon | Import |
+|-----------|------|--------|
+| Dashboard | `Grid` | `@vicons/carbon` |
+| User Management | `UserMultiple` | `@vicons/carbon` |
+| User | `User` | `@vicons/carbon` |
+| Guard | `Security` | `@vicons/carbon` |
+| Role | `UserRole` | `@vicons/carbon` |
+| Permissions | `Document` | `@vicons/carbon` |
+| Profile | `UserAvatar` | `@vicons/carbon` |
+| Logout | `Logout` | `@vicons/carbon` |
+
+---
+
+## Animations
+
+### Library
+- **Primary**: CSS Transitions & Vue `<Transition>`
+- **Optional**: `anime.js` (lightweight, ~17KB gzipped)
+
+### Animation Tokens
+
+| Token | Duration | Easing | Usage |
+|-------|----------|--------|-------|
+| Fast | 150ms | ease-out | Hover effects, button states |
+| Normal | 250ms | ease-in-out | Page transitions, card reveals |
+| Slow | 350ms | ease-in-out | Modal/drawer enter/leave |
+| Bounce | 400ms | cubic-bezier(0.68, -0.55, 0.265, 1.55) | Emphasis, notifications |
+
+### Page Transitions
+
+| Transition | Enter | Leave | Usage |
+|------------|-------|-------|-------|
+| Fade | opacity 0→1 | opacity 1→0 | Default page transition |
+| Slide-Up | translateY(20px)→0 + opacity | reverse | Dashboard content |
+| Slide-Left | translateX(20px)→0 + opacity | reverse | Sidebar content |
+| Scale | scale(0.95)→1 + opacity | reverse | Cards, modals |
+
+### Micro-Interactions
+
+| Element | Trigger | Animation |
+|---------|---------|-----------|
+| Button | hover | scale(1.02) + shadow increase |
+| Button | click | scale(0.98) then scale(1) |
+| Card | mount | slideUp 250ms staggered |
+| Menu Item | hover | background-color 150ms |
+| Menu Item | active | border-left 250ms |
+| Input | focus | border-color 200ms |
+| Alert | mount | slideDown 250ms + fade |
+| Dropdown | enter | scale(0.95)→1 + opacity |
+| Toast | enter | slideInRight 300ms |
+| Toast | leave | slideOutRight 200ms |
+
+### Vue Transition Classes
+
+```css
+/* Fade */
+.fade-enter-active, .fade-leave-active { transition: opacity 250ms ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* Slide-Up */
+.slide-up-enter-active, .slide-up-leave-active { transition: all 250ms ease; }
+.slide-up-enter-from { opacity: 0; transform: translateY(20px); }
+.slide-up-leave-to { opacity: 0; transform: translateY(-10px); }
+
+/* Slide-Left */
+.slide-left-enter-active, .slide-left-leave-active { transition: all 250ms ease; }
+.slide-left-enter-from { opacity: 0; transform: translateX(20px); }
+.slide-left-leave-to { opacity: 0; transform: translateX(-10px); }
+
+/* Scale */
+.scale-enter-active, .scale-leave-active { transition: all 250ms ease; }
+.scale-enter-from { opacity: 0; transform: scale(0.95); }
+.scale-leave-to { opacity: 0; transform: scale(0.95); }
+```
+
+### Stagger Animation Pattern
+Untuk list items (table rows, menu items, cards):
+```css
+.stagger-item { animation: slideUp 250ms ease backwards; }
+.stagger-item:nth-child(1) { animation-delay: 0ms; }
+.stagger-item:nth-child(2) { animation-delay: 50ms; }
+.stagger-item:nth-child(3) { animation-delay: 100ms; }
+/* ... dst */
+```
+
+### Reduced Motion
+Semua animasi harus menghormati `prefers-reduced-motion`:
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+---
+
 ## Implementation Notes
 
 - **Naive UI** adalah komponen utama — gunakan `GlobalThemeOverrides` untuk customisasi tema

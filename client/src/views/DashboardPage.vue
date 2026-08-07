@@ -10,7 +10,9 @@ import {
   NGrid,
   NGi,
   NSpace,
+  NIcon,
 } from 'naive-ui'
+import { UserMultiple, UserRole, Document, Security } from '@vicons/carbon'
 import AppLayout from '@/components/layout/AppLayout/AppLayout.vue'
 
 const router = useRouter()
@@ -58,7 +60,7 @@ onMounted(async () => {
       <template #description>Loading...</template>
 
       <div v-if="!loading && user">
-        <n-card title="Dashboard" class="mb-4">
+        <n-card title="Dashboard" class="mb-4 card-animate">
           <template #header-extra>
             Welcome back!
           </template>
@@ -69,7 +71,7 @@ onMounted(async () => {
         </n-card>
 
         <n-grid :cols="2" :x-gap="16" :y-gap="16">
-          <n-gi>
+          <n-gi class="card-animate">
             <n-card title="Profile Information">
               <n-descriptions label-placement="left" bordered :column="1">
                 <n-descriptions-item label="Username">
@@ -81,7 +83,7 @@ onMounted(async () => {
               </n-descriptions>
             </n-card>
           </n-gi>
-          <n-gi>
+          <n-gi class="card-animate">
             <n-card title="Quick Actions">
               <n-space vertical>
                 <n-button
@@ -89,6 +91,9 @@ onMounted(async () => {
                   block
                   @click="router.push('/dashboard/users')"
                 >
+                  <template #icon>
+                    <n-icon><UserMultiple /></n-icon>
+                  </template>
                   Manage Users
                 </n-button>
                 <n-button
@@ -96,6 +101,9 @@ onMounted(async () => {
                   block
                   @click="router.push('/dashboard/roles')"
                 >
+                  <template #icon>
+                    <n-icon><UserRole /></n-icon>
+                  </template>
                   Manage Roles
                 </n-button>
                 <n-button
@@ -103,6 +111,9 @@ onMounted(async () => {
                   block
                   @click="router.push('/dashboard/permissions')"
                 >
+                  <template #icon>
+                    <n-icon><Document /></n-icon>
+                  </template>
                   Manage Permissions
                 </n-button>
                 <n-button
@@ -110,6 +121,9 @@ onMounted(async () => {
                   block
                   @click="router.push('/dashboard/guards')"
                 >
+                  <template #icon>
+                    <n-icon><Security /></n-icon>
+                  </template>
                   Manage Guards
                 </n-button>
               </n-space>

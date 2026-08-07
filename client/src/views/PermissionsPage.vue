@@ -7,8 +7,10 @@ import {
   NDataTable,
   NButton,
   NSpace,
+  NIcon,
 } from 'naive-ui'
 import AppLayout from '@/components/layout/AppLayout/AppLayout.vue'
+import { Add } from '@vicons/carbon'
 
 const router = useRouter()
 
@@ -68,7 +70,12 @@ onMounted(async () => {
         <n-card title="Permission Management" class="mb-4">
           <template #header-extra>
             <n-space>
-              <n-button type="primary">Add Permission</n-button>
+              <n-button type="primary">
+                <template #icon>
+                  <n-icon><Add /></n-icon>
+                </template>
+                Add Permission
+              </n-button>
             </n-space>
           </template>
           <n-data-table

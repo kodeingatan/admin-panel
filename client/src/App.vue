@@ -9,7 +9,11 @@ import { themeOverrides } from '@/plugins/naiveui'
     <n-message-provider>
       <n-dialog-provider>
         <n-notification-provider>
-          <RouterView />
+          <RouterView v-slot="{ Component }">
+            <Transition name="fade" mode="out-in">
+              <component :is="Component" />
+            </Transition>
+          </RouterView>
         </n-notification-provider>
       </n-dialog-provider>
     </n-message-provider>

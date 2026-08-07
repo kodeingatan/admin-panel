@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { NInput, NButton, NAlert } from 'naive-ui'
+import { NInput, NButton, NAlert, NIcon } from 'naive-ui'
+import { Login } from '@vicons/carbon'
 import AuthForm from '@/components/common/AuthForm/AuthForm.vue'
 import FormField from '@/components/common/FormField/FormField.vue'
 
@@ -55,6 +56,9 @@ async function handleLogin() {
       </FormField>
 
       <NButton type="primary" block :loading="loading" attr-type="submit" class="mt-2">
+        <template #icon>
+          <NIcon><Login /></NIcon>
+        </template>
         Sign In
       </NButton>
     </form>
