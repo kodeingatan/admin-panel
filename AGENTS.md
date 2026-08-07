@@ -21,10 +21,12 @@ npm run build-storybook  # Static Storybook build
 
 **Key conventions**:
 - Vue 3 `<script setup>` SFCs with TypeScript
+- UI: Naive UI + Tailwind CSS v4
 - Rich text editors: TipTap (primary) and Editor.js
-- Storybook stories: `src/**/*.stories.@(js|jsx|mjs|ts|tsx)`
-- Pages/components in `src/pages/` and `src/components/`
+- Storybook stories & tests: `src/stories/` (moved from `components/`)
+- Pages in `src/pages/`, Components in `src/components/`
 - Composables in `src/composables/`
+- Tailwind CSS v4 without preflight (to avoid Naive UI conflicts)
 
 **Routing**: Vue Router configured in `src/router.ts`
 - `/login` — LoginPage (guest only)

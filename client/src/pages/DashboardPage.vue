@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { NSpin } from 'naive-ui'
+import {
+  NSpin,
+  NCard,
+  NDescriptions,
+  NDescriptionsItem,
+  NButton,
+  NGrid,
+  NGi,
+} from 'naive-ui'
 import AppLayout from '../components/AppLayout/AppLayout.vue'
 
 const router = useRouter()
@@ -45,42 +53,46 @@ onMounted(async () => {
 
 <template>
   <AppLayout v-if="user" :user="user">
-    <div v-if="loading" class="flex justify-center py-12">
-      <NSpin size="large" />
-    </div>
+    <n-spin :show="loading" style="width: 100%;">
+      <template #description>Loading...</template>
 
-    <div v-else-if="user" class="max-w-4xl">
-      <h1 class="text-2xl font-bold text-gray-900 mb-6">
-        Welcome, {{ user.firstName }} {{ user.lastName }}!
-      </h1>
+      <div v-if="!loading && user">
+        <n-card title="Dashboard" style="margin-bottom: 16px;">
+          <template #header-extra>
+            Welcome back!
+          </template>
+          <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">
+            Hello, {{ user.firstName }} {{ user.lastName }}!
+          </h2>
+          <p style="color: #666;">Here's your account overview.</p>
+        </n-card>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Profile Information</h3>
-          <dl class="space-y-3">
-            <div>
-              <dt class="text-sm text-gray-500">Username</dt>
-              <dd class="text-sm font-medium text-gray-900">{{ user.username }}</dd>
-            </div>
-            <div>
-              <dt class="text-sm text-gray-500">Email</dt>
-              <dd class="text-sm font-medium text-gray-900">{{ user.email }}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div class="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div class="space-y-3">
-            <router-link
-              to="/dashboard/users"
-              class="block w-full text-center px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition text-sm font-medium"
-            >
-              Manage Users
-            </router-link>
-          </div>
-        </div>
+        <n-grid :cols="2" :x-gap="16" :y-gap="16">
+          <n-gi>
+            <n-card title="Profile Information">
+              <n-descriptions label-placement="left" bordered :column="1">
+                <n-descriptions-item label="Username">
+                  {{ user.username }}
+                </n-descriptions-item>
+                <n-descriptions-item label="Email">
+                  {{ user.email }}
+                </n-descriptions-item>
+              </n-descriptions>
+            </n-card>
+          </n-gi>
+          <n-gi>
+            <n-card title="Quick Actions">
+              <n-button
+                type="primary"
+                block
+                @click="router.push('/dashboard/users')"
+              >
+                Manage Users
+              </n-button>
+            </n-card>
+          </n-gi>
+        </n-grid>
       </div>
-    </div>
+    </n-spin>
   </AppLayout>
 </template>

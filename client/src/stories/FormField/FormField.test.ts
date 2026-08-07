@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { within, expect } from 'storybook/test'
-import FormField from './FormField.vue'
+import FormField from '../../components/FormField/FormField.vue'
 
 const meta: Meta<typeof FormField> = {
   title: 'Components/FormField/Tests',

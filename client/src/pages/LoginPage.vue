@@ -47,29 +47,14 @@ async function handleLogin() {
 
     <form @submit.prevent="handleLogin">
       <FormField label="Email" required>
-        <NInput
-          v-model:value="email"
-          type="text"
-          placeholder="Enter your email"
-        />
+        <NInput class="px-none" v-model:value="email" type="text" placeholder="Enter your email" />
       </FormField>
 
       <FormField label="Password" required>
-        <NInput
-          v-model:value="password"
-          type="password"
-          show-password-on="click"
-          placeholder="Enter your password"
-        />
+        <NInput v-model:value="password" type="password" show-password-on="click" placeholder="Enter your password" />
       </FormField>
 
-      <NButton
-        type="primary"
-        block
-        :loading="loading"
-        attr-type="submit"
-        class="mt-2"
-      >
+      <NButton type="primary" block :loading="loading" attr-type="submit" class="mt-2">
         Sign In
       </NButton>
     </form>
