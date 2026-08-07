@@ -13,7 +13,7 @@ import {
   NDropdown,
 } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
-import { Grid, UserMultiple, Logout, ChevronDown } from '@vicons/carbon'
+import { Grid, UserMultiple, ChevronDown, UserAvatar, Logout } from '@vicons/carbon'
 
 const router = useRouter()
 const collapsed = ref(false)
@@ -63,9 +63,28 @@ function handleMenuUpdate(key: string) {
 
 const avatarLabel = computed(() => `${props.user.firstName.charAt(0)}${props.user.lastName.charAt(0)}`)
 
+function renderDropdownLabel(label: string, icon: any) {
+  return () => h('div', { class: 'flex items-center gap-2' }, [
+    h(NIcon, { size: 16, class: 'text-gray-500' }, { default: () => h(icon) }),
+    h('span', null, label),
+  ])
+}
+
 const dropdownOptions = [
-  { label: 'Profile', key: 'profile' },
-  { label: 'Logout', key: 'logout' },
+  {
+    key: 'profile',
+    label: 'Profile',
+    icon: renderIcon(UserAvatar),
+  },
+  {
+    type: 'divider',
+    key: 'd1',
+  },
+  {
+    key: 'logout',
+    label: 'Logout',
+    icon: renderIcon(Logout),
+  },
 ]
 
 function handleDropdownSelect(key: string) {
@@ -76,7 +95,7 @@ function handleDropdownSelect(key: string) {
 </script>
 
 <template>
-  <n-layout has-sider style="height: 100vh">
+  <n-layout has-sider class="h-screen">
     <n-layout-sider
       bordered
       collapse-mode="width"
@@ -87,7 +106,7 @@ function handleDropdownSelect(key: string) {
       @collapse="collapsed = true"
       @expand="collapsed = false"
     >
-      <div style="display: flex; align-items: center; justify-content: center; height: 56px; font-weight: bold; font-size: 18px; color: #6366f1;">
+      <div class="flex items-center justify-center h-14 font-bold text-lg text-indigo-500">
         <span v-if="!collapsed">MyApp</span>
         <span v-else>M</span>
       </div>
@@ -101,17 +120,22 @@ function handleDropdownSelect(key: string) {
       />
     </n-layout-sider>
     <n-layout>
-      <n-layout-header bordered style="height: 56px; display: flex; align-items: center; justify-content: flex-end; padding: 0 24px;">
-        <n-dropdown :options="dropdownOptions" @select="handleDropdownSelect" trigger="click" placement="bottom-end">
+      <n-layout-header bordered class="h-14 flex items-center justify-end px-6">
+        <n-dropdown
+          :options="dropdownOptions"
+          @select="handleDropdownSelect"
+          trigger="click"
+          placement="bottom-end"
+        >
           <div class="user-menu">
-            <n-avatar round :size="36" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); font-weight: 600; font-size: 14px; flex-shrink: 0;">
+            <n-avatar round :size="36" class="bg-gradient-to-r from-indigo-500 to-purple-500 font-semibold text-sm shrink-0">
               {{ avatarLabel }}
             </n-avatar>
-            <div class="user-info">
-              <span class="user-name">{{ user.firstName }}</span>
-              <span class="user-email">{{ user.email }}</span>
+            <div class="flex flex-col text-left leading-tight">
+              <span class="text-sm font-medium text-gray-800">{{ user.firstName }}</span>
+              <span class="text-xs text-gray-400">{{ user.email }}</span>
             </div>
-            <n-icon :size="16" style="color: #999; flex-shrink: 0;">
+            <n-icon :size="16" class="text-gray-400 shrink-0">
               <ChevronDown />
             </n-icon>
           </div>
@@ -120,7 +144,7 @@ function handleDropdownSelect(key: string) {
       <n-layout-content content-style="padding: 24px;" :native-scrollbar="false">
         <slot />
       </n-layout-content>
-      <n-layout-footer bordered style="height: 48px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #999;">
+      <n-layout-footer bordered class="h-12 flex items-center justify-center text-xs text-gray-400">
         &copy; 2026 MyApp. All rights reserved.
       </n-layout-footer>
     </n-layout>
@@ -135,28 +159,10 @@ function handleDropdownSelect(key: string) {
   padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .user-menu:hover {
-  background-color: #f5f5f5;
-}
-
-.user-info {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-  text-align: left;
-}
-
-.user-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-.user-email {
-  font-size: 11px;
-  color: #999;
+  background-color: #f3f4f6;
 }
 </style>

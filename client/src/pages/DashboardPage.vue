@@ -53,18 +53,18 @@ onMounted(async () => {
 
 <template>
   <AppLayout v-if="user" :user="user">
-    <n-spin :show="loading" style="width: 100%;">
+    <n-spin :show="loading" class="w-full">
       <template #description>Loading...</template>
 
       <div v-if="!loading && user">
-        <n-card title="Dashboard" style="margin-bottom: 16px;">
+        <n-card title="Dashboard" class="mb-4">
           <template #header-extra>
             Welcome back!
           </template>
-          <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">
+          <h2 class="text-xl font-semibold mb-2">
             Hello, {{ user.firstName }} {{ user.lastName }}!
           </h2>
-          <p style="color: #666;">Here's your account overview.</p>
+          <p class="text-gray-500">Here's your account overview.</p>
         </n-card>
 
         <n-grid :cols="2" :x-gap="16" :y-gap="16">
