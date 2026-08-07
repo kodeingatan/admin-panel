@@ -6,6 +6,9 @@ Two independent packages (no root package.json):
 - `client/` — Vue 3 + TypeScript + Vite component library with Storybook
 - `server/` — NestJS backend API
 - `imp/` — Implementation docs & reference code for features
+- `docs/` — Architecture & design documentation
+- `tasks/` — Implementation task lists
+- `stories/` — Storybook stories & tests (root level)
 
 ## Client (Vue 3 + Vite + Storybook)
 
@@ -19,16 +22,47 @@ npm run build-storybook  # Static Storybook build
 
 **Testing**: Vitest via `@storybook/addon-vitest` — tests run inside Storybook with Playwright (headless Chromium). No standalone test script; tests are defined as Story stories.
 
+**Directory Structure**:
+```
+client/src/
+├── components/
+│   ├── base/           # Base components (Button)
+│   ├── common/         # Common components (AuthForm, FormField)
+│   └── layout/         # Layout components (AppLayout)
+├── composables/        # Vue composables (useAuth, useApi)
+├── constants/          # Constants & enums
+├── directives/         # Custom Vue directives
+├── features/           # Feature-based modules
+│   ├── auth/
+│   ├── dashboard/
+│   └── users/
+├── layouts/            # Layout components
+├── plugins/            # Vue plugins
+├── router/             # Vue Router (index.ts)
+├── services/           # API services
+├── stores/             # State management (Pinia)
+├── types/              # TypeScript types (user.ts, auth.ts, index.ts)
+├── utils/              # Utility functions
+├── views/              # Page components (LoginPage, RegisterPage, DashboardPage)
+├── assets/
+│   ├── images/
+│   ├── icons/
+│   └── styles/         # main.css (Tailwind)
+├── App.vue
+└── main.ts
+```
+
 **Key conventions**:
 - Vue 3 `<script setup>` SFCs with TypeScript
-- UI: Naive UI + Tailwind CSS v4
-- Rich text editors: TipTap (primary) and Editor.js
-- Storybook stories & tests: `src/stories/` (moved from `components/`)
-- Pages in `src/pages/`, Components in `src/components/`
-- Composables in `src/composables/`
+- UI: **Naive UI** (priority) + **Tailwind CSS v4**
 - Tailwind CSS v4 without preflight (to avoid Naive UI conflicts)
+- Components: `src/components/{base,common,layout}/`
+- Views: `src/views/`
+- Composables: `src/composables/`
+- Types: `src/types/`
+- Storybook: `stories/` (root level)
 
-**Routing**: Vue Router configured in `src/router.ts`
+**Routing**: Vue Router configured in `src/router/index.ts`
 - `/login` — LoginPage (guest only)
 - `/register` — RegisterPage (guest only)
 - `/dashboard` — DashboardPage (requires auth)
@@ -46,11 +80,50 @@ npm run lint         # ESLint + fix
 npm run format       # Prettier
 ```
 
+**Directory Structure**:
+```
+server/src/
+├── common/             # Shared modules
+│   ├── dto/
+│   ├── guards/
+│   ├── interceptors/
+│   ├── filters/
+│   ├── pipes/
+│   ├── types/
+│   └── utils/
+├── config/             # Configuration
+├── modules/
+│   ├── auth/
+│   │   ├── controllers/    # auth.controller.ts
+│   │   ├── services/       # auth.service.ts
+│   │   ├── dto/            # register.dto.ts, login.dto.ts
+│   │   ├── entities/
+│   │   ├── strategies/     # jwt.strategy.ts
+│   │   ├── guards/         # jwt-auth.guard.ts
+│   │   └── auth.module.ts
+│   └── users/
+│       ├── controllers/
+│       ├── services/
+│       ├── dto/
+│       ├── entities/       # user.entity.ts
+│       └── repositories/
+├── shared/             # Shared business logic
+│   ├── cache/
+│   ├── mail/
+│   └── logger/
+├── app.module.ts
+├── app.controller.ts
+├── app.service.ts
+└── main.ts
+```
+
 **Key conventions**:
 - TypeORM with `better-sqlite3` driver — database file: `db.sqlite`
 - Global prefix: `/api`
 - Validation pipe: whitelist + transform enabled
 - CORS origin: `http://localhost:5173`
+- Modules: `src/modules/{feature}/`
+- Shared: `src/common/`
 
 **Auth API**:
 | Method | Endpoint             | Description    | Auth   |

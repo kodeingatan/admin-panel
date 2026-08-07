@@ -1,0 +1,277 @@
+# Architecture
+
+## Overview
+
+Two independent packages:
+- `client/` — Vue 3 + TypeScript + Vite + Storybook
+- `server/` — NestJS + TypeORM + SQLite
+
+---
+
+## Client (Vue 3) — Best Practices Structure
+
+```
+client/
+├── .storybook/                 # Konfigurasi Storybook
+│   ├── main.ts
+│   ├── preview.ts
+│   ├── manager.ts
+│   └── theme.ts
+│
+├── public/                     # Static assets
+│
+├── src/
+│   ├── assets/
+│   │   ├── images/
+│   │   ├── icons/
+│   │   └── styles/
+│   │
+│   ├── components/
+│   │   ├── base/               # Base components (Button, Input, Modal)
+│   │   ├── common/             # Common components (AuthForm, FormField)
+│   │   └── layout/             # Layout components (AppLayout)
+│   │
+│   ├── composables/            # Vue composables (useAuth, useApi)
+│   │
+│   ├── constants/              # Constants & enums
+│   │
+│   ├── directives/             # Custom Vue directives
+│   │
+│   ├── features/               # Feature-based modules
+│   │   ├── auth/               # Auth feature (login, register)
+│   │   ├── dashboard/          # Dashboard feature
+│   │   └── users/              # User management feature
+│   │
+│   ├── layouts/                # Layout components
+│   │
+│   ├── plugins/                # Vue plugins
+│   │
+│   ├── router/                 # Vue Router configuration
+│   │
+│   ├── services/               # API services
+│   │
+│   ├── stores/                 # State management (Pinia)
+│   │
+│   ├── types/                  # TypeScript types & interfaces
+│   │
+│   ├── utils/                  # Utility functions
+│   │
+│   ├── views/                  # Page-level components
+│   │
+│   ├── App.vue
+│   └── main.ts
+│
+├── stories/                    # Storybook documentation
+│   ├── introduction/
+│   │   └── GettingStarted.mdx
+│   │
+│   ├── foundations/
+│   │   ├── Colors.mdx
+│   │   ├── Typography.mdx
+│   │   ├── Icons.mdx
+│   │   └── Spacing.mdx
+│   │
+│   ├── components/
+│   │   ├── base/
+│   │   ├── common/
+│   │   └── layout/
+│   │
+│   ├── patterns/
+│   │   ├── Forms.mdx
+│   │   ├── Tables.mdx
+│   │   └── Dashboard.mdx
+│   │
+│   ├── examples/
+│   │   └── LoginPage.stories.ts
+│   │
+│   └── assets/
+│
+├── tests/                      # Unit & integration tests
+│
+├── .env
+├── .env.development
+├── .env.production
+│
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+└── README.md
+```
+
+### Current → Target Mapping
+
+| Current | Target | Action |
+|---------|--------|--------|
+| `src/components/AppLayout/` | `src/components/layout/AppLayout/` | Move |
+| `src/components/AuthForm/` | `src/components/common/AuthForm/` | Move |
+| `src/components/FormField/` | `src/components/common/FormField/` | Move |
+| `src/components/Button/` | `src/components/base/Button/` | Move |
+| `src/pages/` | `src/views/` | Rename |
+| `src/style.css` | `src/assets/styles/main.css` | Move |
+| `src/stories/` | `stories/` | Move to root |
+| — | `src/composables/` | Create |
+| — | `src/constants/` | Create |
+| — | `src/types/` | Create |
+| — | `src/services/` | Create |
+| — | `src/utils/` | Create |
+| — | `src/features/` | Create |
+| — | `src/router/index.ts` | Create (move from router.ts) |
+
+---
+
+## Server (NestJS) — Best Practices Structure
+
+```
+server/
+├── src/
+│   ├── app.module.ts
+│   ├── main.ts
+│   │
+│   ├── common/                     # Shared modules
+│   │   ├── decorators/
+│   │   ├── dto/
+│   │   ├── exceptions/
+│   │   ├── filters/
+│   │   ├── guards/
+│   │   ├── interceptors/
+│   │   ├── middleware/
+│   │   ├── pipes/
+│   │   ├── serializers/
+│   │   ├── types/
+│   │   └── utils/
+│   │
+│   ├── config/                     # Application configuration
+│   │   ├── app.config.ts
+│   │   ├── database.config.ts
+│   │   ├── jwt.config.ts
+│   │   └── validation.ts
+│   │
+│   ├── modules/                    # Feature modules
+│   │   ├── auth/
+│   │   │   ├── controllers/
+│   │   │   │   └── auth.controller.ts
+│   │   │   ├── services/
+│   │   │   │   └── auth.service.ts
+│   │   │   ├── dto/
+│   │   │   │   ├── register.dto.ts
+│   │   │   │   └── login.dto.ts
+│   │   │   ├── entities/
+│   │   │   ├── strategies/
+│   │   │   │   └── jwt.strategy.ts
+│   │   │   ├── guards/
+│   │   │   │   └── jwt-auth.guard.ts
+│   │   │   └── auth.module.ts
+│   │   │
+│   │   └── users/
+│   │       ├── controllers/
+│   │       ├── services/
+│   │       ├── dto/
+│   │       ├── entities/
+│   │       │   └── user.entity.ts
+│   │       ├── repositories/
+│   │       └── users.module.ts
+│   │
+│   └── shared/                     # Shared business logic
+│       ├── cache/
+│       ├── mail/
+│       └── logger/
+│
+├── test/
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+│
+├── uploads/
+├── scripts/
+│
+├── .env
+├── .env.development
+├── .env.production
+├── .env.test
+│
+├── nest-cli.json
+├── package.json
+├── tsconfig.json
+├── tsconfig.build.json
+└── README.md
+```
+
+### Current → Target Mapping
+
+| Current | Target | Action |
+|---------|--------|--------|
+| `src/auth/` | `src/modules/auth/` | Move |
+| `src/auth/controllers/` | `src/modules/auth/controllers/` | Move |
+| `src/auth/services/` | `src/modules/auth/services/` | Move |
+| `src/auth/dto/` | `src/modules/auth/dto/` | Move |
+| `src/auth/strategies/` | `src/modules/auth/strategies/` | Move |
+| `src/auth/guards/` | `src/modules/auth/guards/` | Move |
+| `src/user.entity.ts` | `src/modules/users/entities/user.entity.ts` | Move |
+| — | `src/modules/users/` | Create |
+| — | `src/common/` | Create |
+| — | `src/common/guards/` | Create |
+| — | `src/config/` | Create |
+
+---
+
+## Conventions
+
+### Client
+- Vue 3 `<script setup>` SFCs with TypeScript
+- UI: **Naive UI** (priority) + **Tailwind CSS v4** (utility classes)
+- Tailwind CSS v4 without preflight (to avoid Naive UI conflicts)
+- Components: `src/components/{base,common,layout}/`
+- Views: `src/views/`
+- Composables: `src/composables/`
+- Features: `src/features/`
+- Storybook: `stories/`
+
+### Server
+- TypeORM with `better-sqlite3` driver
+- Global prefix: `/api`
+- Validation: whitelist + transform enabled
+- CORS origin: `http://localhost:5173`
+- Modules: `src/modules/{feature}/`
+- Shared: `src/common/`
+
+---
+
+## Routing
+
+| Path | Component | Auth | Description |
+|------|-----------|------|-------------|
+| `/login` | LoginPage | Guest only | Login form |
+| `/register` | RegisterPage | Guest only | Registration form |
+| `/dashboard` | DashboardPage | Required | Dashboard with sidebar |
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/api/auth/register` | Register user | Public |
+| POST | `/api/auth/login` | Login user | Public |
+| GET | `/api/auth/profile` | Get profile | Bearer |
+
+---
+
+## Tech Stack
+
+### Client
+- Vue 3.5
+- Vite 8
+- TypeScript 6
+- Naive UI 2.44
+- Tailwind CSS 4
+- Vue Router 5
+- Storybook 10
+- Vitest 4
+
+### Server
+- NestJS 11
+- TypeORM 1.1
+- better-sqlite3
+- Passport + JWT
+- bcrypt
+- class-validator

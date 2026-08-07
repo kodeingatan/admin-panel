@@ -1,7 +1,6 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-
-const API_URL = 'http://localhost:3000/api'
+import { useApi } from './useApi'
 
 interface User {
   id: number
@@ -11,25 +10,43 @@ interface User {
   email: string
 }
 
+interface AuthResponse {
+  accessToken: string
+  user: User
+}
+
+const user = ref<User | null>(null)
+const loading = ref(false)
+const error = ref('')
+
 export function useAuth() {
   const router = useRouter()
-  const user = ref<User | null>(null)
-  const error = ref<string>('')
-  const loading = ref(false)
 
-  const token = ref<string | null>(localStorage.getItem('accessToken'))
+  const isAuthenticated = computed(() => !!localStorage.getItem('accessToken'))
+  const currentUser = computed(() => user.value)
 
-  function setToken(accessToken: string) {
-    token.value = accessToken
-    localStorage.setItem('accessToken', accessToken)
+  async function login(email: string, password: string) {
+    loading.value = true
+    error.value = ''
+
+    try {
+      const data = await useApi<AuthResponse>('/auth/login', {
+        method: 'POST',
+        body: { email, password },
+      })
+
+      localStorage.setItem('accessToken', data.accessToken)
+      user.value = data.user
+      router.push('/dashboard')
+    } catch (e: any) {
+      error.value = e.message
+      throw e
+    } finally {
+      loading.value = false
+    }
   }
 
-  function clearToken() {
-    token.value = null
-    localStorage.removeItem('accessToken')
-  }
-
-  async function register(data: {
+  async function register(payload: {
     firstName: string
     lastName: string
     username: string
@@ -41,60 +58,56 @@ export function useAuth() {
     error.value = ''
 
     try {
-      const res = await fetch(`${API_URL}/auth/register`, {
+      const data = await useApi<AuthResponse>('/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: payload,
       })
 
-      const json = await res.json()
-
-      if (!res.ok) {
-        throw new Error(json.message || 'Registration failed')
-      }
-
-      setToken(json.accessToken)
-      user.value = json.user
+      localStorage.setItem('accessToken', data.accessToken)
+      user.value = data.user
       router.push('/dashboard')
     } catch (e: any) {
       error.value = e.message
+      throw e
     } finally {
       loading.value = false
     }
   }
 
-  async function login(email: string, password: string) {
+  async function getProfile() {
+    const token = localStorage.getItem('accessToken')
+    if (!token) {
+      router.push('/login')
+      return
+    }
+
     loading.value = true
-    error.value = ''
 
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const json = await res.json()
-
-      if (!res.ok) {
-        throw new Error(json.message || 'Login failed')
-      }
-
-      setToken(json.accessToken)
-      user.value = json.user
-      router.push('/dashboard')
-    } catch (e: any) {
-      error.value = e.message
+      const data = await useApi<User>('/auth/profile', { token })
+      user.value = data
+    } catch {
+      localStorage.removeItem('accessToken')
+      router.push('/login')
     } finally {
       loading.value = false
     }
   }
 
   function logout() {
-    clearToken()
+    localStorage.removeItem('accessToken')
     user.value = null
     router.push('/login')
   }
 
-  return { user, error, loading, token, register, login, logout }
+  return {
+    user: currentUser,
+    loading,
+    error,
+    isAuthenticated,
+    login,
+    register,
+    getProfile,
+    logout,
+  }
 }
