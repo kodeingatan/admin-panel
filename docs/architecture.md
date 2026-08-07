@@ -98,25 +98,6 @@ client/
 └── README.md
 ```
 
-### Current → Target Mapping
-
-| Current | Target | Action |
-|---------|--------|--------|
-| `src/components/AppLayout/` | `src/components/layout/AppLayout/` | Move |
-| `src/components/AuthForm/` | `src/components/common/AuthForm/` | Move |
-| `src/components/FormField/` | `src/components/common/FormField/` | Move |
-| `src/components/Button/` | `src/components/base/Button/` | Move |
-| `src/pages/` | `src/views/` | Rename |
-| `src/style.css` | `src/assets/styles/main.css` | Move |
-| `src/stories/` | `stories/` | Move to root |
-| — | `src/composables/` | Create |
-| — | `src/constants/` | Create |
-| — | `src/types/` | Create |
-| — | `src/services/` | Create |
-| — | `src/utils/` | Create |
-| — | `src/features/` | Create |
-| — | `src/router/index.ts` | Create (move from router.ts) |
-
 ---
 
 ## Server (NestJS) — Best Practices Structure
@@ -195,22 +176,6 @@ server/
 ├── tsconfig.build.json
 └── README.md
 ```
-
-### Current → Target Mapping
-
-| Current | Target | Action |
-|---------|--------|--------|
-| `src/auth/` | `src/modules/auth/` | Move |
-| `src/auth/controllers/` | `src/modules/auth/controllers/` | Move |
-| `src/auth/services/` | `src/modules/auth/services/` | Move |
-| `src/auth/dto/` | `src/modules/auth/dto/` | Move |
-| `src/auth/strategies/` | `src/modules/auth/strategies/` | Move |
-| `src/auth/guards/` | `src/modules/auth/guards/` | Move |
-| `src/user.entity.ts` | `src/modules/users/entities/user.entity.ts` | Move |
-| — | `src/modules/users/` | Create |
-| — | `src/common/` | Create |
-| — | `src/common/guards/` | Create |
-| — | `src/config/` | Create |
 
 ---
 

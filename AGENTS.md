@@ -5,7 +5,6 @@
 Two independent packages (no root package.json):
 - `client/` — Vue 3 + TypeScript + Vite component library with Storybook
 - `server/` — NestJS backend API
-- `imp/` — Implementation docs & reference code for features
 - `docs/` — Architecture & design documentation
 - `tasks/` — Implementation task lists
 - `stories/` — Storybook stories & tests (root level)
@@ -44,6 +43,7 @@ client/src/
 ├── types/              # TypeScript types (user.ts, auth.ts, index.ts)
 ├── utils/              # Utility functions
 ├── views/              # Page components (LoginPage, RegisterPage, DashboardPage)
+├── stories/
 ├── assets/
 │   ├── images/
 │   ├── icons/
