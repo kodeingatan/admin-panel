@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
-import AppLayout from '../../client/src/components/layout/AppLayout/AppLayout.vue'
+import AppLayout from '../../src/components/layout/AppLayout/AppLayout.vue'
 
 const mockUser = {
   id: 1,

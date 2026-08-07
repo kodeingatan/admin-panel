@@ -23,33 +23,40 @@ npm run build-storybook  # Static Storybook build
 
 **Directory Structure**:
 ```
-client/src/
-├── components/
-│   ├── base/           # Base components (Button)
-│   ├── common/         # Common components (AuthForm, FormField)
-│   └── layout/         # Layout components (AppLayout)
-├── composables/        # Vue composables (useAuth, useApi)
-├── constants/          # Constants & enums
-├── directives/         # Custom Vue directives
-├── features/           # Feature-based modules
-│   ├── auth/
-│   ├── dashboard/
-│   └── users/
-├── layouts/            # Layout components
-├── plugins/            # Vue plugins
-├── router/             # Vue Router (index.ts)
-├── services/           # API services
-├── stores/             # State management (Pinia)
-├── types/              # TypeScript types (user.ts, auth.ts, index.ts)
-├── utils/              # Utility functions
-├── views/              # Page components (LoginPage, RegisterPage, DashboardPage)
-├── stories/
-├── assets/
-│   ├── images/
-│   ├── icons/
-│   └── styles/         # main.css (Tailwind)
-├── App.vue
-└── main.ts
+client/
+├── .storybook/              # Storybook config (main.ts, preview.ts)
+├── stories/                 # Storybook stories & tests
+│   ├── Button.stories.ts
+│   ├── LoginPage.stories.ts
+│   ├── AuthForm/
+│   ├── FormField/
+│   └── AppLayout/
+├── src/
+│   ├── components/
+│   │   ├── base/           # Base components (Button)
+│   │   ├── common/         # Common components (AuthForm, FormField)
+│   │   └── layout/         # Layout components (AppLayout)
+│   ├── composables/        # Vue composables (useAuth, useApi)
+│   ├── constants/          # Constants & enums
+│   ├── directives/         # Custom Vue directives
+│   ├── features/           # Feature-based modules
+│   │   ├── auth/
+│   │   ├── dashboard/
+│   │   └── users/
+│   ├── layouts/            # Layout components
+│   ├── plugins/            # Vue plugins
+│   ├── router/             # Vue Router (index.ts)
+│   ├── services/           # API services
+│   ├── stores/             # State management (Pinia)
+│   ├── types/              # TypeScript types (user.ts, auth.ts, index.ts)
+│   ├── utils/              # Utility functions
+│   ├── views/              # Page components (LoginPage, RegisterPage, DashboardPage)
+│   ├── assets/
+│   │   ├── images/
+│   │   ├── icons/
+│   │   └── styles/         # main.css (Tailwind)
+│   ├── App.vue
+│   └── main.ts
 ```
 
 **Key conventions**:
@@ -141,6 +148,8 @@ Start Storybook first (`npm run storybook` in `client/`) before using MCP featur
 
 - No root-level scripts — always `cd` into `client/` or `server/`
 - Client type checking requires `vue-tsc -b` (part of `npm run build`)
+- Storybook stories are in `client/stories/` (not `client/src/stories/`) — `.storybook/main.ts` globs `../stories/**`
+- Story imports: `stories/*.stories.ts` uses `../src/...`, `stories/subdir/*.stories.ts` uses `../../src/...`
 - Server tests use `ts-jest` with `rootDir: "src"` — test files must be `*.spec.ts` in `src/`
 - Server builds with `better-sqlite3` native addon — may take a while on first install
 - JWT secret defaults to `default-secret-change-me` — set `JWT_SECRET` env var for production

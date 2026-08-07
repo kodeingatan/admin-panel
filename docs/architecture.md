@@ -13,7 +13,7 @@ Two independent packages:
 ```
 client/
 ├── .storybook/                 # Konfigurasi Storybook
-│   ├── main.ts
+│   ├── main.ts                 # Stories glob: ../stories/**/*.mdx, ../stories/**/*.stories.*
 │   ├── preview.ts
 │   ├── manager.ts
 │   └── theme.ts
@@ -25,6 +25,7 @@ client/
 │   │   ├── images/
 │   │   ├── icons/
 │   │   └── styles/
+│   │       └── main.css         # Global styles (Tailwind + base)
 │   │
 │   ├── components/
 │   │   ├── base/               # Base components (Button, Input, Modal)

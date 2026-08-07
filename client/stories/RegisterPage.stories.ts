@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
-import RegisterPage from '../client/src/views/RegisterPage.vue'
+import RegisterPage from '../src/views/RegisterPage.vue'
 
 const meta: Meta<typeof RegisterPage> = {
   title: 'Pages/RegisterPage',

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { within, expect } from 'storybook/test'
-import LoginPage from '../client/src/views/LoginPage.vue'
+import LoginPage from '../src/views/LoginPage.vue'
 
 const meta: Meta<typeof LoginPage> = {
   title: 'Pages/LoginPage/Tests',

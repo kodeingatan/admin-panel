@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { within, expect } from 'storybook/test'
-import AuthForm from '../../client/src/components/common/AuthForm/AuthForm.vue'
+import AuthForm from '../../src/components/common/AuthForm/AuthForm.vue'
 
 const meta: Meta<typeof AuthForm> = {
   title: 'Components/AuthForm/Tests',

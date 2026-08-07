@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
-import DashboardPage from '../client/src/views/DashboardPage.vue'
+import DashboardPage from '../src/views/DashboardPage.vue'
 
 const meta: Meta<typeof DashboardPage> = {
   title: 'Pages/DashboardPage',
