@@ -243,3 +243,15 @@ server/
 - Passport + JWT
 - bcrypt
 - class-validator
+
+---
+
+## Design System
+
+Lihat `docs/design-system.md` untuk dokumentasi lengkap design tokens, color palette, typography, spacing, dan komponen.
+
+**Prinsip**:
+- **Naive UI** = komponen utama (Button, Input, Form, DataTable, dll)
+- **Tailwind CSS** = utility classes (spacing, flexbox, display)
+- Customisasi tema via `GlobalThemeOverrides` pada `NConfigProvider`
+- Semua komponen harus dibungkus dengan `NConfigProvider`

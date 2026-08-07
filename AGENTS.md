@@ -69,6 +69,8 @@ client/
 - Composables: `src/composables/`
 - Types: `src/types/`
 - Storybook: `stories/` (root level)
+- Design System: `docs/design-system.md` — color palette, typography, spacing, component dimensions
+- Naive UI components use `GlobalThemeOverrides` for theming, wrap app with `NConfigProvider`
 
 **Routing**: Vue Router configured in `src/router/index.ts`
 - `/login` — LoginPage (guest only)
