@@ -9,6 +9,7 @@ import {
   NButton,
   NGrid,
   NGi,
+  NSpace,
 } from 'naive-ui'
 import AppLayout from '@/components/layout/AppLayout/AppLayout.vue'
 
@@ -82,13 +83,36 @@ onMounted(async () => {
           </n-gi>
           <n-gi>
             <n-card title="Quick Actions">
-              <n-button
-                type="primary"
-                block
-                @click="router.push('/dashboard/users')"
-              >
-                Manage Users
-              </n-button>
+              <n-space vertical>
+                <n-button
+                  type="primary"
+                  block
+                  @click="router.push('/dashboard/users')"
+                >
+                  Manage Users
+                </n-button>
+                <n-button
+                  type="info"
+                  block
+                  @click="router.push('/dashboard/roles')"
+                >
+                  Manage Roles
+                </n-button>
+                <n-button
+                  type="warning"
+                  block
+                  @click="router.push('/dashboard/permissions')"
+                >
+                  Manage Permissions
+                </n-button>
+                <n-button
+                  type="success"
+                  block
+                  @click="router.push('/dashboard/guards')"
+                >
+                  Manage Guards
+                </n-button>
+              </n-space>
             </n-card>
           </n-gi>
         </n-grid>

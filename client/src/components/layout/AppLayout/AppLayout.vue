@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { h, ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { h, ref, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import {
   NLayout,
   NLayoutHeader,
@@ -13,12 +13,23 @@ import {
   NDropdown,
 } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
-import { Grid, UserMultiple, ChevronDown, UserAvatar, Logout } from '@vicons/carbon'
+import {
+  Grid,
+  UserMultiple,
+  User,
+  Security,
+  Rule,
+  Document,
+  ChevronDown,
+  UserAvatar,
+  Logout,
+} from '@vicons/carbon'
 
 const router = useRouter()
+const route = useRoute()
 const collapsed = ref(false)
 
-interface User {
+interface User_ {
   id: number
   firstName: string
   lastName: string
@@ -26,7 +37,7 @@ interface User {
   email: string
 }
 
-const props = defineProps<{ user: User }>()
+const props = defineProps<{ user: User_ }>()
 
 function logout() {
   localStorage.removeItem('accessToken')
@@ -45,19 +56,64 @@ const menuOptions: MenuOption[] = [
   },
   {
     label: 'User Management',
-    key: 'users',
+    key: 'user-management',
     icon: renderIcon(UserMultiple),
+    children: [
+      {
+        label: 'User',
+        key: 'users',
+        icon: renderIcon(User),
+      },
+      {
+        label: 'Guard',
+        key: 'guards',
+        icon: renderIcon(Security),
+      },
+      {
+        label: 'Role',
+        key: 'roles',
+        icon: renderIcon(Rule),
+      },
+      {
+        label: 'Permissions',
+        key: 'permissions',
+        icon: renderIcon(Document),
+      },
+    ],
   },
 ]
 
+const routeKeyMap: Record<string, string> = {
+  '/dashboard': 'dashboard',
+  '/dashboard/users': 'users',
+  '/dashboard/guards': 'guards',
+  '/dashboard/roles': 'roles',
+  '/dashboard/permissions': 'permissions',
+}
+
 const activeKey = ref('dashboard')
+
+watch(
+  () => route.path,
+  (path) => {
+    activeKey.value = routeKeyMap[path] || 'dashboard'
+  },
+  { immediate: true },
+)
+
+const menuRouteMap: Record<string, string> = {
+  dashboard: '/dashboard',
+  users: '/dashboard/users',
+  guards: '/dashboard/guards',
+  roles: '/dashboard/roles',
+  permissions: '/dashboard/permissions',
+}
 
 function handleMenuUpdate(key: string) {
   activeKey.value = key
-  if (key === 'users') {
-    router.push('/dashboard/users')
-  } else {
-    router.push('/dashboard')
+  const target = menuRouteMap[key]
+  if (target) {
+    router.push(target)
   }
 }
 

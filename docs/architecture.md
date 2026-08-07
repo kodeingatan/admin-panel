@@ -144,14 +144,47 @@ server/
 │   │   │   │   └── jwt-auth.guard.ts
 │   │   │   └── auth.module.ts
 │   │   │
-│   │   └── users/
+│   │   ├── users/
+│   │   │   ├── controllers/
+│   │   │   ├── services/
+│   │   │   ├── dto/
+│   │   │   ├── entities/
+│   │   │   │   └── user.entity.ts
+│   │   │   ├── repositories/
+│   │   │   └── users.module.ts
+│   │   │
+│   │   ├── roles/
+│   │   │   ├── controllers/
+│   │   │   ├── services/
+│   │   │   ├── dto/
+│   │   │   ├── entities/
+│   │   │   │   ├── role.entity.ts
+│   │   │   │   ├── user-role.entity.ts
+│   │   │   │   ├── role-guard.entity.ts
+│   │   │   │   └── role-permission.entity.ts
+│   │   │   ├── repositories/
+│   │   │   └── roles.module.ts
+│   │   │
+│   │   ├── permissions/
+│   │   │   ├── controllers/
+│   │   │   ├── services/
+│   │   │   ├── dto/
+│   │   │   ├── entities/
+│   │   │   │   ├── permission.entity.ts
+│   │   │   │   ├── permission-method.entity.ts
+│   │   │   │   └── permission-url.entity.ts
+│   │   │   ├── repositories/
+│   │   │   └── permissions.module.ts
+│   │   │
+│   │   └── guards/
 │   │       ├── controllers/
 │   │       ├── services/
 │   │       ├── dto/
 │   │       ├── entities/
-│   │       │   └── user.entity.ts
+│   │       │   ├── guard.entity.ts
+│   │       │   └── guard-url.entity.ts
 │   │       ├── repositories/
-│   │       └── users.module.ts
+│   │       └── guards.module.ts
 │   │
 │   └── shared/                     # Shared business logic
 │       ├── cache/
@@ -211,16 +244,73 @@ server/
 | `/login` | LoginPage | Guest only | Login form |
 | `/register` | RegisterPage | Guest only | Registration form |
 | `/dashboard` | DashboardPage | Required | Dashboard with sidebar |
+| `/dashboard/users` | UsersPage | Required | User management |
+| `/dashboard/roles` | RolesPage | Required | Role management |
+| `/dashboard/permissions` | PermissionsPage | Required | Permission management |
+| `/dashboard/guards` | GuardsPage | Required | Guard management |
+
+### Sidebar Menu (AppLayout)
+
+```
+Dashboard                    → /dashboard
+User Management (group)
+    ├── User                 → /dashboard/users
+    ├── Guard                → /dashboard/guards
+    ├── Role                 → /dashboard/roles
+    └── Permissions          → /dashboard/permissions
+```
 
 ---
 
 ## API Endpoints
+
+### Auth
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | POST | `/api/auth/register` | Register user | Public |
 | POST | `/api/auth/login` | Login user | Public |
 | GET | `/api/auth/profile` | Get profile | Bearer |
+
+### Users (Planned)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/users` | List users (paginated) | Bearer + Permission |
+| GET | `/api/users/:id` | Get user | Bearer + Permission |
+| POST | `/api/users` | Create user | Bearer + Permission |
+| PUT | `/api/users/:id` | Update user | Bearer + Permission |
+| DELETE | `/api/users/:id` | Delete user | Bearer + Permission |
+
+### Roles (Planned)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/roles` | List roles | Bearer + Permission |
+| GET | `/api/roles/:id` | Get role | Bearer + Permission |
+| POST | `/api/roles` | Create role | Bearer + Permission |
+| PUT | `/api/roles/:id` | Update role | Bearer + Permission |
+| DELETE | `/api/roles/:id` | Delete role | Bearer + Permission |
+
+### Permissions (Planned)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/permissions` | List permissions | Bearer + Permission |
+| GET | `/api/permissions/:id` | Get permission | Bearer + Permission |
+| POST | `/api/permissions` | Create permission | Bearer + Permission |
+| PUT | `/api/permissions/:id` | Update permission | Bearer + Permission |
+| DELETE | `/api/permissions/:id` | Delete permission | Bearer + Permission |
+
+### Guards (Planned)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/guards` | List guards | Bearer + Permission |
+| GET | `/api/guards/:id` | Get guard | Bearer + Permission |
+| POST | `/api/guards` | Create guard | Bearer + Permission |
+| PUT | `/api/guards/:id` | Update guard | Bearer + Permission |
+| DELETE | `/api/guards/:id` | Delete guard | Bearer + Permission |
 
 ---
 

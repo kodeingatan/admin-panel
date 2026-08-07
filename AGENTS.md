@@ -76,7 +76,21 @@ client/
 - `/login` — LoginPage (guest only)
 - `/register` — RegisterPage (guest only)
 - `/dashboard` — DashboardPage (requires auth)
+- `/dashboard/users` — UsersPage (requires auth)
+- `/dashboard/roles` — RolesPage (requires auth)
+- `/dashboard/permissions` — PermissionsPage (requires auth)
+- `/dashboard/guards` — GuardsPage (requires auth)
 - JWT token stored in `localStorage` as `accessToken`
+
+**Sidebar Menu** (AppLayout.vue):
+```
+Dashboard                    → /dashboard
+User Management (group)
+    ├── User                 → /dashboard/users
+    ├── Guard                → /dashboard/guards
+    ├── Role                 → /dashboard/roles
+    └── Permissions          → /dashboard/permissions
+```
 
 ## Server (NestJS)
 
@@ -111,11 +125,29 @@ server/src/
 │   │   ├── strategies/     # jwt.strategy.ts
 │   │   ├── guards/         # jwt-auth.guard.ts
 │   │   └── auth.module.ts
-│   └── users/
+│   ├── users/
+│   │   ├── controllers/
+│   │   ├── services/
+│   │   ├── dto/
+│   │   ├── entities/       # user.entity.ts
+│   │   └── repositories/
+│   ├── roles/
+│   │   ├── controllers/
+│   │   ├── services/
+│   │   ├── dto/
+│   │   ├── entities/       # role.entity.ts, user-role.entity.ts, role-guard.entity.ts, role-permission.entity.ts
+│   │   └── repositories/
+│   ├── permissions/
+│   │   ├── controllers/
+│   │   ├── services/
+│   │   ├── dto/
+│   │   ├── entities/       # permission.entity.ts, permission-method.entity.ts, permission-url.entity.ts
+│   │   └── repositories/
+│   └── guards/
 │       ├── controllers/
 │       ├── services/
 │       ├── dto/
-│       ├── entities/       # user.entity.ts
+│       ├── entities/       # guard.entity.ts, guard-url.entity.ts
 │       └── repositories/
 ├── shared/             # Shared business logic
 │   ├── cache/
@@ -142,6 +174,17 @@ server/src/
 | POST   | `/api/auth/register` | Register user  | Public |
 | POST   | `/api/auth/login`    | Login user     | Public |
 | GET    | `/api/auth/profile`  | Get profile    | Bearer |
+
+**RBAC Modules** (Planned):
+| Module | Endpoint Prefix | Entities | Description |
+|--------|----------------|----------|-------------|
+| Users | `/api/users` | User | User management with role assignment |
+| Roles | `/api/roles` | Role, UserRole, RoleGuard, RolePermission | Role management with guard & permission assignment |
+| Permissions | `/api/permissions` | Permission, PermissionMethod, PermissionUrl | Permission management with method & URL rules |
+| Guards | `/api/guards` | Guard, GuardUrl | Guard management with URL allow/deny rules |
+
+**Database**: SQLite via TypeORM — 10 tables total (users, roles, permissions, guards, + 6 junction tables)
+- See `docs/database.md` for full schema and `docs/PRD.md` for authorization flow
 
 ## Storybook MCP
 

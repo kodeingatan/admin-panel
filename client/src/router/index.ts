@@ -2,6 +2,10 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginPage from '@/views/LoginPage.vue'
 import RegisterPage from '@/views/RegisterPage.vue'
 import DashboardPage from '@/views/DashboardPage.vue'
+import UsersPage from '@/views/UsersPage.vue'
+import RolesPage from '@/views/RolesPage.vue'
+import PermissionsPage from '@/views/PermissionsPage.vue'
+import GuardsPage from '@/views/GuardsPage.vue'
 
 const routes = [
   {
@@ -20,6 +24,30 @@ const routes = [
     path: '/dashboard',
     name: 'Dashboard',
     component: DashboardPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/dashboard/users',
+    name: 'Users',
+    component: UsersPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/dashboard/roles',
+    name: 'Roles',
+    component: RolesPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/dashboard/permissions',
+    name: 'Permissions',
+    component: PermissionsPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/dashboard/guards',
+    name: 'Guards',
+    component: GuardsPage,
     meta: { requiresAuth: true },
   },
   {
