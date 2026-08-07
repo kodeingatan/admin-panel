@@ -10,7 +10,34 @@ setelah register langsung ke dashboard
 
 ## create login page 
 buatkan form login email dan password
-setelah login langsung ke dashboard
+setelah login langsung ke 
+
+## ui/ux
+buatkan dengan menggunakan ui naive ui dan tailwindcss
+buatkan tampilan login cantik dan responsive
+buatkan tampilan register cantik dan responsive
+buatkan tampilan dashboard cantik dan responsive : 
+    - header
+        - logo
+        - user avatar
+            - profile menu
+            - logout
+    - sidebar 
+        sidebar mendukung : 
+            - expand
+            - sidebar bisa collapse/minimize
+        menu item : 
+            - dashboard
+            - user management
+    - content area
+        Area utama untuk halaman.
+    - footer
+Halaman harus:
+- Modern
+- Responsive
+- Mobile Friendly
+- Clean Design
+- Professional Layout
 
 ## Integrate
 buatkan component story pada client/src/stories/{{component name}} : 

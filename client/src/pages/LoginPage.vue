@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { NInput, NButton, NAlert } from 'naive-ui'
+import AuthForm from '../components/AuthForm/AuthForm.vue'
+import FormField from '../components/FormField/FormField.vue'
 
 const router = useRouter()
 
@@ -37,147 +40,45 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div class="auth-page">
-    <div class="auth-card">
-      <h1>Login</h1>
+  <AuthForm title="Welcome Back" subtitle="Sign in to your account">
+    <NAlert v-if="error" type="error" class="mb-4">
+      {{ error }}
+    </NAlert>
 
-      <div v-if="error" class="auth-error">{{ error }}</div>
+    <form @submit.prevent="handleLogin">
+      <FormField label="Email" required>
+        <NInput
+          v-model:value="email"
+          type="text"
+          placeholder="Enter your email"
+        />
+      </FormField>
 
-      <form @submit.prevent="handleLogin">
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input
-            id="email"
-            v-model="email"
-            type="email"
-            required
-            placeholder="Enter your email"
-          />
-        </div>
+      <FormField label="Password" required>
+        <NInput
+          v-model:value="password"
+          type="password"
+          show-password-on="click"
+          placeholder="Enter your password"
+        />
+      </FormField>
 
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            required
-            placeholder="Enter your password"
-          />
-        </div>
+      <NButton
+        type="primary"
+        block
+        :loading="loading"
+        attr-type="submit"
+        class="mt-2"
+      >
+        Sign In
+      </NButton>
+    </form>
 
-        <button type="submit" class="auth-btn" :disabled="loading">
-          {{ loading ? 'Logging in...' : 'Login' }}
-        </button>
-      </form>
-
-      <p class="auth-link">
-        Don't have an account?
-        <RouterLink to="/register">Register</RouterLink>
-      </p>
-    </div>
-  </div>
+    <p class="mt-4 text-center text-sm text-gray-600">
+      Don't have an account?
+      <RouterLink to="/register" class="text-indigo-600 hover:text-indigo-500 font-medium">
+        Register
+      </RouterLink>
+    </p>
+  </AuthForm>
 </template>
-
-<style scoped>
-.auth-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg);
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 400px;
-  padding: 2rem;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg);
-}
-
-h1 {
-  margin: 0 0 1.5rem;
-  text-align: center;
-  color: var(--text-h);
-}
-
-.auth-error {
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #dc2626;
-  font-size: 14px;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.375rem;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-.form-group input {
-  width: 100%;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 14px;
-  background: var(--bg);
-  color: var(--text-h);
-  box-sizing: border-box;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-bg);
-}
-
-.auth-btn {
-  width: 100%;
-  padding: 0.625rem 1rem;
-  margin-top: 0.5rem;
-  border: none;
-  border-radius: 8px;
-  background: var(--accent);
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.auth-btn:hover {
-  opacity: 0.9;
-}
-
-.auth-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.auth-link {
-  margin-top: 1rem;
-  text-align: center;
-  font-size: 14px;
-  color: var(--text);
-}
-
-.auth-link a {
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.auth-link a:hover {
-  text-decoration: underline;
-}
-</style>

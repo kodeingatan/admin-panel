@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { NSpin } from 'naive-ui'
+import AppLayout from '../components/AppLayout/AppLayout.vue'
 
 const router = useRouter()
 
@@ -14,11 +16,6 @@ interface User {
 
 const user = ref<User | null>(null)
 const loading = ref(true)
-
-function logout() {
-  localStorage.removeItem('accessToken')
-  router.push('/login')
-}
 
 onMounted(async () => {
   const token = localStorage.getItem('accessToken')
@@ -47,111 +44,43 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="dashboard-page">
-    <header class="dashboard-header">
-      <h2>Dashboard</h2>
-      <button class="logout-btn" @click="logout">Logout</button>
-    </header>
+  <AppLayout v-if="user" :user="user">
+    <div v-if="loading" class="flex justify-center py-12">
+      <NSpin size="large" />
+    </div>
 
-    <main class="dashboard-content">
-      <div v-if="loading" class="loading">Loading...</div>
+    <div v-else-if="user" class="max-w-4xl">
+      <h1 class="text-2xl font-bold text-gray-900 mb-6">
+        Welcome, {{ user.firstName }} {{ user.lastName }}!
+      </h1>
 
-      <div v-else-if="user" class="welcome-card">
-        <h1>Welcome, {{ user.firstName }} {{ user.lastName }}!</h1>
-        <div class="user-info">
-          <div class="info-item">
-            <span class="label">Username</span>
-            <span class="value">{{ user.username }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Email</span>
-            <span class="value">{{ user.email }}</span>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Profile Information</h3>
+          <dl class="space-y-3">
+            <div>
+              <dt class="text-sm text-gray-500">Username</dt>
+              <dd class="text-sm font-medium text-gray-900">{{ user.username }}</dd>
+            </div>
+            <div>
+              <dt class="text-sm text-gray-500">Email</dt>
+              <dd class="text-sm font-medium text-gray-900">{{ user.email }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div class="space-y-3">
+            <router-link
+              to="/dashboard/users"
+              class="block w-full text-center px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition text-sm font-medium"
+            >
+              Manage Users
+            </router-link>
           </div>
         </div>
       </div>
-    </main>
-  </div>
+    </div>
+  </AppLayout>
 </template>
-
-<style scoped>
-.dashboard-page {
-  min-height: 100vh;
-  background: var(--bg);
-}
-
-.dashboard-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 2rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.dashboard-header h2 {
-  margin: 0;
-  color: var(--text-h);
-}
-
-.logout-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text-h);
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.logout-btn:hover {
-  background: var(--social-bg);
-}
-
-.dashboard-content {
-  padding: 2rem;
-}
-
-.loading {
-  text-align: center;
-  color: var(--text);
-}
-
-.welcome-card {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 2rem;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg);
-}
-
-.welcome-card h1 {
-  margin: 0 0 1.5rem;
-  color: var(--text-h);
-  font-size: 24px;
-}
-
-.user-info {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.info-item .label {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text);
-}
-
-.info-item .value {
-  font-size: 16px;
-  color: var(--text-h);
-}
-</style>
