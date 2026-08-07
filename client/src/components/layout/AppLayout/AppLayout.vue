@@ -63,13 +63,6 @@ function handleMenuUpdate(key: string) {
 
 const avatarLabel = computed(() => `${props.user.firstName.charAt(0)}${props.user.lastName.charAt(0)}`)
 
-function renderDropdownLabel(label: string, icon: any) {
-  return () => h('div', { class: 'flex items-center gap-2' }, [
-    h(NIcon, { size: 16, class: 'text-gray-500' }, { default: () => h(icon) }),
-    h('span', null, label),
-  ])
-}
-
 const dropdownOptions = [
   {
     key: 'profile',

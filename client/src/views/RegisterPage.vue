@@ -2,8 +2,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NInput, NButton, NAlert } from 'naive-ui'
-import AuthForm from '../components/common/AuthForm/AuthForm.vue'
-import FormField from '../components/common/FormField/FormField.vue'
+import AuthForm from '@/components/common/AuthForm/AuthForm.vue'
+import FormField from '@/components/common/FormField/FormField.vue'
 
 const router = useRouter()
 

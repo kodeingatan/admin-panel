@@ -10,7 +10,7 @@ import {
   NGrid,
   NGi,
 } from 'naive-ui'
-import AppLayout from '../components/layout/AppLayout/AppLayout.vue'
+import AppLayout from '@/components/layout/AppLayout/AppLayout.vue'
 
 const router = useRouter()
 

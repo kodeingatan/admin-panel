@@ -186,6 +186,7 @@ server/
 - Vue 3 `<script setup>` SFCs with TypeScript
 - UI: **Naive UI** (priority) + **Tailwind CSS v4** (utility classes)
 - Tailwind CSS v4 without preflight (to avoid Naive UI conflicts)
+- Import alias: `@/` → `src/` (e.g., `import Button from '@/components/base/Button.vue'`)
 - Components: `src/components/{base,common,layout}/`
 - Views: `src/views/`
 - Composables: `src/composables/`
@@ -197,6 +198,7 @@ server/
 - Global prefix: `/api`
 - Validation: whitelist + transform enabled
 - CORS origin: `http://localhost:5173`
+- Import alias: `@/` → `src/` (e.g., `import { AuthService } from '@/modules/auth/services/auth.service'`)
 - Modules: `src/modules/{feature}/`
 - Shared: `src/common/`
 

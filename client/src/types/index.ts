@@ -1,2 +1,2 @@
-export type { User } from './user'
-export type { LoginPayload, RegisterPayload, AuthResponse } from './auth'
+export type { User } from '@/types/user'
+export type { LoginPayload, RegisterPayload, AuthResponse } from '@/types/auth'

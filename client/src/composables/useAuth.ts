@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useApi } from './useApi'
+import { useApi } from '@/composables/useApi'
 
 interface User {
   id: number
