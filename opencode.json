@@ -3,7 +3,7 @@
     "mcp": {
         "storybook": {
             "enabled": true,
-            "type": "remote",
+            "type": "url",
             "url": "http://localhost:6006/mcp"
         }
     }

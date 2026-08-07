@@ -1,6 +1,6 @@
 pelajari semua yang ada pada website https://tiptap.dev/docs/editor/getting-started/overview gunakan skill .opencode/skills/crawlee-scraper-skill
 
-hasil pembelajaran sesuaikan dengan pembuatan vue components library dengan memggunakan storybook
+hasil pembelajaran sesuaikan dengan penggunaanya pada vue dan sesuaikan dengan storybook
 
 hasil pembelajaran ubah menjadi skill dan simpan pada .opencode/skills/titap-vue
 pecah menjadi

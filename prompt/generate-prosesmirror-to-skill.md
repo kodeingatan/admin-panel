@@ -3,7 +3,7 @@ pelajari semua yang ada pada website
 - https://prosemirror.net/examples/
 gunakan skill .opencode/skills/crawlee-scraper-skill
 
-hasil pembelajaran sesuaikan dengan pembuatan vue components library dengan memggunakan storybook
+hasil pembelajaran sesuaikan dengan penggunaanya pada vue dan sesuaikan dengan storybook
 
 hasil pembelajaran ubah menjadi skill dan simpan pada .opencode/skills/vue-prosesmirror : 
 pecah menjadi
