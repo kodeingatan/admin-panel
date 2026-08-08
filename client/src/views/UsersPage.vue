@@ -1,92 +1,56 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import {
-  NSpin,
-  NCard,
-  NDataTable,
-  NButton,
-  NSpace,
-  NIcon,
-} from 'naive-ui'
+import { useAuthStore } from '@/stores/auth.store'
 import AppLayout from '@/components/layout/AppLayout/AppLayout.vue'
-import { Add } from '@vicons/carbon'
+import { UserTable, UserFormModal, UserDetailDrawer } from '@/features/users'
+import type { User } from '@/types/user'
 
-const router = useRouter()
+const authStore = useAuthStore()
+const showForm = ref(false)
+const showDetail = ref(false)
+const formMode = ref<'create' | 'edit'>('create')
+const selectedUser = ref<User | null>(null)
 
-interface User {
-  id: number
-  firstName: string
-  lastName: string
-  username: string
-  email: string
+function handleCreate() {
+  formMode.value = 'create'
+  selectedUser.value = null
+  showForm.value = true
 }
 
-const user = ref<User | null>(null)
-const loading = ref(true)
+function handleEdit(user: User) {
+  formMode.value = 'edit'
+  selectedUser.value = user
+  showForm.value = true
+}
 
-const columns = [
-  { title: 'ID', key: 'id' },
-  { title: 'First Name', key: 'firstName' },
-  { title: 'Last Name', key: 'lastName' },
-  { title: 'Username', key: 'username' },
-  { title: 'Email', key: 'email' },
-  { title: 'Actions', key: 'actions' },
-]
+function handleDetail(user: User) {
+  selectedUser.value = user
+  showDetail.value = true
+}
 
-const tableData = ref([])
+function handleFormSuccess() {
+  showForm.value = false
+  selectedUser.value = null
+}
 
 onMounted(async () => {
-  const token = localStorage.getItem('accessToken')
-  if (!token) {
-    router.push('/login')
-    return
-  }
-
-  try {
-    const res = await fetch('http://localhost:3000/api/auth/profile', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-
-    if (!res.ok) {
-      throw new Error('Unauthorized')
-    }
-
-    user.value = await res.json()
-  } catch {
-    localStorage.removeItem('accessToken')
-    router.push('/login')
-  } finally {
-    loading.value = false
-  }
+  await authStore.fetchProfile()
 })
 </script>
 
 <template>
-  <AppLayout v-if="user" :user="user">
-    <n-spin :show="loading" class="w-full">
-      <template #description>Loading...</template>
-
-      <div v-if="!loading && user">
-        <n-card title="User Management" class="mb-4">
-          <template #header-extra>
-            <n-space>
-              <n-button type="primary">
-                <template #icon>
-                  <n-icon><Add /></n-icon>
-                </template>
-                Add User
-              </n-button>
-            </n-space>
-          </template>
-          <n-data-table
-            :columns="columns"
-            :data="tableData"
-            :bordered="true"
-            :single-line="false"
-          />
-        </n-card>
-      </div>
-    </n-spin>
+  <AppLayout v-if="authStore.user" :user="authStore.user">
+    <UserTable @create="handleCreate" @edit="handleEdit" @detail="handleDetail" />
+    <UserFormModal
+      v-model:visible="showForm"
+      :mode="formMode"
+      :user="selectedUser"
+      @success="handleFormSuccess"
+    />
+    <UserDetailDrawer
+      v-model:visible="showDetail"
+      :user-id="selectedUser?.id ?? null"
+      @edit="handleEdit"
+    />
   </AppLayout>
 </template>

@@ -1,91 +1,56 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import {
-  NSpin,
-  NCard,
-  NDataTable,
-  NButton,
-  NSpace,
-  NIcon,
-} from 'naive-ui'
+import { useAuthStore } from '@/stores/auth.store'
 import AppLayout from '@/components/layout/AppLayout/AppLayout.vue'
-import { Add } from '@vicons/carbon'
+import { GuardTable, GuardFormModal, GuardDetailDrawer } from '@/features/users'
+import type { Guard } from '@/types/guard'
 
-const router = useRouter()
+const authStore = useAuthStore()
+const showForm = ref(false)
+const showDetail = ref(false)
+const formMode = ref<'create' | 'edit'>('create')
+const selectedGuard = ref<Guard | null>(null)
 
-interface User {
-  id: number
-  firstName: string
-  lastName: string
-  username: string
-  email: string
+function handleCreate() {
+  formMode.value = 'create'
+  selectedGuard.value = null
+  showForm.value = true
 }
 
-const user = ref<User | null>(null)
-const loading = ref(true)
+function handleEdit(guard: Guard) {
+  formMode.value = 'edit'
+  selectedGuard.value = guard
+  showForm.value = true
+}
 
-const columns = [
-  { title: 'ID', key: 'id' },
-  { title: 'Guard Name', key: 'name' },
-  { title: 'URL Pattern', key: 'urlPattern' },
-  { title: 'Method', key: 'method' },
-  { title: 'Actions', key: 'actions' },
-]
+function handleDetail(guard: Guard) {
+  selectedGuard.value = guard
+  showDetail.value = true
+}
 
-const tableData = ref([])
+function handleFormSuccess() {
+  showForm.value = false
+  selectedGuard.value = null
+}
 
 onMounted(async () => {
-  const token = localStorage.getItem('accessToken')
-  if (!token) {
-    router.push('/login')
-    return
-  }
-
-  try {
-    const res = await fetch('http://localhost:3000/api/auth/profile', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-
-    if (!res.ok) {
-      throw new Error('Unauthorized')
-    }
-
-    user.value = await res.json()
-  } catch {
-    localStorage.removeItem('accessToken')
-    router.push('/login')
-  } finally {
-    loading.value = false
-  }
+  await authStore.fetchProfile()
 })
 </script>
 
 <template>
-  <AppLayout v-if="user" :user="user">
-    <n-spin :show="loading" class="w-full">
-      <template #description>Loading...</template>
-
-      <div v-if="!loading && user">
-        <n-card title="Guard Management" class="mb-4">
-          <template #header-extra>
-            <n-space>
-              <n-button type="primary">
-                <template #icon>
-                  <n-icon><Add /></n-icon>
-                </template>
-                Add Guard
-              </n-button>
-            </n-space>
-          </template>
-          <n-data-table
-            :columns="columns"
-            :data="tableData"
-            :bordered="true"
-            :single-line="false"
-          />
-        </n-card>
-      </div>
-    </n-spin>
+  <AppLayout v-if="authStore.user" :user="authStore.user">
+    <GuardTable @create="handleCreate" @edit="handleEdit" @detail="handleDetail" />
+    <GuardFormModal
+      v-model:visible="showForm"
+      :mode="formMode"
+      :guard="selectedGuard"
+      @success="handleFormSuccess"
+    />
+    <GuardDetailDrawer
+      v-model:visible="showDetail"
+      :guard-id="selectedGuard?.id ?? null"
+      @edit="handleEdit"
+    />
   </AppLayout>
 </template>

@@ -1,91 +1,56 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import {
-  NSpin,
-  NCard,
-  NDataTable,
-  NButton,
-  NSpace,
-  NIcon,
-} from 'naive-ui'
+import { useAuthStore } from '@/stores/auth.store'
 import AppLayout from '@/components/layout/AppLayout/AppLayout.vue'
-import { Add } from '@vicons/carbon'
+import { PermissionTable, PermissionFormModal, PermissionDetailDrawer } from '@/features/users'
+import type { Permission } from '@/types/permission'
 
-const router = useRouter()
+const authStore = useAuthStore()
+const showForm = ref(false)
+const showDetail = ref(false)
+const formMode = ref<'create' | 'edit'>('create')
+const selectedPermission = ref<Permission | null>(null)
 
-interface User {
-  id: number
-  firstName: string
-  lastName: string
-  username: string
-  email: string
+function handleCreate() {
+  formMode.value = 'create'
+  selectedPermission.value = null
+  showForm.value = true
 }
 
-const user = ref<User | null>(null)
-const loading = ref(true)
+function handleEdit(permission: Permission) {
+  formMode.value = 'edit'
+  selectedPermission.value = permission
+  showForm.value = true
+}
 
-const columns = [
-  { title: 'ID', key: 'id' },
-  { title: 'Permission Name', key: 'name' },
-  { title: 'Resource', key: 'resource' },
-  { title: 'Action', key: 'action' },
-  { title: 'Actions', key: 'actions' },
-]
+function handleDetail(permission: Permission) {
+  selectedPermission.value = permission
+  showDetail.value = true
+}
 
-const tableData = ref([])
+function handleFormSuccess() {
+  showForm.value = false
+  selectedPermission.value = null
+}
 
 onMounted(async () => {
-  const token = localStorage.getItem('accessToken')
-  if (!token) {
-    router.push('/login')
-    return
-  }
-
-  try {
-    const res = await fetch('http://localhost:3000/api/auth/profile', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-
-    if (!res.ok) {
-      throw new Error('Unauthorized')
-    }
-
-    user.value = await res.json()
-  } catch {
-    localStorage.removeItem('accessToken')
-    router.push('/login')
-  } finally {
-    loading.value = false
-  }
+  await authStore.fetchProfile()
 })
 </script>
 
 <template>
-  <AppLayout v-if="user" :user="user">
-    <n-spin :show="loading" class="w-full">
-      <template #description>Loading...</template>
-
-      <div v-if="!loading && user">
-        <n-card title="Permission Management" class="mb-4">
-          <template #header-extra>
-            <n-space>
-              <n-button type="primary">
-                <template #icon>
-                  <n-icon><Add /></n-icon>
-                </template>
-                Add Permission
-              </n-button>
-            </n-space>
-          </template>
-          <n-data-table
-            :columns="columns"
-            :data="tableData"
-            :bordered="true"
-            :single-line="false"
-          />
-        </n-card>
-      </div>
-    </n-spin>
+  <AppLayout v-if="authStore.user" :user="authStore.user">
+    <PermissionTable @create="handleCreate" @edit="handleEdit" @detail="handleDetail" />
+    <PermissionFormModal
+      v-model:visible="showForm"
+      :mode="formMode"
+      :permission="selectedPermission"
+      @success="handleFormSuccess"
+    />
+    <PermissionDetailDrawer
+      v-model:visible="showDetail"
+      :permission-id="selectedPermission?.id ?? null"
+      @edit="handleEdit"
+    />
   </AppLayout>
 </template>

@@ -5,37 +5,23 @@ import { NInput, NButton, NAlert, NIcon } from 'naive-ui'
 import { Login } from '@vicons/carbon'
 import AuthForm from '@/components/common/AuthForm/AuthForm.vue'
 import FormField from '@/components/common/FormField/FormField.vue'
+import { useAuthStore } from '@/stores/auth.store'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
 const error = ref('')
-const loading = ref(false)
 
 async function handleLogin() {
-  loading.value = true
   error.value = ''
 
   try {
-    const res = await fetch('http://localhost:3000/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.value, password: password.value }),
-    })
-
-    const json = await res.json()
-
-    if (!res.ok) {
-      throw new Error(json.message || 'Login failed')
-    }
-
-    localStorage.setItem('accessToken', json.accessToken)
+    await authStore.login({ email: email.value, password: password.value })
     router.push('/dashboard')
   } catch (e: any) {
-    error.value = e.message
-  } finally {
-    loading.value = false
+    error.value = e.response?.data?.message || e.message || 'Login failed'
   }
 }
 </script>
@@ -55,7 +41,7 @@ async function handleLogin() {
         <NInput v-model:value="password" type="password" show-password-on="click" placeholder="Enter your password" />
       </FormField>
 
-      <NButton type="primary" block :loading="loading" attr-type="submit" class="mt-2">
+      <NButton type="primary" block :loading="authStore.loading" attr-type="submit" class="mt-2">
         <template #icon>
           <NIcon><Login /></NIcon>
         </template>

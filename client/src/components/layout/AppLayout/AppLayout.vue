@@ -25,8 +25,11 @@ import {
   Logout,
 } from '@vicons/carbon'
 
+import { useAuthStore } from '@/stores/auth.store'
+
 const router = useRouter()
 const route = useRoute()
+const authStore = useAuthStore()
 const collapsed = ref(false)
 
 interface User_ {
@@ -40,7 +43,7 @@ interface User_ {
 const props = defineProps<{ user: User_ }>()
 
 function logout() {
-  localStorage.removeItem('accessToken')
+  authStore.logout()
   router.push('/login')
 }
 

@@ -5,8 +5,10 @@ import { NInput, NButton, NAlert, NIcon } from 'naive-ui'
 import { UserAvatar } from '@vicons/carbon'
 import AuthForm from '@/components/common/AuthForm/AuthForm.vue'
 import FormField from '@/components/common/FormField/FormField.vue'
+import { useAuthStore } from '@/stores/auth.store'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 const form = ref({
   firstName: '',
@@ -17,7 +19,6 @@ const form = ref({
   confirmPassword: '',
 })
 const error = ref('')
-const loading = ref(false)
 
 async function handleRegister() {
   if (form.value.password !== form.value.confirmPassword) {
@@ -25,28 +26,13 @@ async function handleRegister() {
     return
   }
 
-  loading.value = true
   error.value = ''
 
   try {
-    const res = await fetch('http://localhost:3000/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value),
-    })
-
-    const json = await res.json()
-
-    if (!res.ok) {
-      throw new Error(json.message || 'Registration failed')
-    }
-
-    localStorage.setItem('accessToken', json.accessToken)
+    await authStore.register(form.value)
     router.push('/dashboard')
   } catch (e: any) {
-    error.value = e.message
-  } finally {
-    loading.value = false
+    error.value = e.response?.data?.message || e.message || 'Registration failed'
   }
 }
 </script>
@@ -96,7 +82,7 @@ async function handleRegister() {
       <NButton
         type="primary"
         block
-        :loading="loading"
+        :loading="authStore.loading"
         attr-type="submit"
         class="mt-2"
       >

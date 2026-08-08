@@ -29,10 +29,10 @@ client/
 │   │
 │   ├── components/
 │   │   ├── base/               # Base components (Button, Input, Modal)
-│   │   ├── common/             # Common components (AuthForm, FormField)
+│   │   ├── common/             # Common components (AuthForm, FormField, DataTable)
 │   │   └── layout/             # Layout components (AppLayout)
 │   │
-│   ├── composables/            # Vue composables (useAuth, useApi)
+│   ├── composables/            # Vue composables (useAuth, useApi, useCrudTable)
 │   │
 │   ├── constants/              # Constants & enums
 │   │
@@ -42,6 +42,13 @@ client/
 │   │   ├── auth/               # Auth feature (login, register)
 │   │   ├── dashboard/          # Dashboard feature
 │   │   └── users/              # User management feature
+│   │       ├── components/     # Feature-specific components
+│   │       │   ├── UserTable.vue
+│   │       │   ├── UserFormModal.vue
+│   │       │   └── UserDetailDrawer.vue
+│   │       ├── composables/    # Feature composables
+│   │       │   └── useUsers.ts
+│   │       └── index.ts        # Barrel exports
 │   │
 │   ├── layouts/                # Layout components
 │   │
@@ -50,10 +57,26 @@ client/
 │   ├── router/                 # Vue Router configuration
 │   │
 │   ├── services/               # API services
+│   │   ├── api.ts              # Axios instance with interceptors
+│   │   ├── users.service.ts    # Users CRUD API
+│   │   ├── roles.service.ts    # Roles CRUD API
+│   │   ├── permissions.service.ts # Permissions CRUD API
+│   │   └── guards.service.ts   # Guards CRUD API
 │   │
 │   ├── stores/                 # State management (Pinia)
+│   │   ├── auth.store.ts       # Auth state (token, user)
+│   │   ├── users.store.ts      # Users list & CRUD state
+│   │   ├── roles.store.ts      # Roles list & CRUD state
+│   │   ├── permissions.store.ts # Permissions list & CRUD state
+│   │   └── guards.store.ts     # Guards list & CRUD state
 │   │
 │   ├── types/                  # TypeScript types & interfaces
+│   │   ├── user.ts             # User, CreateUser, UpdateUser, QueryUser
+│   │   ├── role.ts             # Role, CreateRole, UpdateRole, QueryRole
+│   │   ├── permission.ts       # Permission, CreatePermission, UpdatePermission
+│   │   ├── guard.ts            # Guard, CreateGuard, UpdateGuard
+│   │   ├── api.ts              # PaginatedResponse, ApiResponse
+│   │   └── index.ts            # Barrel exports
 │   │
 │   ├── utils/                  # Utility functions
 │   │
@@ -223,7 +246,10 @@ server/
 - Components: `src/components/{base,common,layout}/`
 - Views: `src/views/`
 - Composables: `src/composables/`
-- Features: `src/features/`
+- Features: `src/features/{feature}/`
+- Services: `src/services/` (API service layer)
+- Stores: `src/stores/` (Pinia state management)
+- Types: `src/types/` (TypeScript interfaces)
 - Storybook: `stories/`
 
 ### Server
@@ -234,6 +260,7 @@ server/
 - Import alias: `@/` → `src/` (e.g., `import { AuthService } from '@/modules/auth/services/auth.service'`)
 - Modules: `src/modules/{feature}/`
 - Shared: `src/common/`
+- RBAC: Use `@Roles()` and `@Permissions()` decorators on controller methods
 
 ---
 
@@ -272,45 +299,148 @@ User Management (group)
 | POST | `/api/auth/login` | Login user | Public |
 | GET | `/api/auth/profile` | Get profile | Bearer |
 
-### Users (Planned)
+### Users
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/users` | List users (paginated) | Bearer + Permission |
-| GET | `/api/users/:id` | Get user | Bearer + Permission |
-| POST | `/api/users` | Create user | Bearer + Permission |
-| PUT | `/api/users/:id` | Update user | Bearer + Permission |
-| DELETE | `/api/users/:id` | Delete user | Bearer + Permission |
+| GET | `/api/users` | List users (paginated) | Bearer |
+| GET | `/api/users/:id` | Get user | Bearer |
+| POST | `/api/users` | Create user | Bearer |
+| PUT | `/api/users/:id` | Update user | Bearer |
+| DELETE | `/api/users/:id` | Delete user | Bearer |
 
-### Roles (Planned)
+**Query Parameters** (GET `/api/users`):
+- `page` (number, default: 1)
+- `limit` (number, default: 20)
+- `search` (string) — searches firstName, lastName, username, email
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/roles` | List roles | Bearer + Permission |
-| GET | `/api/roles/:id` | Get role | Bearer + Permission |
-| POST | `/api/roles` | Create role | Bearer + Permission |
-| PUT | `/api/roles/:id` | Update role | Bearer + Permission |
-| DELETE | `/api/roles/:id` | Delete role | Bearer + Permission |
+**Create/Update DTO**:
+- `firstName` (string, required for create)
+- `lastName` (string, required for create)
+- `username` (string, required for create, unique)
+- `email` (string, email format, required for create, unique)
+- `password` (string, required for create)
+- `confirmPassword` (string, must match password)
+- `roleIds` (number[], optional) — assign roles to user
 
-### Permissions (Planned)
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/permissions` | List permissions | Bearer + Permission |
-| GET | `/api/permissions/:id` | Get permission | Bearer + Permission |
-| POST | `/api/permissions` | Create permission | Bearer + Permission |
-| PUT | `/api/permissions/:id` | Update permission | Bearer + Permission |
-| DELETE | `/api/permissions/:id` | Delete permission | Bearer + Permission |
-
-### Guards (Planned)
+### Roles
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/guards` | List guards | Bearer + Permission |
-| GET | `/api/guards/:id` | Get guard | Bearer + Permission |
-| POST | `/api/guards` | Create guard | Bearer + Permission |
-| PUT | `/api/guards/:id` | Update guard | Bearer + Permission |
-| DELETE | `/api/guards/:id` | Delete guard | Bearer + Permission |
+| GET | `/api/roles` | List roles (paginated) | Bearer |
+| GET | `/api/roles/:id` | Get role with guards & permissions | Bearer |
+| POST | `/api/roles` | Create role | Bearer |
+| PUT | `/api/roles/:id` | Update role | Bearer |
+| DELETE | `/api/roles/:id` | Delete role | Bearer |
+
+**Query Parameters** (GET `/api/roles`):
+- `page` (number, default: 1)
+- `limit` (number, default: 20)
+- `search` (string) — searches roleName, description
+
+**Create/Update DTO**:
+- `roleName` (string, required for create, unique)
+- `description` (string, optional)
+- `guardIds` (number[], optional) — assign guards to role
+- `permissionIds` (number[], optional) — assign permissions to role
+
+### Permissions
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/permissions` | List permissions (paginated) | Bearer |
+| GET | `/api/permissions/:id` | Get permission with methods & urls | Bearer |
+| POST | `/api/permissions` | Create permission | Bearer |
+| PUT | `/api/permissions/:id` | Update permission | Bearer |
+| DELETE | `/api/permissions/:id` | Delete permission | Bearer |
+
+**Query Parameters** (GET `/api/permissions`):
+- `page` (number, default: 1)
+- `limit` (number, default: 20)
+- `search` (string) — searches permissionName, description
+
+**Create/Update DTO**:
+- `permissionName` (string, required for create, unique)
+- `description` (string, optional)
+- `methods` (string[], optional) — HTTP methods: GET, POST, PUT, DELETE, PATCH, OPTIONS, or * for all
+- `urls` (string[], optional) — URL patterns: `/api/users/*`, `/*`, etc.
+
+### Guards
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/guards` | List guards (paginated) | Bearer |
+| GET | `/api/guards/:id` | Get guard with URLs | Bearer |
+| POST | `/api/guards` | Create guard | Bearer |
+| PUT | `/api/guards/:id` | Update guard | Bearer |
+| DELETE | `/api/guards/:id` | Delete guard | Bearer |
+
+**Query Parameters** (GET `/api/guards`):
+- `page` (number, default: 1)
+- `limit` (number, default: 20)
+- `search` (string) — searches guardName, description
+
+**Create/Update DTO**:
+- `guardName` (string, required for create, unique)
+- `description` (string, optional)
+- `allowUrls` (string[], optional) — allowed URL patterns
+- `denyUrls` (string[], optional) — denied URL patterns
+
+---
+
+## RBAC System
+
+### Global Guards
+
+Two global guards are registered in `app.module.ts`:
+
+1. **JwtAuthGuard** — Validates JWT token for all routes (except `@Public()` decorated)
+2. **RbacGuard** — Checks role & permission access (respects `@Roles()` and `@Permissions()` decorators)
+
+### Decorators
+
+| Decorator | File | Usage |
+|-----------|------|-------|
+| `@Public()` | `common/decorators/public.decorator.ts` | Skip JWT authentication |
+| `@Roles(...roles)` | `common/decorators/roles.decorator.ts` | Require specific roles |
+| `@Permissions(...perms)` | `common/decorators/permissions.decorator.ts` | Require specific permissions |
+
+### RBAC Guard Logic (`common/guards/rbac.guard.ts`)
+
+1. Loads user with full relations (roles → guards.urls, roles → permissions.methods, permissions.urls)
+2. Checks `@Roles()` — if defined, user must have at least one matching role name
+3. Checks `@Permissions()` — if defined, user must have at least one matching permission name
+4. Checks Guard URL rules — matches request URL against allow/deny patterns
+5. Checks Permission method+URL rules — matches HTTP method and URL against permission rules
+
+---
+
+## Entity Relationships
+
+```
+users ──────< users_roles >────── roles
+                                    │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+                    v               v               v
+              roles_guards    roles_permissions     │
+                    │               │               │
+                    v               v               v
+                guards         permissions
+                    │               │
+                    v               v
+              guard_urls    permission_methods
+                            permission_urls
+```
+
+| Relationship | Type | Description |
+|-------------|------|-------------|
+| User → Role | Many-to-Many | User can have multiple roles |
+| Role → Guard | Many-to-Many | Role can have multiple guards |
+| Role → Permission | Many-to-Many | Role can have multiple permissions |
+| Guard → GuardUrl | One-to-Many | Guard has many URL rules (allow/deny) |
+| Permission → PermissionMethod | One-to-Many | Permission has many method rules |
+| Permission → PermissionUrl | One-to-Many | Permission has many URL rules |
 
 ---
 
