@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h, onMounted, computed } from 'vue'
-import { NTag, NSpace, NText, NButton, NPopconfirm, useMessage } from 'naive-ui'
+import { NTag, NSpace, NText, NButton, NPopconfirm, NIcon, useMessage } from 'naive-ui'
 import { Add, TrashCan, Edit, View } from '@vicons/carbon'
 import DataTable from '@/components/common/DataTable/DataTable.vue'
 import { useRolesStore } from '@/stores/roles.store'
@@ -52,16 +52,16 @@ const columns = computed(() => [
         h(NButton, {
           size: 'small', quaternary: true, type: 'info',
           onClick: () => emit('detail', row),
-        }, { default: () => h(View) }),
+        }, { default: () => h(NIcon, null, { default: () => h(View) }) }),
         h(NButton, {
           size: 'small', quaternary: true, type: 'warning',
           onClick: () => emit('edit', row),
-        }, { default: () => h(Edit) }),
+        }, { default: () => h(NIcon, null, { default: () => h(Edit) }) }),
         h(
           NPopconfirm,
           { onPositiveClick: () => handleDelete(row.id) },
           {
-            trigger: () => h(NButton, { size: 'small', quaternary: true, type: 'error' }, { default: () => h(TrashCan) }),
+            trigger: () => h(NButton, { size: 'small', quaternary: true, type: 'error' }, { default: () => h(NIcon, null, { default: () => h(TrashCan) }) }),
             default: () => `Delete role "${row.roleName}"?`,
           }
         ),
@@ -139,7 +139,7 @@ onMounted(() => {
     >
       <template #toolbar>
         <NButton type="primary" @click="emit('create')">
-          <template #icon><Add /></template>
+          <template #icon><NIcon><Add /></NIcon></template>
           Add Role
         </NButton>
       </template>

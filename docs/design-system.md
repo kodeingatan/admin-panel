@@ -309,7 +309,7 @@ Design system menggunakan **Naive UI** sebagai komponen utama dengan Tailwind CS
 | Edit | `Edit` | `@vicons/carbon` |
 | Delete | `TrashCan` | `@vicons/carbon` |
 | Search | `Search` | `@vicons/carbon` |
-| Refresh | `Refresh` | `@vicons/carbon` |
+| Refresh | `Restart` | `@vicons/carbon` |
 | Export / Download | `Download` | `@vicons/carbon` |
 | Import / Upload | `Upload` | `@vicons/carbon` |
 | Settings | `Settings` | `@vicons/carbon` |
