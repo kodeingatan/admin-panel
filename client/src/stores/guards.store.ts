@@ -9,6 +9,9 @@ export const useGuardsStore = defineStore('guards', () => {
   const page = ref(1)
   const limit = ref(20)
   const search = ref('')
+  const sortBy = ref('id')
+  const sortOrder = ref<'ASC' | 'DESC'>('DESC')
+  const searchField = ref('')
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -20,6 +23,9 @@ export const useGuardsStore = defineStore('guards', () => {
         page: params?.page ?? page.value,
         limit: params?.limit ?? limit.value,
         search: params?.search ?? (search.value || undefined),
+        searchField: params?.searchField ?? (searchField.value || undefined),
+        sortBy: params?.sortBy ?? sortBy.value,
+        sortOrder: params?.sortOrder ?? sortOrder.value,
       }
       const { data } = await guardsService.getAll(query)
       guards.value = data.data
@@ -93,5 +99,32 @@ export const useGuardsStore = defineStore('guards', () => {
     page.value = 1
   }
 
-  return { guards, total, page, limit, search, loading, error, fetchAll, create, update, remove, setPage, setLimit, setSearch }
+  function setSort(field: string) {
+    if (sortBy.value === field) {
+      sortOrder.value = sortOrder.value === 'ASC' ? 'DESC' : 'ASC'
+    } else {
+      sortBy.value = field
+      sortOrder.value = 'ASC'
+    }
+    page.value = 1
+  }
+
+  function setSearchField(field: string) {
+    searchField.value = field
+    page.value = 1
+  }
+
+  function resetFilters() {
+    page.value = 1
+    search.value = ''
+    sortBy.value = 'id'
+    sortOrder.value = 'DESC'
+    searchField.value = ''
+  }
+
+  return {
+    guards, total, page, limit, search, sortBy, sortOrder, searchField, loading, error,
+    fetchAll, create, update, remove,
+    setPage, setLimit, setSearch, setSort, setSearchField, resetFilters,
+  }
 })

@@ -31,4 +31,7 @@ export interface QueryGuard {
   page?: number
   limit?: number
   search?: string
+  searchField?: string
+  sortBy?: string
+  sortOrder?: 'ASC' | 'DESC'
 }

@@ -28,8 +28,9 @@ client/
 │   │       └── main.css         # Global styles (Tailwind + base)
 │   │
 │   ├── components/
-│   │   ├── base/               # Base components (Button, Input, Modal)
+│   │   ├── base/               # Base components (Button)
 │   │   ├── common/             # Common components (AuthForm, FormField, DataTable)
+│   │   │   └── DataTable/      # Reusable table browse component
 │   │   └── layout/             # Layout components (AppLayout)
 │   │
 │   ├── composables/            # Vue composables (useAuth, useApi, useCrudTable)
@@ -312,7 +313,21 @@ User Management (group)
 **Query Parameters** (GET `/api/users`):
 - `page` (number, default: 1)
 - `limit` (number, default: 20)
-- `search` (string) — searches firstName, lastName, username, email
+- `search` (string) — global search across firstName, lastName, username, email
+- `searchField` (string) — search specific field only (e.g., `email`, `username`)
+- `sortBy` (string, default: 'id') — sort column (whitelisted: id, firstName, lastName, username, email, createdAt, updatedAt)
+- `sortOrder` (string, default: 'DESC') — sort direction: `ASC` or `DESC`
+
+**Response Format**:
+```json
+{
+  "data": [...],
+  "total": 42,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 3
+}
+```
 
 **Create/Update DTO**:
 - `firstName` (string, required for create)
@@ -336,7 +351,10 @@ User Management (group)
 **Query Parameters** (GET `/api/roles`):
 - `page` (number, default: 1)
 - `limit` (number, default: 20)
-- `search` (string) — searches roleName, description
+- `search` (string) — global search across roleName, description
+- `searchField` (string) — search specific field only (e.g., `roleName`)
+- `sortBy` (string, default: 'id') — sort column (whitelisted: id, roleName, description, createdAt, updatedAt)
+- `sortOrder` (string, default: 'DESC') — sort direction: `ASC` or `DESC`
 
 **Create/Update DTO**:
 - `roleName` (string, required for create, unique)
@@ -357,7 +375,10 @@ User Management (group)
 **Query Parameters** (GET `/api/permissions`):
 - `page` (number, default: 1)
 - `limit` (number, default: 20)
-- `search` (string) — searches permissionName, description
+- `search` (string) — global search across permissionName, description
+- `searchField` (string) — search specific field only (e.g., `permissionName`)
+- `sortBy` (string, default: 'id') — sort column (whitelisted: id, permissionName, description, createdAt, updatedAt)
+- `sortOrder` (string, default: 'DESC') — sort direction: `ASC` or `DESC`
 
 **Create/Update DTO**:
 - `permissionName` (string, required for create, unique)
@@ -378,7 +399,10 @@ User Management (group)
 **Query Parameters** (GET `/api/guards`):
 - `page` (number, default: 1)
 - `limit` (number, default: 20)
-- `search` (string) — searches guardName, description
+- `search` (string) — global search across guardName, description
+- `searchField` (string) — search specific field only (e.g., `guardName`)
+- `sortBy` (string, default: 'id') — sort column (whitelisted: id, guardName, description, createdAt, updatedAt)
+- `sortOrder` (string, default: 'DESC') — sort direction: `ASC` or `DESC`
 
 **Create/Update DTO**:
 - `guardName` (string, required for create, unique)
@@ -475,3 +499,57 @@ Lihat `docs/design-system.md` untuk dokumentasi lengkap design tokens, color pal
 - **Tailwind CSS** = utility classes (spacing, flexbox, display)
 - Customisasi tema via `GlobalThemeOverrides` pada `NConfigProvider`
 - Semua komponen harus dibungkus dengan `NConfigProvider`
+
+---
+
+## Table Browse Component
+
+Reusable component untuk semua halaman tabel (Users, Roles, Permissions, Guards).
+
+### Component: `DataTable.vue`
+
+**Path**: `client/src/components/common/DataTable/DataTable.vue`
+
+**Props**:
+| Prop | Type | Description |
+|------|------|-------------|
+| `columns` | `ColumnDef[]` | Column definitions with key, title, sortable, searchable, render |
+| `data` | `T[]` | Table data |
+| `loading` | `boolean` | Loading state |
+| `page` | `number` | Current page (default: 1) |
+| `limit` | `number` | Page size (default: 20) |
+| `total` | `number` | Total items |
+| `sortBy` | `string` | Current sort field (default: 'id') |
+| `sortOrder` | `'ASC' \| 'DESC'` | Current sort order (default: 'DESC') |
+| `searchPlaceholder` | `string` | Search input placeholder |
+| `searchableFields` | `{ label: string; value: string }[]` | Available search field options |
+
+**Emits**:
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `update:page` | `number` | Page changed |
+| `update:limit` | `number` | Page size changed |
+| `search` | `string` | Search text changed (debounced 300ms) |
+| `search-field-change` | `string` | Search field changed |
+| `sort-change` | `{ columnKey: string; order: 'ascend' \| 'descend' \| false }` | Sort changed |
+
+**Slots**:
+| Slot | Description |
+|------|-------------|
+| `toolbar` | Custom toolbar content (e.g., Add button) |
+
+### Features
+1. **Column Visibility Toggle** — NPopover with checkboxes to show/hide columns
+2. **Server-Side Sorting** — Click column header to toggle ASC → DESC → none
+3. **Field-Specific Search** — NSelect to choose which field to search, or "All Fields"
+4. **Global Search** — NInput with debounce (300ms)
+5. **Pagination** — NPagination with page size selector (10, 20, 50, 100)
+6. **Loading State** — NSpin overlay
+7. **Empty State** — NEmpty with message
+8. **Reset Filters** — Button to clear all filters
+
+### Composable: `useDataTable`
+
+**Path**: `client/src/composables/useDataTable.ts`
+
+Manages table state (search, sort, column visibility). Used by DataTable component internally.

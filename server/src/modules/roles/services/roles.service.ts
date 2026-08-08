@@ -24,28 +24,38 @@ export class RolesService {
   ) {}
 
   async findAll(query: QueryRoleDto) {
-    const { page = 1, limit = 20, search } = query;
+    const { page = 1, limit = 20, search, searchField, sortBy, sortOrder } = query;
     const qb = this.rolesRepository
       .createQueryBuilder('role')
       .leftJoinAndSelect('role.guards', 'guard')
       .leftJoinAndSelect('role.permissions', 'permission');
 
-    if (search) {
-      qb.where(
-        'role.roleName LIKE :search OR role.description LIKE :search',
-        { search: `%${search}%` },
-      );
+    if (search && searchField) {
+      const allowed = QueryRoleDto.searchFields;
+      if (allowed.includes(searchField)) {
+        qb.where(`role.${searchField} LIKE :search`, { search: `%${search}%` });
+      }
+    } else if (search) {
+      const conditions = QueryRoleDto.searchFields.map((f) => `role.${f} LIKE :search`);
+      qb.where(`(${conditions.join(' OR ')})`, { search: `%${search}%` });
     }
+
+    const sortable = QueryRoleDto.sortableFields;
+    const field = sortBy && sortable.includes(sortBy) ? `role.${sortBy}` : 'role.id';
+    const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
     const [roles, total] = await qb
       .skip((page - 1) * limit)
       .take(limit)
-      .orderBy('role.id', 'DESC')
+      .orderBy(field, order)
       .getManyAndCount();
 
     return {
       data: roles,
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 

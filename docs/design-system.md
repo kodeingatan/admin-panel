@@ -167,6 +167,47 @@ Design system menggunakan **Naive UI** sebagai komponen utama dengan Tailwind CS
 | Cell Padding  | 8px   |
 | Header Height | 40px  |
 
+### Table Interaction Patterns
+
+#### Sort Indicators
+- **Unsorted**: No indicator (column header text only)
+- **Ascending**: ↑ arrow (Carbon `ArrowUp` icon, 14px, Primary 500 color)
+- **Descending**: ↓ arrow (Carbon `ArrowDown` icon, 14px, Primary 500 color)
+- **Transition**: 150ms ease-out color change on hover
+
+#### Column Visibility Toggle
+- **Trigger**: NDropdown with checkbox items
+- **Icon**: Carbon `View` / `ViewOff` icon
+- **Position**: Toolbar right side, next to refresh button
+- **Behavior**: Toggle visibility immediately, persist in localStorage
+
+#### Search Field Selector
+- **Component**: NSelect (filterable, small size)
+- **Default**: "All Fields" option
+- **Position**: Toolbar left side, adjacent to search input
+- **Width**: 160px fixed
+
+#### Pagination Text
+- **Format**: "Showing {from}-{to} of {total}"
+- **Position**: Below table, left-aligned
+- **Style**: `text-sm text-gray-500`
+
+#### Loading State
+- **Component**: NSpin with `show` prop
+- **Overlay**: Semi-transparent white background
+- **Position**: Absolute overlay on table
+
+#### Empty State
+- **Component**: NEmpty
+- **Description**: "No {entity} found"
+- **Position**: Centered in table body
+
+#### Error State
+- **Component**: NAlert
+- **Type**: error
+- **Position**: Above table, full width
+- **Dismissable**: Yes (close button)
+
 ---
 
 ## Layout Dimensions

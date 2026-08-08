@@ -22,27 +22,37 @@ export class UsersService {
   ) {}
 
   async findAll(query: QueryUserDto) {
-    const { page = 1, limit = 20, search } = query;
+    const { page = 1, limit = 20, search, searchField, sortBy, sortOrder } = query;
     const qb = this.usersRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.roles', 'role');
 
-    if (search) {
-      qb.where(
-        'user.firstName LIKE :search OR user.lastName LIKE :search OR user.username LIKE :search OR user.email LIKE :search',
-        { search: `%${search}%` },
-      );
+    if (search && searchField) {
+      const allowed = QueryUserDto.searchFields;
+      if (allowed.includes(searchField)) {
+        qb.where(`user.${searchField} LIKE :search`, { search: `%${search}%` });
+      }
+    } else if (search) {
+      const conditions = QueryUserDto.searchFields.map((f) => `user.${f} LIKE :search`);
+      qb.where(`(${conditions.join(' OR ')})`, { search: `%${search}%` });
     }
+
+    const sortable = QueryUserDto.sortableFields;
+    const field = sortBy && sortable.includes(sortBy) ? `user.${sortBy}` : 'user.id';
+    const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
     const [users, total] = await qb
       .skip((page - 1) * limit)
       .take(limit)
-      .orderBy('user.id', 'DESC')
+      .orderBy(field, order)
       .getManyAndCount();
 
     return {
       data: users.map((u) => this.toResponse(u)),
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 

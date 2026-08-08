@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { h, ref, onMounted, computed } from 'vue'
-import {
-  NButton, NInput, NDataTable, NSpace, NTag, NPopconfirm,
-  NText, NSpin, NEmpty, useMessage,
-  type DataTableColumns, type PaginationProps,
-} from 'naive-ui'
-import { Search, Add, TrashCan, Edit, View } from '@vicons/carbon'
+import { h, onMounted, computed } from 'vue'
+import { NTag, NSpace, NText, NButton, NPopconfirm, useMessage } from 'naive-ui'
+import { Add, TrashCan, Edit, View } from '@vicons/carbon'
+import DataTable from '@/components/common/DataTable/DataTable.vue'
 import { useUsersStore } from '@/stores/users.store'
 import type { User } from '@/types/user'
 
@@ -17,18 +14,17 @@ const emit = defineEmits<{
 
 const store = useUsersStore()
 const message = useMessage()
-const searchText = ref('')
 
-const columns: DataTableColumns<User> = [
-  { title: 'ID', key: 'id', width: 60, sorter: true },
-  { title: 'First Name', key: 'firstName', sorter: true },
-  { title: 'Last Name', key: 'lastName', sorter: true },
-  { title: 'Username', key: 'username', sorter: true },
-  { title: 'Email', key: 'email', sorter: true },
+const columns = computed(() => [
+  { key: 'id', title: 'ID', sortable: true, width: 60 },
+  { key: 'firstName', title: 'First Name', sortable: true, searchable: true },
+  { key: 'lastName', title: 'Last Name', sortable: true, searchable: true },
+  { key: 'username', title: 'Username', sortable: true, searchable: true },
+  { key: 'email', title: 'Email', sortable: true, searchable: true },
   {
-    title: 'Roles',
     key: 'roles',
-    render(row) {
+    title: 'Roles',
+    render(row: User) {
       if (!row.roles?.length) return h(NText, { depth: 3 }, () => '-')
       return h(NSpace, { size: 4 }, () =>
         row.roles.map((role) =>
@@ -38,45 +34,38 @@ const columns: DataTableColumns<User> = [
     },
   },
   {
-    title: 'Actions',
     key: 'actions',
+    title: 'Actions',
     width: 160,
-    render(row) {
+    render(row: User) {
       return h(NSpace, { size: 4 }, () => [
         h(NButton, {
-          size: 'small',
-          quaternary: true,
-          type: 'info',
+          size: 'small', quaternary: true, type: 'info',
           onClick: () => emit('detail', row),
         }, { default: () => h(View) }),
         h(NButton, {
-          size: 'small',
-          quaternary: true,
-          type: 'warning',
+          size: 'small', quaternary: true, type: 'warning',
           onClick: () => emit('edit', row),
         }, { default: () => h(Edit) }),
         h(
           NPopconfirm,
           { onPositiveClick: () => handleDelete(row.id) },
           {
-            trigger: () =>
-              h(NButton, { size: 'small', quaternary: true, type: 'error' }, { default: () => h(TrashCan) }),
+            trigger: () => h(NButton, { size: 'small', quaternary: true, type: 'error' }, { default: () => h(TrashCan) }),
             default: () => `Delete user "${row.firstName} ${row.lastName}"?`,
           }
         ),
       ])
     },
   },
-]
+])
 
-const pagination = computed<PaginationProps>(() => ({
-  page: store.page,
-  pageSize: store.limit,
-  pageCount: Math.ceil(store.total / store.limit),
-  itemCount: store.total,
-  pageSizes: [10, 20, 50, 100],
-  showSizePicker: true,
-}))
+const searchableFields = [
+  { label: 'First Name', value: 'firstName' },
+  { label: 'Last Name', value: 'lastName' },
+  { label: 'Username', value: 'username' },
+  { label: 'Email', value: 'email' },
+]
 
 async function handleDelete(id: number) {
   try {
@@ -87,23 +76,33 @@ async function handleDelete(id: number) {
   }
 }
 
+function handleSearch(value: string) {
+  store.setSearch(value)
+  store.fetchAll()
+}
+
+function handleSearchField(field: string) {
+  store.setSearchField(field)
+  store.fetchAll()
+}
+
 function handlePageChange(p: number) {
   store.setPage(p)
   store.fetchAll()
 }
 
-function handlePageSizeChange(size: number) {
-  store.setLimit(size)
+function handleLimitChange(l: number) {
+  store.setLimit(l)
   store.fetchAll()
 }
 
-let searchTimeout: ReturnType<typeof setTimeout> | null = null
-function handleSearch(value: string) {
-  if (searchTimeout) clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    store.setSearch(value)
-    store.fetchAll()
-  }, 300)
+function handleSortChange(sorter: { columnKey: string; order: 'ascend' | 'descend' | false }) {
+  if (!sorter.order) {
+    store.setSort('id')
+  } else {
+    store.setSort(sorter.columnKey)
+  }
+  store.fetchAll()
 }
 
 onMounted(() => {
@@ -112,37 +111,30 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <div class="flex items-center justify-between">
-      <NInput
-        :value="searchText"
-        placeholder="Search users..."
-        clearable
-        @update:value="(v) => { searchText = v; handleSearch(v) }"
-        class="max-w-xs"
-      >
-        <template #prefix>
-          <Search />
-        </template>
-      </NInput>
-      <NButton type="primary" @click="emit('create')">
-        <template #icon><Add /></template>
-        Add User
-      </NButton>
-    </div>
-
-    <NSpin :show="store.loading">
-      <NDataTable
-        :columns="columns"
-        :data="store.users"
-        :pagination="pagination"
-        :row-key="(row: User) => row.id"
-        remote
-        @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
-      />
-    </NSpin>
-
-    <NEmpty v-if="!store.loading && store.users.length === 0" description="No users found" />
+  <div>
+    <DataTable
+      :columns="columns"
+      :data="store.users"
+      :loading="store.loading"
+      :page="store.page"
+      :limit="store.limit"
+      :total="store.total"
+      :sort-by="store.sortBy"
+      :sort-order="store.sortOrder"
+      search-placeholder="Search users..."
+      :searchable-fields="searchableFields"
+      @search="handleSearch"
+      @search-field-change="handleSearchField"
+      @update:page="handlePageChange"
+      @update:limit="handleLimitChange"
+      @sort-change="handleSortChange"
+    >
+      <template #toolbar>
+        <NButton type="primary" @click="emit('create')">
+          <template #icon><Add /></template>
+          Add User
+        </NButton>
+      </template>
+    </DataTable>
   </div>
 </template>

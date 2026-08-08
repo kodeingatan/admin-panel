@@ -1,20 +1,6 @@
-import { IsOptional, IsString, IsInt, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { QueryDto } from '@/common/dto/query.dto';
 
-export class QueryGuardDto {
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit?: number = 20;
-
-  @IsOptional()
-  @IsString()
-  search?: string;
+export class QueryGuardDto extends QueryDto {
+  static readonly sortableFields = ['id', 'guardName', 'description', 'createdAt', 'updatedAt'];
+  static readonly searchFields = ['guardName', 'description'];
 }

@@ -24,28 +24,38 @@ export class PermissionsService {
   ) {}
 
   async findAll(query: QueryPermissionDto) {
-    const { page = 1, limit = 20, search } = query;
+    const { page = 1, limit = 20, search, searchField, sortBy, sortOrder } = query;
     const qb = this.permissionsRepository
       .createQueryBuilder('permission')
       .leftJoinAndSelect('permission.methods', 'method')
       .leftJoinAndSelect('permission.urls', 'url');
 
-    if (search) {
-      qb.where(
-        'permission.permissionName LIKE :search OR permission.description LIKE :search',
-        { search: `%${search}%` },
-      );
+    if (search && searchField) {
+      const allowed = QueryPermissionDto.searchFields;
+      if (allowed.includes(searchField)) {
+        qb.where(`permission.${searchField} LIKE :search`, { search: `%${search}%` });
+      }
+    } else if (search) {
+      const conditions = QueryPermissionDto.searchFields.map((f) => `permission.${f} LIKE :search`);
+      qb.where(`(${conditions.join(' OR ')})`, { search: `%${search}%` });
     }
+
+    const sortable = QueryPermissionDto.sortableFields;
+    const field = sortBy && sortable.includes(sortBy) ? `permission.${sortBy}` : 'permission.id';
+    const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
     const [permissions, total] = await qb
       .skip((page - 1) * limit)
       .take(limit)
-      .orderBy('permission.id', 'DESC')
+      .orderBy(field, order)
       .getManyAndCount();
 
     return {
       data: permissions,
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 

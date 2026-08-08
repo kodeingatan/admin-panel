@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { h, ref, onMounted, computed } from 'vue'
-import {
-  NButton, NInput, NDataTable, NSpace, NTag, NPopconfirm,
-  NText, NSpin, NEmpty, useMessage,
-  type DataTableColumns, type PaginationProps,
-} from 'naive-ui'
-import { Search, Add, TrashCan, Edit, View } from '@vicons/carbon'
+import { h, onMounted, computed } from 'vue'
+import { NTag, NSpace, NText, NButton, NPopconfirm, useMessage } from 'naive-ui'
+import { Add, TrashCan, Edit, View } from '@vicons/carbon'
+import DataTable from '@/components/common/DataTable/DataTable.vue'
 import { useRolesStore } from '@/stores/roles.store'
 import type { Role } from '@/types/role'
 
@@ -17,16 +14,15 @@ const emit = defineEmits<{
 
 const store = useRolesStore()
 const message = useMessage()
-const searchText = ref('')
 
-const columns: DataTableColumns<Role> = [
-  { title: 'ID', key: 'id', width: 60, sorter: true },
-  { title: 'Role Name', key: 'roleName', sorter: true },
-  { title: 'Description', key: 'description', ellipsis: { tooltip: true } },
+const columns = computed(() => [
+  { key: 'id', title: 'ID', sortable: true, width: 60 },
+  { key: 'roleName', title: 'Role Name', sortable: true, searchable: true },
+  { key: 'description', title: 'Description', searchable: true, ellipsis: { tooltip: true } },
   {
-    title: 'Guards',
     key: 'guards',
-    render(row) {
+    title: 'Guards',
+    render(row: Role) {
       if (!row.guards?.length) return h(NText, { depth: 3 }, () => '-')
       return h(NSpace, { size: 4 }, () =>
         row.guards.map((g) =>
@@ -36,9 +32,9 @@ const columns: DataTableColumns<Role> = [
     },
   },
   {
-    title: 'Permissions',
     key: 'permissions',
-    render(row) {
+    title: 'Permissions',
+    render(row: Role) {
       if (!row.permissions?.length) return h(NText, { depth: 3 }, () => '-')
       return h(NSpace, { size: 4 }, () =>
         row.permissions.map((p) =>
@@ -48,45 +44,36 @@ const columns: DataTableColumns<Role> = [
     },
   },
   {
-    title: 'Actions',
     key: 'actions',
+    title: 'Actions',
     width: 160,
-    render(row) {
+    render(row: Role) {
       return h(NSpace, { size: 4 }, () => [
         h(NButton, {
-          size: 'small',
-          quaternary: true,
-          type: 'info',
+          size: 'small', quaternary: true, type: 'info',
           onClick: () => emit('detail', row),
         }, { default: () => h(View) }),
         h(NButton, {
-          size: 'small',
-          quaternary: true,
-          type: 'warning',
+          size: 'small', quaternary: true, type: 'warning',
           onClick: () => emit('edit', row),
         }, { default: () => h(Edit) }),
         h(
           NPopconfirm,
           { onPositiveClick: () => handleDelete(row.id) },
           {
-            trigger: () =>
-              h(NButton, { size: 'small', quaternary: true, type: 'error' }, { default: () => h(TrashCan) }),
+            trigger: () => h(NButton, { size: 'small', quaternary: true, type: 'error' }, { default: () => h(TrashCan) }),
             default: () => `Delete role "${row.roleName}"?`,
           }
         ),
       ])
     },
   },
-]
+])
 
-const pagination = computed<PaginationProps>(() => ({
-  page: store.page,
-  pageSize: store.limit,
-  pageCount: Math.ceil(store.total / store.limit),
-  itemCount: store.total,
-  pageSizes: [10, 20, 50, 100],
-  showSizePicker: true,
-}))
+const searchableFields = [
+  { label: 'Role Name', value: 'roleName' },
+  { label: 'Description', value: 'description' },
+]
 
 async function handleDelete(id: number) {
   try {
@@ -97,23 +84,33 @@ async function handleDelete(id: number) {
   }
 }
 
+function handleSearch(value: string) {
+  store.setSearch(value)
+  store.fetchAll()
+}
+
+function handleSearchField(field: string) {
+  store.setSearchField(field)
+  store.fetchAll()
+}
+
 function handlePageChange(p: number) {
   store.setPage(p)
   store.fetchAll()
 }
 
-function handlePageSizeChange(size: number) {
-  store.setLimit(size)
+function handleLimitChange(l: number) {
+  store.setLimit(l)
   store.fetchAll()
 }
 
-let searchTimeout: ReturnType<typeof setTimeout> | null = null
-function handleSearch(value: string) {
-  if (searchTimeout) clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    store.setSearch(value)
-    store.fetchAll()
-  }, 300)
+function handleSortChange(sorter: { columnKey: string; order: 'ascend' | 'descend' | false }) {
+  if (!sorter.order) {
+    store.setSort('id')
+  } else {
+    store.setSort(sorter.columnKey)
+  }
+  store.fetchAll()
 }
 
 onMounted(() => {
@@ -122,37 +119,30 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <div class="flex items-center justify-between">
-      <NInput
-        :value="searchText"
-        placeholder="Search roles..."
-        clearable
-        @update:value="(v) => { searchText = v; handleSearch(v) }"
-        class="max-w-xs"
-      >
-        <template #prefix>
-          <Search />
-        </template>
-      </NInput>
-      <NButton type="primary" @click="emit('create')">
-        <template #icon><Add /></template>
-        Add Role
-      </NButton>
-    </div>
-
-    <NSpin :show="store.loading">
-      <NDataTable
-        :columns="columns"
-        :data="store.roles"
-        :pagination="pagination"
-        :row-key="(row: Role) => row.id"
-        remote
-        @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
-      />
-    </NSpin>
-
-    <NEmpty v-if="!store.loading && store.roles.length === 0" description="No roles found" />
+  <div>
+    <DataTable
+      :columns="columns"
+      :data="store.roles"
+      :loading="store.loading"
+      :page="store.page"
+      :limit="store.limit"
+      :total="store.total"
+      :sort-by="store.sortBy"
+      :sort-order="store.sortOrder"
+      search-placeholder="Search roles..."
+      :searchable-fields="searchableFields"
+      @search="handleSearch"
+      @search-field-change="handleSearchField"
+      @update:page="handlePageChange"
+      @update:limit="handleLimitChange"
+      @sort-change="handleSortChange"
+    >
+      <template #toolbar>
+        <NButton type="primary" @click="emit('create')">
+          <template #icon><Add /></template>
+          Add Role
+        </NButton>
+      </template>
+    </DataTable>
   </div>
 </template>

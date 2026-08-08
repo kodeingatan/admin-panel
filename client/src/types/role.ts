@@ -29,4 +29,7 @@ export interface QueryRole {
   page?: number
   limit?: number
   search?: string
+  searchField?: string
+  sortBy?: string
+  sortOrder?: 'ASC' | 'DESC'
 }

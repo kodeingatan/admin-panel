@@ -249,6 +249,65 @@ Roles: [Super Admin]
 
 ---
 
+### 3.6 Table Browse Features
+
+Semua halaman tabel (Users, Roles, Permissions, Guards) menggunakan komponen **DataTable** yang reusable dengan fitur:
+
+#### Column Visibility Toggle
+- NDropdown dengan checkbox untuk show/hide kolom
+- User dapat memilih kolom mana yang ditampilkan
+- Default: semua kolom visible
+- State tersimpan di localStorage per halaman
+
+#### Server-Side Sorting
+- Klik header kolom untuk sort (ASC → DESC → none)
+- Hanya kolom yang ditandai `sortable` yang bisa di-sort
+- Sorting dilakukan di server (bukan client-side)
+- Default sort: `id DESC`
+
+#### Search Features
+- **Global Search**: NInput dengan debounce 300ms, mencari di semua field
+- **Field-Specific Search**: NSelect untuk memilih field tertentu (e.g., search only in email)
+- **Search Field Options** per entity:
+
+| Entity | Search Fields |
+|--------|---------------|
+| User | All, First Name, Last Name, Username, Email |
+| Role | All, Role Name, Description |
+| Permission | All, Permission Name, Description |
+| Guard | All, Guard Name, Description |
+
+#### Pagination
+- Server-side pagination
+- Page size options: 10, 20, 50, 100
+- "Showing X-Y of Z" text
+- Page change & size change via API params
+
+#### API Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | number | 1 | Page number |
+| `limit` | number | 20 | Items per page |
+| `search` | string | — | Global search text |
+| `searchField` | string | — | Search specific field only |
+| `sortBy` | string | 'id' | Sort column name |
+| `sortOrder` | string | 'DESC' | Sort direction (ASC/DESC) |
+
+#### Response Format
+
+```json
+{
+  "data": [...],
+  "total": 42,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 3
+}
+```
+
+---
+
 ## 4. Alur Authorization
 
 ```

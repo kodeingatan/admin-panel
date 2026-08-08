@@ -34,9 +34,10 @@ client/
 ├── src/
 │   ├── components/
 │   │   ├── base/           # Base components (Button)
-│   │   ├── common/         # Common components (AuthForm, FormField)
+│   │   ├── common/         # Common components (AuthForm, FormField, DataTable)
+│   │   │   └── DataTable/  # Reusable table browse component
 │   │   └── layout/         # Layout components (AppLayout)
-│   ├── composables/        # Vue composables (useAuth, useApi)
+│   ├── composables/        # Vue composables (useAuth, useDataTable)
 │   ├── constants/          # Constants & enums
 │   ├── directives/         # Custom Vue directives
 │   ├── features/           # Feature-based modules
@@ -71,6 +72,7 @@ client/
 - Storybook: `stories/` (root level)
 - Design System: `docs/design-system.md` — color palette, typography, spacing, component dimensions
 - Naive UI components use `GlobalThemeOverrides` for theming, wrap app with `NConfigProvider`
+- Table browse: Use `DataTable` component for all list/table pages (supports sort, search, column visibility, pagination)
 
 **Routing**: Vue Router configured in `src/router/index.ts`
 - `/login` — LoginPage (guest only)
@@ -175,7 +177,7 @@ server/src/
 | POST   | `/api/auth/login`    | Login user     | Public |
 | GET    | `/api/auth/profile`  | Get profile    | Bearer |
 
-**RBAC Modules** (Planned):
+**RBAC Modules** (Implemented):
 | Module | Endpoint Prefix | Entities | Description |
 |--------|----------------|----------|-------------|
 | Users | `/api/users` | User | User management with role assignment |
