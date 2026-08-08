@@ -185,6 +185,19 @@ server/src/
 | Permissions | `/api/permissions` | Permission, PermissionMethod, PermissionUrl | Permission management with method & URL rules |
 | Guards | `/api/guards` | Guard, GuardUrl | Guard management with URL allow/deny rules |
 
+**RBAC Guard Chain** (Global):
+| Guard | File | Purpose |
+|-------|------|---------|
+| JwtAuthGuard | `modules/auth/guards/jwt-auth.guard.ts` | Validates JWT token (skips @Public) |
+| RbacGuard | `common/guards/rbac.guard.ts` | Checks roles, permissions, guard URL rules |
+
+**Custom Decorators**:
+| Decorator | File | Usage |
+|-----------|------|-------|
+| `@Public()` | `common/decorators/public.decorator.ts` | Skip JWT + RBAC |
+| `@Roles(...roles)` | `common/decorators/roles.decorator.ts` | Require specific roles |
+| `@Permissions(...perms)` | `common/decorators/permissions.decorator.ts` | Require specific permissions |
+
 **Database**: SQLite via TypeORM — 10 tables total (users, roles, permissions, guards, + 6 junction tables)
 - See `docs/database.md` for full schema and `docs/PRD.md` for authorization flow
 

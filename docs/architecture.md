@@ -419,7 +419,7 @@ User Management (group)
 Two global guards are registered in `app.module.ts`:
 
 1. **JwtAuthGuard** — Validates JWT token for all routes (except `@Public()` decorated)
-2. **RbacGuard** — Checks role & permission access (respects `@Roles()` and `@Permissions()` decorators)
+2. **RbacGuard** — Checks role, guard, and permission access (respects `@Roles()` and `@Permissions()` decorators)
 
 ### Decorators
 
@@ -434,8 +434,49 @@ Two global guards are registered in `app.module.ts`:
 1. Loads user with full relations (roles → guards.urls, roles → permissions.methods, permissions.urls)
 2. Checks `@Roles()` — if defined, user must have at least one matching role name
 3. Checks `@Permissions()` — if defined, user must have at least one matching permission name
-4. Checks Guard URL rules — matches request URL against allow/deny patterns
-5. Checks Permission method+URL rules — matches HTTP method and URL against permission rules
+4. **Guard URL enforcement** — For each role's guards:
+   - Collect all `deny` URLs → if request URL matches any, deny access
+   - Collect all `allow` URLs → if request URL matches any, grant access
+5. **Permission method+URL enforcement** — For each role's permissions:
+   - Check if HTTP method matches permission's `methods` (or `*` wildcard)
+   - Check if request URL matches permission's `urls` patterns
+
+### Access Control Flow
+
+```
+Request → JwtAuthGuard → RbacGuard
+  │
+  ├─ @Public()? → Allow (skip all checks)
+  │
+  ├─ @Roles() set? → Check user has matching role → Fail: 403
+  │
+  ├─ @Permissions() set? → Check user has matching permission → Fail: 403
+  │
+  ├─ Neither @Roles nor @Permissions? → Allow (any authenticated user)
+  │
+  └─ Guard-Based Enforcement:
+       For each role → For each permission:
+         Method matches? → URL matches permission urls?
+           → For each guard on role:
+             Deny URLs match? → DENY
+             Allow URLs match? → ALLOW
+       → Fail: 403 "Access denied"
+```
+
+### Client-Side Authorization
+
+The client implements complementary access control:
+
+1. **Route Guards** — Vue Router `beforeEach` checks `meta.requiresAuth` and `meta.guest`
+2. **Menu Visibility** — Sidebar menu items conditionally rendered based on user roles/permissions
+3. **API Error Handling** — Axios interceptor catches 401/403 responses:
+   - 401 → Clear token, redirect to `/login`
+   - 403 → Show NAlert "Access Denied" message
+4. **Composable `useAuthorization`** — Centralized role/permission checking:
+   - `hasRole(roleName)` — Check if user has specific role
+   - `hasPermission(permissionName)` — Check if user has specific permission
+   - `hasAnyRole(roles[])` — Check if user has any of the listed roles
+   - `hasAnyPermission(perms[])` — Check if user has any of the listed permissions
 
 ---
 

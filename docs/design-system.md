@@ -426,3 +426,53 @@ Semua animasi harus menghormati `prefers-reduced-motion`:
 - Gunakan direct import per komponen, jangan global import
 - Gunakan `v-model:value` untuk form components
 - Gunakan `on-update:*` pattern untuk event handlers
+
+---
+
+## Authorization UI Patterns
+
+### Access Denied Alert
+
+When user lacks permission for an action:
+
+| Element | Component | Usage |
+|---------|-----------|-------|
+| Access Denied Alert | `NAlert` type="error" | Shown when 403 returned from API |
+| Alert Title | "Access Denied" | Bold heading |
+| Alert Description | "You don't have permission to perform this action" | Body text |
+| Alert Icon | `LockClosed` from `@vicons/carbon` | Left icon |
+| Dismissable | `true` | Close button available |
+
+### Conditional Rendering
+
+```vue
+<!-- Hide button if user lacks permission -->
+<NButton v-if="hasPermission('User Management')" @click="createUser">
+  Add User
+</NButton>
+
+<!-- Hide menu item if user lacks role -->
+<NMenuItem v-if="hasAnyRole(['Admin', 'Super Admin'])" key="users">
+  User Management
+</NMenuItem>
+```
+
+### Route Guard Pattern
+
+```typescript
+// router/index.ts
+meta: { 
+  requiresAuth: true,
+  requiredRole: 'Admin',        // Optional: require specific role
+  requiredPermission: 'User Management'  // Optional: require specific permission
+}
+```
+
+### Error Response Handling
+
+| HTTP Status | Client Action | UI Feedback |
+|-------------|---------------|-------------|
+| 401 | Clear token, redirect `/login` | "Session expired" message |
+| 403 | Show access denied alert | "Access denied" NAlert |
+| 404 | Show not found page | "Resource not found" |
+| 500 | Show error alert | "Server error" NAlert |

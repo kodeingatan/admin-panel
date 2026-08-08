@@ -455,13 +455,18 @@ User Management (group)
 | Username | Email | Password | Role |
 |----------|-------|----------|------|
 | admin | admin@admin.com | P455w0rd!!! | Super Admin |
+| editor | editor@example.com | P455w0rd!!! | Editor |
+| viewer | viewer@example.com | P455w0rd!!! | Viewer |
+| manager | manager@example.com | P455w0rd!!! | Manager |
 
 ### Roles
 | Role Name | Guards | Permissions |
 |-----------|--------|-------------|
 | Super Admin | Full Access | Full Access |
 | Admin | Web Access | Read Write |
-| User | Web Access | Read Only |
+| Editor | API Only | Read Write |
+| Viewer | API Only | Read Only |
+| Manager | Web Access | Read Write |
 
 ### Guards
 | Guard Name | Allow URLs | Deny URLs |
@@ -469,6 +474,8 @@ User Management (group)
 | Full Access | /* | (none) |
 | Web Access | /api/* | /api/admin/* |
 | API Only | /api/* | (none) |
+| Admin Only | /api/admin/* | (none) |
+| Read Only | /api/* | /api/users, /api/roles |
 
 ### Permissions
 | Permission Name | Allow Methods | Allow URLs |
@@ -476,3 +483,46 @@ User Management (group)
 | Full Access | * | /* |
 | Read Only | GET, OPTIONS | /* |
 | Read Write | GET, POST, PUT, DELETE, PATCH, OPTIONS | /* |
+| User Management | GET, POST, PUT, DELETE | /api/users/* |
+| Role Management | GET, POST, PUT, DELETE | /api/roles/* |
+| Guard Management | GET, POST, PUT, DELETE | /api/guards/* |
+| Permission Management | GET, POST, PUT, DELETE | /api/permissions/* |
+
+---
+
+## 9. Client-Side Authorization
+
+### Access Denied Handling
+
+When server returns 403 Forbidden:
+
+1. **Axios Interceptor** — Catches 403 response, shows global NAlert
+2. **Route Guard** — Checks user roles/permissions before rendering protected components
+3. **Menu Visibility** — Sidebar menu items hidden if user lacks required role/permission
+
+### Authorization Composable
+
+```typescript
+// client/src/composables/useAuthorization.ts
+export function useAuthorization() {
+  const authStore = useAuthStore()
+  
+  function hasRole(roleName: string): boolean
+  function hasAnyRole(roles: string[]): boolean
+  function hasPermission(permissionName: string): boolean
+  function hasAnyPermission(perms: string[]): boolean
+  function canAccessUrl(url: string, method: string): boolean
+  
+  return { hasRole, hasAnyRole, hasPermission, hasAnyPermission, canAccessUrl }
+}
+```
+
+### Menu Visibility Rules
+
+| Menu Item | Required Role | Required Guard URL Match |
+|-----------|---------------|--------------------------|
+| Dashboard | Any authenticated | — |
+| User Management | Admin, Super Admin | /api/users/* |
+| Role Management | Admin, Super Admin | /api/roles/* |
+| Permission Management | Admin, Super Admin | /api/permissions/* |
+| Guard Management | Admin, Super Admin | /api/guards/* |
