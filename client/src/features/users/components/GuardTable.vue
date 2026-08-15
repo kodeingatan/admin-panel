@@ -73,6 +73,7 @@ const columns = computed(() => [
 ])
 
 const searchableFields = [
+  { label: 'All Fields', value: '' },
   { label: 'Guard Name', value: 'guardName' },
   { label: 'Description', value: 'description' },
 ]

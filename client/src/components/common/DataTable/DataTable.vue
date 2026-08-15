@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
-import { computed, ref } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import {
   NDataTable, NInput, NButton, NSpace, NSpin, NEmpty, NPopover,
   NCheckbox, NSelect,
@@ -50,7 +50,24 @@ const emit = defineEmits<{
 
 const searchText = ref('')
 const searchField = ref<string | undefined>(undefined)
+
+const STORAGE_KEY = 'datatable-hidden-columns'
 const hiddenColumns = ref<Set<string>>(new Set())
+
+onMounted(() => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      hiddenColumns.value = new Set(JSON.parse(stored))
+    }
+  } catch {
+    // ignore
+  }
+})
+
+watch(hiddenColumns, (val) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...val]))
+}, { deep: true })
 
 const visibleColumnDefs = computed(() =>
   props.columns.filter((c) => !hiddenColumns.value.has(c.key))
@@ -115,6 +132,7 @@ function resetFilters() {
   searchText.value = ''
   searchField.value = undefined
   hiddenColumns.value = new Set()
+  localStorage.removeItem(STORAGE_KEY)
   emit('search', '')
   emit('search-field-change', '')
 }
@@ -123,13 +141,13 @@ function resetFilters() {
 <template>
   <div class="space-y-4">
     <div class="flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3 flex-1 max-w-md">
+      <div class="flex items-center gap-3 flex-1">
         <NInput
           :value="searchText"
           :placeholder="searchPlaceholder"
           clearable
           @update:value="handleSearch"
-          class="flex-1"
+          style="min-width: 280px; flex: 1"
         >
           <template #prefix>
             <Search />
@@ -143,7 +161,7 @@ function resetFilters() {
           placeholder="All fields"
           clearable
           @update:value="handleSearchFieldChange"
-          class="w-40"
+          style="width: 140px"
         />
 
         <NButton
@@ -196,5 +214,9 @@ function resetFilters() {
     </NSpin>
 
     <NEmpty v-if="!loading && data.length === 0" description="No data found" />
+
+    <div v-if="total > 0" class="text-sm text-gray-500">
+      Showing {{ (page - 1) * limit + 1 }}-{{ Math.min(page * limit, total) }} of {{ total }}
+    </div>
   </div>
 </template>

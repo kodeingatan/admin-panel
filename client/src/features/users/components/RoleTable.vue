@@ -71,6 +71,7 @@ const columns = computed(() => [
 ])
 
 const searchableFields = [
+  { label: 'All Fields', value: '' },
   { label: 'Role Name', value: 'roleName' },
   { label: 'Description', value: 'description' },
 ]

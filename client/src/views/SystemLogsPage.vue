@@ -7,7 +7,7 @@
             v-model:value="selectedFile"
             placeholder="Select log file"
             :options="fileOptions"
-            style="width: 250px"
+            style="width: 300px"
             @update:value="handleFileChange"
           />
           <n-select
@@ -18,47 +18,71 @@
             style="width: 120px"
             @update:value="handleFilter"
           />
-          <n-button @click="handleRefresh" :loading="loading">
-            Refresh
-          </n-button>
         </n-space>
       </template>
 
-      <n-space v-if="stats" style="margin-bottom: 16px">
-        <n-statistic label="Total Entries" :value="stats.total" />
-        <n-statistic v-for="(count, level) in stats.byLevel" :key="level" :label="String(level)" :value="count" />
-      </n-space>
+      <!-- Statistics Bar -->
+      <div v-if="statCounts" class="flex items-center gap-3 flex-wrap mb-4">
+        <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">
+          <span class="text-sm text-gray-500">Total</span>
+          <span class="text-sm font-semibold text-gray-800">{{ statCounts.total }}</span>
+        </div>
+        <div class="h-4 w-px bg-gray-200"></div>
+        <div
+          v-for="item in levelStats"
+          :key="item.level"
+          class="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
+          :style="{ backgroundColor: item.bgColor, color: item.textColor }"
+        >
+          <span class="inline-block w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: item.dotColor }"></span>
+          {{ item.level }}
+          <span class="font-bold">{{ item.count }}</span>
+        </div>
+      </div>
 
-      <n-data-table
-        :columns="logColumns"
+      <!-- DataTable -->
+      <DataTable
+        :columns="columns"
         :data="logEntries"
         :loading="loading"
-        :max-height="600"
-        :scroll-x="1200"
-        striped
-      />
-
-      <n-space v-if="stats && stats.total > logEntries.length" justify="center" style="margin-top: 16px">
-        <n-pagination
-          v-model:page="currentPage"
-          :page-count="Math.ceil(stats.total / pageSize)"
-          @update:page="handlePageChange"
-        />
-      </n-space>
+        :page="page"
+        :limit="limit"
+        :total="total"
+        :sort-by="sortBy"
+        :sort-order="sortOrder"
+        search-placeholder="Search system logs..."
+        :searchable-fields="searchableFields"
+        @search="handleSearch"
+        @search-field-change="handleSearchField"
+        @update:page="handlePageChange"
+        @update:limit="handleLimitChange"
+        @sort-change="handleSortChange"
+      >
+        <template #toolbar>
+          <n-button @click="handleRefresh" :loading="loading">
+            Refresh
+          </n-button>
+        </template>
+      </DataTable>
     </n-card>
+
+    <!-- Log Detail Drawer -->
+    <LogDetailDrawer
+      v-model:visible="showDetail"
+      :entry="selectedEntry"
+    />
   </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, h, onMounted, computed } from 'vue';
-import {
-  NCard, NDataTable, NSelect, NSpace, NTag, NStatistic, NPagination, NButton,
-} from 'naive-ui';
+import { NTag, NSpace, NSelect, NButton } from 'naive-ui';
 import AppLayout from '@/components/layout/AppLayout/AppLayout.vue';
+import DataTable from '@/components/common/DataTable/DataTable.vue';
+import { LogDetailDrawer, LogLevelBadge } from '@/features/logging';
 import { systemLogService } from '@/services/system-log.service';
 import { useAuthStore } from '@/stores/auth.store';
 import type { LogEntry, SystemLogFile, SystemLogStats } from '@/types/system-log';
-import type { DataTableColumns } from 'naive-ui';
 
 const authStore = useAuthStore();
 const files = ref<SystemLogFile[]>([]);
@@ -66,9 +90,37 @@ const selectedFile = ref<string | null>(null);
 const logEntries = ref<LogEntry[]>([]);
 const stats = ref<SystemLogStats | null>(null);
 const loading = ref(false);
+const page = ref(1);
+const limit = ref(20);
+const total = ref(0);
+const search = ref('');
+const searchField = ref('');
+const sortBy = ref('timestamp');
+const sortOrder = ref<'ASC' | 'DESC'>('DESC');
 const filterLevel = ref<string | null>(null);
-const currentPage = ref(1);
-const pageSize = ref(100);
+
+// Detail drawer
+const showDetail = ref(false);
+const selectedEntry = ref<LogEntry | null>(null);
+
+const searchableFields = [
+  { label: 'All Fields', value: '' },
+  { label: 'Message', value: 'message' },
+  { label: 'Context', value: 'context' },
+  { label: 'Level', value: 'level' },
+];
+
+const levelOptions = [
+  { label: 'TRACE', value: 'TRACE' },
+  { label: 'DEBUG', value: 'DEBUG' },
+  { label: 'INFO', value: 'INFO' },
+  { label: 'NOTICE', value: 'NOTICE' },
+  { label: 'WARNING', value: 'WARNING' },
+  { label: 'ERROR', value: 'ERROR' },
+  { label: 'CRITICAL', value: 'CRITICAL' },
+  { label: 'FATAL', value: 'FATAL' },
+  { label: 'EMERGENCY', value: 'EMERGENCY' },
+];
 
 const fileOptions = computed(() =>
   files.value.map((f) => ({
@@ -77,38 +129,76 @@ const fileOptions = computed(() =>
   })),
 );
 
-const levelOptions = [
-  { label: 'INFO', value: 'INFO' },
-  { label: 'WARN', value: 'WARN' },
-  { label: 'ERROR', value: 'ERROR' },
-  { label: 'DEBUG', value: 'DEBUG' },
-  { label: 'TRACE', value: 'TRACE' },
-];
-
-const getLevelType = (level: string) => {
-  const map: Record<string, 'success' | 'warning' | 'error' | 'info' | 'default'> = {
-    INFO: 'info',
-    WARN: 'warning',
-    ERROR: 'error',
-    DEBUG: 'default',
-    TRACE: 'default',
-  };
-  return map[level] || 'default';
-};
-
-const logColumns: DataTableColumns<LogEntry> = [
-  { title: 'Timestamp', key: 'timestamp', width: 220 },
+const columns = computed(() => [
+  { title: 'Timestamp', key: 'timestamp', width: 200, sortable: true },
   {
     title: 'Level',
     key: 'level',
-    width: 80,
-    render(row) {
-      return h(NTag, { type: getLevelType(row.level), size: 'small' }, { default: () => row.level });
+    width: 100,
+    sortable: true,
+    render(row: LogEntry) {
+      return h(LogLevelBadge, { level: row.level, size: 'small' });
     },
   },
-  { title: 'Context', key: 'context', width: 150 },
+  { title: 'Context', key: 'context', width: 150, sortable: true },
   { title: 'Message', key: 'message', ellipsis: { tooltip: true } },
-];
+  {
+    title: 'Actions',
+    key: 'actions',
+    width: 80,
+    render(row: LogEntry) {
+      return h(
+        NTag,
+        {
+          size: 'small',
+          style: 'cursor: pointer',
+          onClick: () => {
+            selectedEntry.value = row;
+            showDetail.value = true;
+          },
+        },
+        { default: () => 'View' },
+      );
+    },
+  },
+]);
+
+const statCounts = computed(() => {
+  if (!stats.value) return null;
+  return {
+    total: stats.value.total,
+    TRACE: stats.value.byLevel['TRACE'] || 0,
+    DEBUG: stats.value.byLevel['DEBUG'] || 0,
+    INFO: stats.value.byLevel['INFO'] || 0,
+    NOTICE: stats.value.byLevel['NOTICE'] || 0,
+    WARNING: stats.value.byLevel['WARNING'] || 0,
+    ERROR: stats.value.byLevel['ERROR'] || 0,
+    CRITICAL: stats.value.byLevel['CRITICAL'] || 0,
+    FATAL: stats.value.byLevel['FATAL'] || 0,
+    EMERGENCY: stats.value.byLevel['EMERGENCY'] || 0,
+  };
+});
+
+const levelStats = computed(() => {
+  if (!statCounts.value) return [];
+  const config: Record<string, { bgColor: string; textColor: string; dotColor: string }> = {
+    TRACE: { bgColor: '#f3f4f6', textColor: '#6b7280', dotColor: '#9ca3af' },
+    DEBUG: { bgColor: '#eff6ff', textColor: '#2563eb', dotColor: '#60a5fa' },
+    INFO: { bgColor: '#ecfdf5', textColor: '#059669', dotColor: '#34d399' },
+    NOTICE: { bgColor: '#f0f9ff', textColor: '#0284c7', dotColor: '#38bdf8' },
+    WARNING: { bgColor: '#fffbeb', textColor: '#d97706', dotColor: '#fbbf24' },
+    ERROR: { bgColor: '#fef2f2', textColor: '#dc2626', dotColor: '#f87171' },
+    CRITICAL: { bgColor: '#fef2f2', textColor: '#b91c1c', dotColor: '#ef4444' },
+    FATAL: { bgColor: '#fef2f2', textColor: '#991b1b', dotColor: '#dc2626' },
+    EMERGENCY: { bgColor: '#fef2f2', textColor: '#7f1d1d', dotColor: '#b91c1c' },
+  };
+  const levels = ['TRACE', 'DEBUG', 'INFO', 'NOTICE', 'WARNING', 'ERROR', 'CRITICAL', 'FATAL', 'EMERGENCY'];
+  return levels.map((level) => ({
+    level,
+    count: (statCounts.value as Record<string, number>)[level] || 0,
+    ...config[level],
+  }));
+});
 
 const fetchFiles = async () => {
   try {
@@ -129,9 +219,13 @@ const fetchContent = async () => {
   loading.value = true;
   try {
     const params: any = {
-      limit: pageSize.value,
-      offset: (currentPage.value - 1) * pageSize.value,
+      page: page.value,
+      limit: limit.value,
     };
+    if (search.value) params.search = search.value;
+    if (searchField.value) params.searchField = searchField.value;
+    if (sortBy.value) params.sortBy = sortBy.value;
+    if (sortOrder.value) params.sortOrder = sortOrder.value;
     if (filterLevel.value) params.level = filterLevel.value;
 
     const [contentRes, statsRes] = await Promise.all([
@@ -140,6 +234,7 @@ const fetchContent = async () => {
     ]);
 
     logEntries.value = contentRes.data.lines;
+    total.value = contentRes.data.total;
     stats.value = statsRes.data;
   } catch (error) {
     console.error('Failed to fetch log content:', error);
@@ -148,24 +243,54 @@ const fetchContent = async () => {
   }
 };
 
-const handleFileChange = () => {
-  currentPage.value = 1;
+function handleFileChange() {
+  page.value = 1;
   fetchContent();
-};
+}
 
-const handleFilter = () => {
-  currentPage.value = 1;
+function handleFilter() {
+  page.value = 1;
   fetchContent();
-};
+}
 
-const handleRefresh = () => {
+function handleSearch(value: string) {
+  search.value = value;
+  page.value = 1;
   fetchContent();
-};
+}
 
-const handlePageChange = (page: number) => {
-  currentPage.value = page;
+function handleSearchField(field: string) {
+  searchField.value = field;
+  page.value = 1;
   fetchContent();
-};
+}
+
+function handlePageChange(p: number) {
+  page.value = p;
+  fetchContent();
+}
+
+function handleLimitChange(l: number) {
+  limit.value = l;
+  page.value = 1;
+  fetchContent();
+}
+
+function handleSortChange(sorter: { columnKey: string; order: 'ascend' | 'descend' | false }) {
+  if (!sorter.order) {
+    sortBy.value = 'timestamp';
+    sortOrder.value = 'DESC';
+  } else {
+    sortBy.value = sorter.columnKey;
+    sortOrder.value = sorter.order === 'ascend' ? 'ASC' : 'DESC';
+  }
+  page.value = 1;
+  fetchContent();
+}
+
+function handleRefresh() {
+  fetchContent();
+}
 
 onMounted(() => {
   fetchFiles();

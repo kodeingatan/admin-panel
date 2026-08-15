@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -7,6 +11,10 @@ export interface LogEntry {
   level: string;
   context: string;
   message: string;
+  stackTrace?: string;
+  rawLine: string;
+  codePath?: string;
+  codeLine?: number;
 }
 
 @Injectable()
@@ -23,22 +31,63 @@ export class SystemLogsService {
     }
   }
 
+  private parseStackTrace(message: string): {
+    cleanMessage: string;
+    stackTrace?: string;
+    codePath?: string;
+    codeLine?: number;
+  } {
+    const stackTraceRegex = /(?:Error|Exception|at\s+).*(?:\n\s+at\s+.+)*/s;
+    const match = message.match(stackTraceRegex);
+
+    if (match) {
+      const stackTrace = match[0];
+      const cleanMessage = message.replace(stackTrace, '').trim();
+
+      const fileRegex =
+        /at\s+(?:(?:\S+\s+\()?(\/[^\s:]+):(\d+):\d+\)?)|(?:at\s+(\/[^\s:]+):(\d+))/;
+      const fileMatch = stackTrace.match(fileRegex);
+      const codePath = fileMatch?.[1] || fileMatch?.[3];
+      const codeLine = fileMatch?.[2]
+        ? parseInt(fileMatch[2])
+        : fileMatch?.[4]
+          ? parseInt(fileMatch[4])
+          : undefined;
+
+      return { cleanMessage, stackTrace, codePath, codeLine };
+    }
+
+    return { cleanMessage: message };
+  }
+
   private parseLogLine(line: string): LogEntry | null {
     const match = line.match(
       /^\[([^\]]+)\]\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(.*)$/,
     );
     if (!match) return null;
+
+    const { cleanMessage, stackTrace, codePath, codeLine } =
+      this.parseStackTrace(match[4]);
+
     return {
       timestamp: match[1],
       level: match[2],
       context: match[3],
-      message: match[4],
+      message: cleanMessage,
+      stackTrace,
+      rawLine: line,
+      codePath,
+      codeLine,
     };
   }
 
-  async getLogFiles(): Promise<{ filename: string; size: number; modified: string }[]> {
+  async getLogFiles(): Promise<
+    { filename: string; size: number; modified: string }[]
+  > {
     this.ensureLogsDir();
-    const files = fs.readdirSync(this.logsDir).filter((f) => f.endsWith('.log'));
+    const files = fs
+      .readdirSync(this.logsDir)
+      .filter((f) => f.endsWith('.log'));
     return files.map((filename) => {
       const stat = fs.statSync(path.join(this.logsDir, filename));
       return {
@@ -54,12 +103,21 @@ export class SystemLogsService {
     query: {
       level?: string;
       search?: string;
+      searchField?: string;
       startDate?: string;
       endDate?: string;
+      page?: number;
       limit?: number;
       offset?: number;
+      sortBy?: string;
+      sortOrder?: 'ASC' | 'DESC';
     } = {},
-  ): Promise<{ lines: LogEntry[]; total: number }> {
+  ): Promise<{
+    lines: LogEntry[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     this.ensureLogsDir();
     const filepath = path.join(this.logsDir, filename);
     if (!fs.existsSync(filepath)) {
@@ -82,11 +140,18 @@ export class SystemLogsService {
 
     if (query.search) {
       const searchLower = query.search.toLowerCase();
-      filtered = filtered.filter(
-        (entry) =>
-          entry.message.toLowerCase().includes(searchLower) ||
-          entry.context.toLowerCase().includes(searchLower),
-      );
+      if (query.searchField) {
+        filtered = filtered.filter((entry) => {
+          const val = entry[query.searchField as keyof LogEntry];
+          return val && String(val).toLowerCase().includes(searchLower);
+        });
+      } else {
+        filtered = filtered.filter(
+          (entry) =>
+            entry.message.toLowerCase().includes(searchLower) ||
+            entry.context.toLowerCase().includes(searchLower),
+        );
+      }
     }
 
     if (query.startDate) {
@@ -96,17 +161,25 @@ export class SystemLogsService {
     }
 
     if (query.endDate) {
-      filtered = filtered.filter(
-        (entry) => entry.timestamp <= query.endDate!,
-      );
+      filtered = filtered.filter((entry) => entry.timestamp <= query.endDate!);
+    }
+
+    if (query.sortBy) {
+      filtered.sort((a, b) => {
+        const valA = a[query.sortBy as keyof LogEntry] || '';
+        const valB = b[query.sortBy as keyof LogEntry] || '';
+        const cmp = String(valA).localeCompare(String(valB));
+        return query.sortOrder === 'DESC' ? -cmp : cmp;
+      });
     }
 
     const total = filtered.length;
-    const offset = query.offset || 0;
+    const page = query.page || 1;
     const limit = query.limit || 100;
+    const offset = query.offset ?? (page - 1) * limit;
     const lines = filtered.slice(offset, offset + limit);
 
-    return { lines, total };
+    return { lines, total, page, limit };
   }
 
   async getLogStats(filename: string): Promise<{

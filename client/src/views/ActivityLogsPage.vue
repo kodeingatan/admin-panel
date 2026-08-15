@@ -37,11 +37,15 @@
         :page="page"
         :limit="limit"
         :total="total"
+        :sort-by="sortBy"
+        :sort-order="sortOrder"
         search-placeholder="Search activity logs..."
         :searchable-fields="searchableFields"
         @update:page="handlePageChange"
         @update:limit="handleLimitChange"
         @search="handleSearch"
+        @search-field-change="handleSearchField"
+        @sort-change="handleSortChange"
       />
     </n-card>
 
@@ -94,6 +98,9 @@ const page = ref(1);
 const limit = ref(20);
 const total = ref(0);
 const search = ref('');
+const searchField = ref('');
+const sortBy = ref('id');
+const sortOrder = ref<'ASC' | 'DESC'>('DESC');
 const filterAction = ref<string | null>(null);
 const filterEntity = ref<string | null>(null);
 const filterLevel = ref<string | null>(null);
@@ -101,6 +108,7 @@ const showDetail = ref(false);
 const selectedLog = ref<ActivityLog | null>(null);
 
 const searchableFields = [
+  { label: 'All Fields', value: '' },
   { label: 'Description', value: 'description' },
   { label: 'Username', value: 'user.username' },
   { label: 'First Name', value: 'user.firstName' },
@@ -224,6 +232,9 @@ const fetchLogs = async () => {
       limit: limit.value,
     };
     if (search.value) params.search = search.value;
+    if (searchField.value) params.searchField = searchField.value;
+    if (sortBy.value) params.sortBy = sortBy.value;
+    if (sortOrder.value) params.sortOrder = sortOrder.value;
     if (filterAction.value) params.action = filterAction.value;
     if (filterEntity.value) params.entity = filterEntity.value;
     if (filterLevel.value) params.level = filterLevel.value;
@@ -251,6 +262,24 @@ const handleLimitChange = (l: number) => {
 
 const handleSearch = (value: string) => {
   search.value = value;
+  page.value = 1;
+  fetchLogs();
+};
+
+const handleSearchField = (field: string) => {
+  searchField.value = field;
+  page.value = 1;
+  fetchLogs();
+};
+
+const handleSortChange = (sorter: { columnKey: string; order: 'ascend' | 'descend' | false }) => {
+  if (!sorter.order) {
+    sortBy.value = 'id';
+    sortOrder.value = 'DESC';
+  } else {
+    sortBy.value = sorter.columnKey;
+    sortOrder.value = sorter.order === 'ascend' ? 'ASC' : 'DESC';
+  }
   page.value = 1;
   fetchLogs();
 };

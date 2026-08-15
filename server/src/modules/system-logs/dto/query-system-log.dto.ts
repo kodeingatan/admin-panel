@@ -11,6 +11,10 @@ export class QuerySystemLogDto {
   search?: string;
 
   @IsOptional()
+  @IsString()
+  searchField?: string;
+
+  @IsOptional()
   @IsDateString()
   startDate?: string;
 
@@ -21,10 +25,23 @@ export class QuerySystemLogDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
   limit?: number = 100;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  offset?: number = 0;
+  offset?: number;
+
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @IsOptional()
+  @IsString()
+  sortOrder?: 'ASC' | 'DESC';
 }
