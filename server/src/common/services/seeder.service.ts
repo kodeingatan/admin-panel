@@ -269,7 +269,31 @@ export class SeederService implements OnModuleInit {
       this.permissionUrlsRepo.create({ url: '/api/auth/profile', permission: dashRead }),
     );
 
-    return [fullAccess, readOnly, readWrite, userMgmt, roleMgmt, guardMgmt, permMgmt, dashRead];
+    const activityLogs = this.permissionsRepo.create({
+      permissionName: 'Activity Logs',
+      description: 'Akses melihat activity logs',
+    });
+    await this.permissionsRepo.save(activityLogs);
+    await this.permissionMethodsRepo.save(
+      this.permissionMethodsRepo.create({ method: 'GET', permission: activityLogs }),
+    );
+    await this.permissionUrlsRepo.save(
+      this.permissionUrlsRepo.create({ url: '/api/activity-logs/*', permission: activityLogs }),
+    );
+
+    const systemLogs = this.permissionsRepo.create({
+      permissionName: 'System Logs',
+      description: 'Akses melihat system logs',
+    });
+    await this.permissionsRepo.save(systemLogs);
+    await this.permissionMethodsRepo.save(
+      this.permissionMethodsRepo.create({ method: 'GET', permission: systemLogs }),
+    );
+    await this.permissionUrlsRepo.save(
+      this.permissionUrlsRepo.create({ url: '/api/system-logs/*', permission: systemLogs }),
+    );
+
+    return [fullAccess, readOnly, readWrite, userMgmt, roleMgmt, guardMgmt, permMgmt, dashRead, activityLogs, systemLogs];
   }
 
   private async seedRoles(guards: any[], permissions: any[]): Promise<Role[]> {
@@ -277,7 +301,7 @@ export class SeederService implements OnModuleInit {
       roleName: 'Super Admin',
       description: 'Akses penuh ke semua fitur',
       guards: [guards[0]],
-      permissions: [permissions[0]],
+      permissions: [permissions[0], permissions[8], permissions[9]],
     });
     await this.rolesRepo.save(superAdmin);
 

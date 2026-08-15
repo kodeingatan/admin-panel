@@ -11,6 +11,7 @@ import { Role } from '@/modules/roles/entities/role.entity';
 import { CreateUserDto } from '@/modules/users/dto/create-user.dto';
 import { UpdateUserDto } from '@/modules/users/dto/update-user.dto';
 import { QueryUserDto } from '@/modules/users/dto/query-user.dto';
+import { ActivityLogsService } from '@/modules/activity-logs/services/activity-logs.service';
 
 @Injectable()
 export class UsersService {
@@ -19,6 +20,7 @@ export class UsersService {
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    private activityLogsService: ActivityLogsService,
   ) {}
 
   async findAll(query: QueryUserDto) {
@@ -65,7 +67,7 @@ export class UsersService {
     return this.toResponse(user);
   }
 
-  async create(dto: CreateUserDto) {
+  async create(dto: CreateUserDto, req?: any) {
     if (dto.password !== dto.confirmPassword) {
       throw new ConflictException('Passwords do not match');
     }
@@ -101,10 +103,22 @@ export class UsersService {
     });
 
     await this.usersRepository.save(user);
+
+    await this.activityLogsService.log({
+      userId: req?.user?.sub,
+      action: 'CREATE',
+      entity: 'User',
+      entityId: user.id,
+      description: `Created user ${user.username}`,
+      metadata: { username: user.username, email: user.email },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
     return this.toResponse(user);
   }
 
-  async update(id: number, dto: UpdateUserDto) {
+  async update(id: number, dto: UpdateUserDto, req?: any) {
     const user = await this.usersRepository.findOne({
       where: { id },
       relations: { roles: true },
@@ -136,6 +150,18 @@ export class UsersService {
     }
 
     await this.usersRepository.save(user);
+
+    await this.activityLogsService.log({
+      userId: req?.user?.sub,
+      action: 'UPDATE',
+      entity: 'User',
+      entityId: user.id,
+      description: `Updated user ${user.username}`,
+      metadata: { username: user.username, email: user.email },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
     return this.toResponse(user);
   }
 
@@ -152,10 +178,24 @@ export class UsersService {
     return user;
   }
 
-  async remove(id: number) {
+  async remove(id: number, req?: any) {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
+
+    const username = user.username;
     await this.usersRepository.remove(user);
+
+    await this.activityLogsService.log({
+      userId: req?.user?.sub,
+      action: 'DELETE',
+      entity: 'User',
+      entityId: id,
+      description: `Deleted user ${username}`,
+      metadata: { username },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
     return { message: 'User deleted successfully' };
   }
 

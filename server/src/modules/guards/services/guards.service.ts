@@ -10,6 +10,7 @@ import { GuardUrl } from '@/modules/guards/entities/guard-url.entity';
 import { CreateGuardDto } from '@/modules/guards/dto/create-guard.dto';
 import { UpdateGuardDto } from '@/modules/guards/dto/update-guard.dto';
 import { QueryGuardDto } from '@/modules/guards/dto/query-guard.dto';
+import { ActivityLogsService } from '@/modules/activity-logs/services/activity-logs.service';
 
 @Injectable()
 export class GuardsService {
@@ -18,6 +19,7 @@ export class GuardsService {
     private guardsRepository: Repository<Guard>,
     @InjectRepository(GuardUrl)
     private guardUrlsRepository: Repository<GuardUrl>,
+    private activityLogsService: ActivityLogsService,
   ) {}
 
   async findAll(query: QueryGuardDto) {
@@ -64,7 +66,7 @@ export class GuardsService {
     return guard;
   }
 
-  async create(dto: CreateGuardDto) {
+  async create(dto: CreateGuardDto, req?: any) {
     const existing = await this.guardsRepository.findOne({
       where: { guardName: dto.guardName },
     });
@@ -92,10 +94,23 @@ export class GuardsService {
       await this.guardUrlsRepository.save(urls);
     }
 
-    return this.findOne(guard.id);
+    const result = await this.findOne(guard.id);
+
+    await this.activityLogsService.log({
+      userId: req?.user?.sub,
+      action: 'CREATE',
+      entity: 'Guard',
+      entityId: guard.id,
+      description: `Created guard ${guard.guardName}`,
+      metadata: { guardName: guard.guardName },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
+    return result;
   }
 
-  async update(id: number, dto: UpdateGuardDto) {
+  async update(id: number, dto: UpdateGuardDto, req?: any) {
     const guard = await this.guardsRepository.findOne({
       where: { id },
       relations: { urls: true },
@@ -131,13 +146,40 @@ export class GuardsService {
       }
     }
 
-    return this.findOne(id);
+    const result = await this.findOne(id);
+
+    await this.activityLogsService.log({
+      userId: req?.user?.sub,
+      action: 'UPDATE',
+      entity: 'Guard',
+      entityId: guard.id,
+      description: `Updated guard ${guard.guardName}`,
+      metadata: { guardName: guard.guardName },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
+    return result;
   }
 
-  async remove(id: number) {
+  async remove(id: number, req?: any) {
     const guard = await this.guardsRepository.findOne({ where: { id } });
     if (!guard) throw new NotFoundException('Guard not found');
+
+    const guardName = guard.guardName;
     await this.guardsRepository.remove(guard);
+
+    await this.activityLogsService.log({
+      userId: req?.user?.sub,
+      action: 'DELETE',
+      entity: 'Guard',
+      entityId: id,
+      description: `Deleted guard ${guardName}`,
+      metadata: { guardName },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
     return { message: 'Guard deleted successfully' };
   }
 }

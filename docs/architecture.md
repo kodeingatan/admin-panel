@@ -210,10 +210,31 @@ server/
 │   │       ├── repositories/
 │   │       └── guards.module.ts
 │   │
+│   │   ├── activity-logs/
+│   │   │   ├── controllers/
+│   │   │   │   └── activity-logs.controller.ts
+│   │   │   ├── services/
+│   │   │   │   └── activity-logs.service.ts
+│   │   │   ├── dto/
+│   │   │   │   └── query-activity-log.dto.ts
+│   │   │   ├── entities/
+│   │   │   │   └── activity-log.entity.ts
+│   │   │   └── activity-logs.module.ts
+│   │   │
+│   │   └── system-logs/
+│   │       ├── controllers/
+│   │       │   └── system-logs.controller.ts
+│   │       ├── services/
+│   │       │   └── system-logs.service.ts
+│   │       ├── dto/
+│   │       │   └── query-system-log.dto.ts
+│   │       └── system-logs.module.ts
+│   │
 │   └── shared/                     # Shared business logic
 │       ├── cache/
 │       ├── mail/
 │       └── logger/
+│           └── custom.logger.ts    # Custom logger with file transport
 │
 ├── test/
 │   ├── unit/
@@ -276,6 +297,8 @@ server/
 | `/dashboard/roles` | RolesPage | Required | Role management |
 | `/dashboard/permissions` | PermissionsPage | Required | Permission management |
 | `/dashboard/guards` | GuardsPage | Required | Guard management |
+| `/dashboard/activity-logs` | ActivityLogsPage | Required | Activity logs viewer |
+| `/dashboard/system-logs` | SystemLogsPage | Required | System logs viewer |
 
 ### Sidebar Menu (AppLayout)
 
@@ -286,6 +309,9 @@ User Management (group)
     ├── Guard                → /dashboard/guards
     ├── Role                 → /dashboard/roles
     └── Permissions          → /dashboard/permissions
+Sistem (group)
+    ├── Activity Logs        → /dashboard/activity-logs
+    └── System Logs          → /dashboard/system-logs
 ```
 
 ---
@@ -429,6 +455,75 @@ User Management (group)
 - `allowUrls` (string[], optional) — allowed URL patterns
 - `denyUrls` (string[], optional) — denied URL patterns
 
+### Activity Logs
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/activity-logs` | List activity logs (paginated, filterable) | Bearer |
+| GET | `/api/activity-logs/stats` | Get statistics (by action, entity, level) | Bearer |
+| GET | `/api/activity-logs/:id` | Get activity log detail | Bearer |
+
+**Query Parameters** (GET `/api/activity-logs`):
+- `page` (number, default: 1)
+- `limit` (number, default: 20)
+- `search` (string) — global search across description, user.username, user.firstName, user.lastName
+- `action` (string) — filter by action: CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+- `entity` (string) — filter by entity: User, Role, Permission, Guard, Auth
+- `userId` (number) — filter by user ID
+- `level` (string) — filter by level: INFO, WARNING, ERROR
+- `startDate` (string, ISO date) — filter from date
+- `endDate` (string, ISO date) — filter to date
+- `sortBy` (string, default: 'createdAt') — sort column
+- `sortOrder` (string, default: 'DESC') — sort direction
+
+**Response Format**:
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "userId": 1,
+      "user": { "id": 1, "firstName": "Super", "lastName": "Admin", "username": "admin" },
+      "action": "CREATE",
+      "entity": "User",
+      "entityId": 5,
+      "description": "Created user john",
+      "metadata": "{\"username\":\"john\",\"email\":\"john@example.com\"}",
+      "ipAddress": "127.0.0.1",
+      "userAgent": "Mozilla/5.0...",
+      "level": "INFO",
+      "createdAt": "2026-08-15T10:30:00.000Z"
+    }
+  ],
+  "total": 42,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 3
+}
+```
+
+### System Logs
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/system-logs/files` | List available log files | Bearer |
+| GET | `/api/system-logs/files/:filename` | Read log file content | Bearer |
+| GET | `/api/system-logs/stats/:filename` | Get log file statistics | Bearer |
+
+**Query Parameters** (GET `/api/system-logs/files/:filename`):
+- `level` (string) — filter by log level: INFO, WARN, ERROR, DEBUG, TRACE
+- `search` (string) — search in message and context
+- `startDate` (string, ISO date) — filter from timestamp
+- `endDate` (string, ISO date) — filter to timestamp
+- `limit` (number, default: 100) — max entries to return
+- `offset` (number, default: 0) — offset for pagination
+
+**Log File Format** (`.log` files in `server/logs/`):
+```
+[2026-08-15T10:30:00.000Z] [INFO] [Auth] User logged in: admin
+[2026-08-15T10:31:00.000Z] [ERROR] [UsersService] Failed to create user
+```
+
 ---
 
 ## RBAC System
@@ -503,18 +598,20 @@ The client implements complementary access control:
 
 ```
 users ──────< users_roles >────── roles
-                                    │
-                    ┌───────────────┼───────────────┐
-                    │               │               │
-                    v               v               v
-              roles_guards    roles_permissions     │
-                    │               │               │
-                    v               v               v
-                guards         permissions
-                    │               │
-                    v               v
-              guard_urls    permission_methods
-                            permission_urls
+  │                                   │
+  │                   ┌───────────────┼───────────────┐
+  │                   │               │               │
+  │                   v               v               v
+  │             roles_guards    roles_permissions     │
+  │                   │               │               │
+  │                   v               v               v
+  │               guards         permissions
+  │                   │               │
+  │                   v               v
+  │             guard_urls    permission_methods
+  │                           permission_urls
+  │
+  └─────────────< activity_logs
 ```
 
 | Relationship | Type | Description |
@@ -525,6 +622,7 @@ users ──────< users_roles >────── roles
 | Guard → GuardUrl | One-to-Many | Guard has many URL rules (allow/deny) |
 | Permission → PermissionMethod | One-to-Many | Permission has many method rules |
 | Permission → PermissionUrl | One-to-Many | Permission has many URL rules |
+| User → ActivityLog | One-to-Many | User has many activity logs (nullable FK) |
 
 ---
 

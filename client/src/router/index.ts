@@ -6,6 +6,8 @@ import UsersPage from '@/views/UsersPage.vue'
 import RolesPage from '@/views/RolesPage.vue'
 import PermissionsPage from '@/views/PermissionsPage.vue'
 import GuardsPage from '@/views/GuardsPage.vue'
+import ActivityLogsPage from '@/views/ActivityLogsPage.vue'
+import SystemLogsPage from '@/views/SystemLogsPage.vue'
 
 const routes = [
   {
@@ -64,6 +66,26 @@ const routes = [
       requiresAuth: true,
       requiredRoles: ['Admin', 'Super Admin'],
       requiredPermission: 'Guard Management',
+    },
+  },
+  {
+    path: '/dashboard/activity-logs',
+    name: 'ActivityLogs',
+    component: ActivityLogsPage,
+    meta: {
+      requiresAuth: true,
+      requiredRoles: ['Admin', 'Super Admin'],
+      requiredPermission: 'Activity Logs',
+    },
+  },
+  {
+    path: '/dashboard/system-logs',
+    name: 'SystemLogs',
+    component: SystemLogsPage,
+    meta: {
+      requiresAuth: true,
+      requiredRoles: ['Admin', 'Super Admin'],
+      requiredPermission: 'System Logs',
     },
   },
   {

@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   ParseIntPipe,
+  Request,
 } from '@nestjs/common';
 import { GuardsService } from '@/modules/guards/services/guards.service';
 import { CreateGuardDto } from '@/modules/guards/dto/create-guard.dto';
@@ -37,21 +38,21 @@ export class GuardsController {
   @Post()
   @Permissions('Guard Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  create(@Body() dto: CreateGuardDto) {
-    return this.guardsService.create(dto);
+  create(@Body() dto: CreateGuardDto, @Request() req) {
+    return this.guardsService.create(dto, req);
   }
 
   @Put(':id')
   @Permissions('Guard Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateGuardDto) {
-    return this.guardsService.update(id, dto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateGuardDto, @Request() req) {
+    return this.guardsService.update(id, dto, req);
   }
 
   @Delete(':id')
   @Permissions('Guard Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.guardsService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    return this.guardsService.remove(id, req);
   }
 }

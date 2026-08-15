@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '@/modules/users/entities/user.entity';
 import { RegisterDto } from '@/modules/auth/dto/register.dto';
 import { LoginDto } from '@/modules/auth/dto/login.dto';
+import { ActivityLogsService } from '@/modules/activity-logs/services/activity-logs.service';
 
 @Injectable()
 export class AuthService {
@@ -17,9 +18,10 @@ export class AuthService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private jwtService: JwtService,
+    private activityLogsService: ActivityLogsService,
   ) {}
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto, req?: any) {
     if (dto.password !== dto.confirmPassword) {
       throw new ConflictException('Passwords do not match');
     }
@@ -50,13 +52,20 @@ export class AuthService {
 
     await this.usersRepository.save(user);
 
-    return this.login({
-      email: dto.email,
-      password: dto.password,
+    await this.activityLogsService.log({
+      action: 'CREATE',
+      entity: 'Auth',
+      entityId: user.id,
+      description: `User registered: ${user.username}`,
+      metadata: { username: user.username, email: user.email },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
     });
+
+    return this.login({ email: dto.email, password: dto.password }, req);
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto, req?: any) {
     const user = await this.usersRepository.findOne({
       where: { email: dto.email },
       relations: {
@@ -78,6 +87,16 @@ export class AuthService {
 
     const payload = { sub: user.id, email: user.email, username: user.username };
     const accessToken = await this.jwtService.signAsync(payload);
+
+    await this.activityLogsService.log({
+      userId: user.id,
+      action: 'LOGIN',
+      entity: 'Auth',
+      description: `User logged in: ${user.username}`,
+      metadata: { username: user.username, email: user.email },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
 
     const { password, ...result } = user as any;
     return {

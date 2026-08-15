@@ -400,6 +400,22 @@ Response dikirim
 | PUT | `/api/guards/:id` | Update guard | Bearer + Permission |
 | DELETE | `/api/guards/:id` | Hapus guard | Bearer + Permission |
 
+### Activity Logs API
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/activity-logs` | List semua activity logs (paginated, filterable) | Bearer + Permission |
+| GET | `/api/activity-logs/stats` | Statistik activity logs | Bearer + Permission |
+| GET | `/api/activity-logs/:id` | Detail activity log | Bearer + Permission |
+
+### System Logs API
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/system-logs/files` | List semua file log | Bearer + Permission |
+| GET | `/api/system-logs/files/:filename` | Baca isi file log | Bearer + Permission |
+| GET | `/api/system-logs/stats/:filename` | Statistik file log | Bearer + Permission |
+
 ---
 
 ## 6. Client Routes
@@ -423,6 +439,9 @@ User Management (group)
     ├── Guard                → /dashboard/guards
     ├── Role                 → /dashboard/roles
     └── Permissions          → /dashboard/permissions
+Sistem (group)
+    ├── Activity Logs        → /dashboard/activity-logs
+    └── System Logs          → /dashboard/system-logs
 ```
 
 ---
@@ -488,6 +507,8 @@ User Management (group)
 | Role Management | GET, POST, PUT, DELETE | /api/roles/* |
 | Guard Management | GET, POST, PUT, DELETE | /api/guards/* |
 | Permission Management | GET, POST, PUT, DELETE | /api/permissions/* |
+| Activity Logs | GET | /api/activity-logs/* |
+| System Logs | GET | /api/system-logs/* |
 
 ---
 

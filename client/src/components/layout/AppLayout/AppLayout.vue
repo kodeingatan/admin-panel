@@ -23,6 +23,9 @@ import {
   ChevronDown,
   UserAvatar,
   Logout,
+  Activity,
+  Report,
+  Settings,
 } from '@vicons/carbon'
 
 import { useAuthStore } from '@/stores/auth.store'
@@ -90,6 +93,24 @@ const menuOptions = computed<MenuOption[]>(() => {
         },
       ],
     })
+
+    options.push({
+      label: 'Sistem',
+      key: 'sistem',
+      icon: renderIcon(Settings),
+      children: [
+        {
+          label: 'Activity Logs',
+          key: 'activity-logs',
+          icon: renderIcon(Activity),
+        },
+        {
+          label: 'System Logs',
+          key: 'system-logs',
+          icon: renderIcon(Report),
+        },
+      ],
+    })
   }
 
   return options
@@ -101,6 +122,8 @@ const routeKeyMap: Record<string, string> = {
   '/dashboard/guards': 'guards',
   '/dashboard/roles': 'roles',
   '/dashboard/permissions': 'permissions',
+  '/dashboard/activity-logs': 'activity-logs',
+  '/dashboard/system-logs': 'system-logs',
 }
 
 const activeKey = ref('dashboard')
@@ -119,6 +142,8 @@ const menuRouteMap: Record<string, string> = {
   guards: '/dashboard/guards',
   roles: '/dashboard/roles',
   permissions: '/dashboard/permissions',
+  'activity-logs': '/dashboard/activity-logs',
+  'system-logs': '/dashboard/system-logs',
 }
 
 function handleMenuUpdate(key: string) {

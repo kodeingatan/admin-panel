@@ -82,6 +82,8 @@ client/
 - `/dashboard/roles` — RolesPage (requires auth)
 - `/dashboard/permissions` — PermissionsPage (requires auth)
 - `/dashboard/guards` — GuardsPage (requires auth)
+- `/dashboard/activity-logs` — ActivityLogsPage (requires auth)
+- `/dashboard/system-logs` — SystemLogsPage (requires auth)
 - JWT token stored in `localStorage` as `accessToken`
 
 **Sidebar Menu** (AppLayout.vue):
@@ -92,6 +94,9 @@ User Management (group)
     ├── Guard                → /dashboard/guards
     ├── Role                 → /dashboard/roles
     └── Permissions          → /dashboard/permissions
+Sistem (group)
+    ├── Activity Logs        → /dashboard/activity-logs
+    └── System Logs          → /dashboard/system-logs
 ```
 
 ## Server (NestJS)
@@ -145,16 +150,28 @@ server/src/
 │   │   ├── dto/
 │   │   ├── entities/       # permission.entity.ts, permission-method.entity.ts, permission-url.entity.ts
 │   │   └── repositories/
-│   └── guards/
-│       ├── controllers/
-│       ├── services/
-│       ├── dto/
-│       ├── entities/       # guard.entity.ts, guard-url.entity.ts
-│       └── repositories/
+│   ├── guards/
+│   │   ├── controllers/
+│   │   ├── services/
+│   │   ├── dto/
+│   │   ├── entities/       # guard.entity.ts, guard-url.entity.ts
+│   │   └── repositories/
+│   ├── activity-logs/
+│   │   ├── controllers/    # activity-logs.controller.ts
+│   │   ├── services/       # activity-logs.service.ts
+│   │   ├── dto/            # query-activity-log.dto.ts
+│   │   ├── entities/       # activity-log.entity.ts
+│   │   └── activity-logs.module.ts
+│   └── system-logs/
+│       ├── controllers/    # system-logs.controller.ts
+│       ├── services/       # system-logs.service.ts
+│       ├── dto/            # query-system-log.dto.ts
+│       └── system-logs.module.ts
 ├── shared/             # Shared business logic
 │   ├── cache/
 │   ├── mail/
 │   └── logger/
+│       └── custom.logger.ts    # Custom logger with file transport
 ├── app.module.ts
 ├── app.controller.ts
 ├── app.service.ts
@@ -186,6 +203,8 @@ server/src/
 | Roles | `/api/roles` | Role, UserRole, RoleGuard, RolePermission | Role management with guard & permission assignment |
 | Permissions | `/api/permissions` | Permission, PermissionMethod, PermissionUrl | Permission management with method & URL rules |
 | Guards | `/api/guards` | Guard, GuardUrl | Guard management with URL allow/deny rules |
+| Activity Logs | `/api/activity-logs` | ActivityLog | Audit trail for all user activities |
+| System Logs | `/api/system-logs` | (file-based) | System log viewer for log files |
 
 **RBAC Guard Chain** (Global):
 | Guard | File | Purpose |

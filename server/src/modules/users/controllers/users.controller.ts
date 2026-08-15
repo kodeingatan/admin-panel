@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   ParseIntPipe,
+  Request,
 } from '@nestjs/common';
 import { UsersService } from '@/modules/users/services/users.service';
 import { CreateUserDto } from '@/modules/users/dto/create-user.dto';
@@ -37,21 +38,21 @@ export class UsersController {
   @Post()
   @Permissions('User Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  create(@Body() dto: CreateUserDto) {
-    return this.usersService.create(dto);
+  create(@Body() dto: CreateUserDto, @Request() req) {
+    return this.usersService.create(dto, req);
   }
 
   @Put(':id')
   @Permissions('User Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
-    return this.usersService.update(id, dto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Request() req) {
+    return this.usersService.update(id, dto, req);
   }
 
   @Delete(':id')
   @Permissions('User Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    return this.usersService.remove(id, req);
   }
 }

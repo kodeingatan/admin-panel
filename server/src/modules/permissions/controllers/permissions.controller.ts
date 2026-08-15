@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   ParseIntPipe,
+  Request,
 } from '@nestjs/common';
 import { PermissionsService } from '@/modules/permissions/services/permissions.service';
 import { CreatePermissionDto } from '@/modules/permissions/dto/create-permission.dto';
@@ -37,8 +38,8 @@ export class PermissionsController {
   @Post()
   @Permissions('Permission Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  create(@Body() dto: CreatePermissionDto) {
-    return this.permissionsService.create(dto);
+  create(@Body() dto: CreatePermissionDto, @Request() req) {
+    return this.permissionsService.create(dto, req);
   }
 
   @Put(':id')
@@ -47,14 +48,15 @@ export class PermissionsController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePermissionDto,
+    @Request() req,
   ) {
-    return this.permissionsService.update(id, dto);
+    return this.permissionsService.update(id, dto, req);
   }
 
   @Delete(':id')
   @Permissions('Permission Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.permissionsService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    return this.permissionsService.remove(id, req);
   }
 }

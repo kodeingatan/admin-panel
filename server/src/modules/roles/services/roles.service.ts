@@ -11,6 +11,7 @@ import { Permission } from '@/modules/permissions/entities/permission.entity';
 import { CreateRoleDto } from '@/modules/roles/dto/create-role.dto';
 import { UpdateRoleDto } from '@/modules/roles/dto/update-role.dto';
 import { QueryRoleDto } from '@/modules/roles/dto/query-role.dto';
+import { ActivityLogsService } from '@/modules/activity-logs/services/activity-logs.service';
 
 @Injectable()
 export class RolesService {
@@ -21,6 +22,7 @@ export class RolesService {
     private guardsRepository: Repository<Guard>,
     @InjectRepository(Permission)
     private permissionsRepository: Repository<Permission>,
+    private activityLogsService: ActivityLogsService,
   ) {}
 
   async findAll(query: QueryRoleDto) {
@@ -68,7 +70,7 @@ export class RolesService {
     return role;
   }
 
-  async create(dto: CreateRoleDto) {
+  async create(dto: CreateRoleDto, req?: any) {
     const existing = await this.rolesRepository.findOne({
       where: { roleName: dto.roleName },
     });
@@ -95,10 +97,23 @@ export class RolesService {
       permissions,
     });
 
-    return this.rolesRepository.save(role);
+    const saved = await this.rolesRepository.save(role);
+
+    await this.activityLogsService.log({
+      userId: req?.user?.sub,
+      action: 'CREATE',
+      entity: 'Role',
+      entityId: saved.id,
+      description: `Created role ${saved.roleName}`,
+      metadata: { roleName: saved.roleName },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
+    return saved;
   }
 
-  async update(id: number, dto: UpdateRoleDto) {
+  async update(id: number, dto: UpdateRoleDto, req?: any) {
     const role = await this.rolesRepository.findOne({
       where: { id },
       relations: { guards: true, permissions: true },
@@ -124,13 +139,40 @@ export class RolesService {
       });
     }
 
-    return this.rolesRepository.save(role);
+    const saved = await this.rolesRepository.save(role);
+
+    await this.activityLogsService.log({
+      userId: req?.user?.sub,
+      action: 'UPDATE',
+      entity: 'Role',
+      entityId: role.id,
+      description: `Updated role ${role.roleName}`,
+      metadata: { roleName: role.roleName },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
+    return saved;
   }
 
-  async remove(id: number) {
+  async remove(id: number, req?: any) {
     const role = await this.rolesRepository.findOne({ where: { id } });
     if (!role) throw new NotFoundException('Role not found');
+
+    const roleName = role.roleName;
     await this.rolesRepository.remove(role);
+
+    await this.activityLogsService.log({
+      userId: req?.user?.sub,
+      action: 'DELETE',
+      entity: 'Role',
+      entityId: id,
+      description: `Deleted role ${roleName}`,
+      metadata: { roleName },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
     return { message: 'Role deleted successfully' };
   }
 }

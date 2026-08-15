@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   ParseIntPipe,
+  Request,
 } from '@nestjs/common';
 import { RolesService } from '@/modules/roles/services/roles.service';
 import { CreateRoleDto } from '@/modules/roles/dto/create-role.dto';
@@ -37,21 +38,21 @@ export class RolesController {
   @Post()
   @Permissions('Role Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  create(@Body() dto: CreateRoleDto) {
-    return this.rolesService.create(dto);
+  create(@Body() dto: CreateRoleDto, @Request() req) {
+    return this.rolesService.create(dto, req);
   }
 
   @Put(':id')
   @Permissions('Role Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateRoleDto) {
-    return this.rolesService.update(id, dto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateRoleDto, @Request() req) {
+    return this.rolesService.update(id, dto, req);
   }
 
   @Delete(':id')
   @Permissions('Role Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.rolesService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    return this.rolesService.remove(id, req);
   }
 }

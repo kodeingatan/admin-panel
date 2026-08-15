@@ -11,6 +11,7 @@ import { PermissionUrl } from '@/modules/permissions/entities/permission-url.ent
 import { CreatePermissionDto } from '@/modules/permissions/dto/create-permission.dto';
 import { UpdatePermissionDto } from '@/modules/permissions/dto/update-permission.dto';
 import { QueryPermissionDto } from '@/modules/permissions/dto/query-permission.dto';
+import { ActivityLogsService } from '@/modules/activity-logs/services/activity-logs.service';
 
 @Injectable()
 export class PermissionsService {
@@ -21,6 +22,7 @@ export class PermissionsService {
     private permissionMethodsRepository: Repository<PermissionMethod>,
     @InjectRepository(PermissionUrl)
     private permissionUrlsRepository: Repository<PermissionUrl>,
+    private activityLogsService: ActivityLogsService,
   ) {}
 
   async findAll(query: QueryPermissionDto) {
@@ -68,7 +70,7 @@ export class PermissionsService {
     return permission;
   }
 
-  async create(dto: CreatePermissionDto) {
+  async create(dto: CreatePermissionDto, req?: any) {
     const existing = await this.permissionsRepository.findOne({
       where: { permissionName: dto.permissionName },
     });
@@ -96,10 +98,23 @@ export class PermissionsService {
       await this.permissionUrlsRepository.save(urls);
     }
 
-    return this.findOne(permission.id);
+    const result = await this.findOne(permission.id);
+
+    await this.activityLogsService.log({
+      userId: req?.user?.sub,
+      action: 'CREATE',
+      entity: 'Permission',
+      entityId: permission.id,
+      description: `Created permission ${permission.permissionName}`,
+      metadata: { permissionName: permission.permissionName },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
+    return result;
   }
 
-  async update(id: number, dto: UpdatePermissionDto) {
+  async update(id: number, dto: UpdatePermissionDto, req?: any) {
     const permission = await this.permissionsRepository.findOne({
       where: { id },
       relations: { methods: true, urls: true },
@@ -133,13 +148,40 @@ export class PermissionsService {
       await this.permissionUrlsRepository.save(urls);
     }
 
-    return this.findOne(id);
+    const result = await this.findOne(id);
+
+    await this.activityLogsService.log({
+      userId: req?.user?.sub,
+      action: 'UPDATE',
+      entity: 'Permission',
+      entityId: permission.id,
+      description: `Updated permission ${permission.permissionName}`,
+      metadata: { permissionName: permission.permissionName },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
+    return result;
   }
 
-  async remove(id: number) {
+  async remove(id: number, req?: any) {
     const permission = await this.permissionsRepository.findOne({ where: { id } });
     if (!permission) throw new NotFoundException('Permission not found');
+
+    const permissionName = permission.permissionName;
     await this.permissionsRepository.remove(permission);
+
+    await this.activityLogsService.log({
+      userId: req?.user?.sub,
+      action: 'DELETE',
+      entity: 'Permission',
+      entityId: id,
+      description: `Deleted permission ${permissionName}`,
+      metadata: { permissionName },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
     return { message: 'Permission deleted successfully' };
   }
 }

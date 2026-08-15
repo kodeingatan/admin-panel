@@ -355,3 +355,33 @@ users ──────< users_roles >────── roles
 | Guard → GuardUrl | One-to-Many | Guard punya banyak URL rules |
 | Permission → PermissionMethod | One-to-Many | Permission punya banyak method rules |
 | Permission → PermissionUrl | One-to-Many | Permission punya banyak URL rules |
+| User → ActivityLog | One-to-Many | User bisa punya banyak activity log (nullable) |
+
+---
+
+## Activity Logs Entity
+
+### 11. activity_logs
+
+Tabel untuk mencatat semua aktivitas user (audit trail).
+
+| Column | Type | Constraint | Description |
+|--------|------|-----------|-------------|
+| `id` | INTEGER | PK, AUTO_INCREMENT | ID unik log |
+| `userId` | INTEGER | NULLABLE, FK → users.id ON DELETE SET NULL | ID user yang melakukan aksi |
+| `action` | VARCHAR | NOT NULL | Jenis aksi (CREATE, UPDATE, DELETE, LOGIN, LOGOUT) |
+| `entity` | VARCHAR | NOT NULL | Entity yang terpengaruh (User, Role, Permission, Guard, Auth) |
+| `entityId` | INTEGER | NULLABLE | ID entity yang terpengaruh |
+| `description` | TEXT | NULLABLE | Deskripsi aktivitas |
+| `metadata` | TEXT | NULLABLE | JSON data tambahan (before/after snapshots) |
+| `ipAddress` | VARCHAR | NULLABLE | IP address user |
+| `userAgent` | VARCHAR | NULLABLE | User agent browser |
+| `level` | VARCHAR(20) | DEFAULT 'INFO' | Level log (INFO, WARNING, ERROR) |
+| `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pencatatan log |
+
+**Indexes**:
+- `PRIMARY KEY` on `id`
+- `INDEX` on `userId`
+- `INDEX` on `action`
+- `INDEX` on `entity`
+- `INDEX` on `createdAt`
