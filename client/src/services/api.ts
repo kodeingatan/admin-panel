@@ -19,8 +19,19 @@ api.interceptors.response.use(
       localStorage.removeItem('accessToken')
       window.location.href = '/login'
     }
+    if (error.response?.status === 403) {
+      window.dispatchEvent(
+        new CustomEvent('rbac-denied', {
+          detail: {
+            message:
+              error.response?.data?.message ||
+              "Access denied. You don't have permission to perform this action.",
+          },
+        }),
+      )
+    }
     return Promise.reject(error)
-  }
+  },
 )
 
 export default api

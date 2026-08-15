@@ -446,6 +446,7 @@ User Management (group)
 - Error handling dengan pesan yang jelas
 - Konfirmasi sebelum delete
 - Form validation real-time
+- Access denied alert dengan animasi slide-in dari kanan (CSS Transition)
 
 ---
 

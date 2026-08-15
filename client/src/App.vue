@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider, NGlobalStyle } from 'naive-ui'
 import { themeOverrides } from '@/plugins/naiveui'
+import AccessDeniedAlert from '@/components/common/AccessDeniedAlert.vue'
 </script>
 
 <template>
   <n-config-provider :theme-overrides="themeOverrides">
     <n-global-style />
+    <AccessDeniedAlert />
     <n-message-provider>
       <n-dialog-provider>
         <n-notification-provider>

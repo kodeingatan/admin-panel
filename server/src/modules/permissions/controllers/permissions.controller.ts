@@ -13,27 +13,37 @@ import { PermissionsService } from '@/modules/permissions/services/permissions.s
 import { CreatePermissionDto } from '@/modules/permissions/dto/create-permission.dto';
 import { UpdatePermissionDto } from '@/modules/permissions/dto/update-permission.dto';
 import { QueryPermissionDto } from '@/modules/permissions/dto/query-permission.dto';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { Permissions } from '@/common/decorators/permissions.decorator';
 
 @Controller('permissions')
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
 
   @Get()
+  @Permissions('Permission Management', 'Full Access')
+  @Roles('Admin', 'Super Admin')
   findAll(@Query() query: QueryPermissionDto) {
     return this.permissionsService.findAll(query);
   }
 
   @Get(':id')
+  @Permissions('Permission Management', 'Full Access')
+  @Roles('Admin', 'Super Admin')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.permissionsService.findOne(id);
   }
 
   @Post()
+  @Permissions('Permission Management', 'Full Access')
+  @Roles('Admin', 'Super Admin')
   create(@Body() dto: CreatePermissionDto) {
     return this.permissionsService.create(dto);
   }
 
   @Put(':id')
+  @Permissions('Permission Management', 'Full Access')
+  @Roles('Admin', 'Super Admin')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePermissionDto,
@@ -42,6 +52,8 @@ export class PermissionsController {
   }
 
   @Delete(':id')
+  @Permissions('Permission Management', 'Full Access')
+  @Roles('Admin', 'Super Admin')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.permissionsService.remove(id);
   }

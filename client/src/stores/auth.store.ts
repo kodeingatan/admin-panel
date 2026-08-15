@@ -6,11 +6,28 @@ import type { LoginPayload, RegisterPayload, AuthResponse } from '@/types/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('accessToken'))
-  const user = ref<User | null>(null)
+  const user = ref<User | null>(loadUserFromStorage())
   const loading = ref(false)
 
   const isAuthenticated = computed(() => !!token.value)
   const fullName = computed(() => user.value ? `${user.value.firstName} ${user.value.lastName}` : '')
+
+  function loadUserFromStorage(): User | null {
+    try {
+      const raw = localStorage.getItem('user')
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  }
+
+  function saveUserToStorage(userData: User | null) {
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData))
+    } else {
+      localStorage.removeItem('user')
+    }
+  }
 
   async function login(payload: LoginPayload) {
     loading.value = true
@@ -19,6 +36,7 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = data.accessToken
       user.value = data.user
       localStorage.setItem('accessToken', data.accessToken)
+      saveUserToStorage(data.user)
       return data
     } finally {
       loading.value = false
@@ -32,6 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = data.accessToken
       user.value = data.user
       localStorage.setItem('accessToken', data.accessToken)
+      saveUserToStorage(data.user)
       return data
     } finally {
       loading.value = false
@@ -44,11 +63,13 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const { data } = await api.get<User>('/auth/profile')
       user.value = data
+      saveUserToStorage(data)
       return data
     } catch {
       token.value = null
       user.value = null
       localStorage.removeItem('accessToken')
+      saveUserToStorage(null)
     } finally {
       loading.value = false
     }
@@ -58,6 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     user.value = null
     localStorage.removeItem('accessToken')
+    saveUserToStorage(null)
   }
 
   return { token, user, loading, isAuthenticated, fullName, login, register, fetchProfile, logout }

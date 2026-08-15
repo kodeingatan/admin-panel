@@ -59,6 +59,12 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.usersRepository.findOne({
       where: { email: dto.email },
+      relations: {
+        roles: {
+          guards: { urls: true },
+          permissions: { methods: true, urls: true },
+        },
+      },
     });
 
     if (!user) {
@@ -73,30 +79,28 @@ export class AuthService {
     const payload = { sub: user.id, email: user.email, username: user.username };
     const accessToken = await this.jwtService.signAsync(payload);
 
+    const { password, ...result } = user as any;
     return {
       accessToken,
-      user: {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        username: user.username,
-        email: user.email,
-      },
+      user: result,
     };
   }
 
   async getProfile(userId: number) {
-    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: {
+        roles: {
+          guards: { urls: true },
+          permissions: { methods: true, urls: true },
+        },
+      },
+    });
     if (!user) {
       throw new UnauthorizedException();
     }
 
-    return {
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      username: user.username,
-      email: user.email,
-    };
+    const { password, ...result } = user as any;
+    return result;
   }
 }

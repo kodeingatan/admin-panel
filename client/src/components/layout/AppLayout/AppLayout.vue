@@ -26,10 +26,12 @@ import {
 } from '@vicons/carbon'
 
 import { useAuthStore } from '@/stores/auth.store'
+import { useAuthorization } from '@/composables/useAuthorization'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const { hasAnyRole } = useAuthorization()
 const collapsed = ref(false)
 
 interface User_ {
@@ -51,40 +53,47 @@ function renderIcon(icon: any) {
   return () => h(NIcon, null, { default: () => h(icon) })
 }
 
-const menuOptions: MenuOption[] = [
-  {
-    label: 'Dashboard',
-    key: 'dashboard',
-    icon: renderIcon(Grid),
-  },
-  {
-    label: 'User Management',
-    key: 'user-management',
-    icon: renderIcon(UserMultiple),
-    children: [
-      {
-        label: 'User',
-        key: 'users',
-        icon: renderIcon(User),
-      },
-      {
-        label: 'Guard',
-        key: 'guards',
-        icon: renderIcon(Security),
-      },
-      {
-        label: 'Role',
-        key: 'roles',
-        icon: renderIcon(Rule),
-      },
-      {
-        label: 'Permissions',
-        key: 'permissions',
-        icon: renderIcon(Document),
-      },
-    ],
-  },
-]
+const menuOptions = computed<MenuOption[]>(() => {
+  const options: MenuOption[] = [
+    {
+      label: 'Dashboard',
+      key: 'dashboard',
+      icon: renderIcon(Grid),
+    },
+  ]
+
+  if (hasAnyRole(['Admin', 'Super Admin'])) {
+    options.push({
+      label: 'User Management',
+      key: 'user-management',
+      icon: renderIcon(UserMultiple),
+      children: [
+        {
+          label: 'User',
+          key: 'users',
+          icon: renderIcon(User),
+        },
+        {
+          label: 'Guard',
+          key: 'guards',
+          icon: renderIcon(Security),
+        },
+        {
+          label: 'Role',
+          key: 'roles',
+          icon: renderIcon(Rule),
+        },
+        {
+          label: 'Permissions',
+          key: 'permissions',
+          icon: renderIcon(Document),
+        },
+      ],
+    })
+  }
+
+  return options
+})
 
 const routeKeyMap: Record<string, string> = {
   '/dashboard': 'dashboard',

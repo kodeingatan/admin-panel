@@ -9,6 +9,7 @@ import { UsersService } from '@/modules/users/services/users.service';
 import { ROLES_KEY } from '@/common/decorators/roles.decorator';
 import { PERMISSIONS_KEY } from '@/common/decorators/permissions.decorator';
 import { IS_PUBLIC_KEY } from '@/common/decorators/public.decorator';
+import { matchUrlPattern } from '@/common/utils/url-matcher';
 
 @Injectable()
 export class RbacGuard implements CanActivate {
@@ -94,7 +95,7 @@ export class RbacGuard implements CanActivate {
 
         const allowedUrls = permission.urls.map((u) => u.url);
         const urlMatch = allowedUrls.some((pattern) =>
-          this.matchUrl(pattern, requestUrl),
+          matchUrlPattern(pattern, requestUrl),
         );
         if (!urlMatch) continue;
 
@@ -107,12 +108,12 @@ export class RbacGuard implements CanActivate {
             .map((u) => u.url);
 
           const isDenied = denyUrls.some((pattern) =>
-            this.matchUrl(pattern, requestUrl),
+            matchUrlPattern(pattern, requestUrl),
           );
           if (isDenied) continue;
 
           const isAllowed = allowUrls.some((pattern) =>
-            this.matchUrl(pattern, requestUrl),
+            matchUrlPattern(pattern, requestUrl),
           );
           if (isAllowed) return true;
         }
@@ -120,19 +121,5 @@ export class RbacGuard implements CanActivate {
     }
 
     throw new ForbiddenException('Access denied');
-  }
-
-  private matchUrl(pattern: string, url: string): boolean {
-    if (pattern === '/*') return true;
-
-    const cleanPattern = pattern.replace(/\/+$/, '');
-    const cleanUrl = url.split('?')[0].replace(/\/+$/, '');
-
-    if (cleanPattern.endsWith('/*')) {
-      const prefix = cleanPattern.slice(0, -2);
-      return cleanUrl === prefix || cleanUrl.startsWith(prefix + '/');
-    }
-
-    return cleanUrl === cleanPattern;
   }
 }

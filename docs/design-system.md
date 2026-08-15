@@ -440,7 +440,7 @@ When user lacks permission for an action:
 | Access Denied Alert | `NAlert` type="error" | Shown when 403 returned from API |
 | Alert Title | "Access Denied" | Bold heading |
 | Alert Description | "You don't have permission to perform this action" | Body text |
-| Alert Icon | `LockClosed` from `@vicons/carbon` | Left icon |
+| Alert Icon | `Locked` from `@vicons/carbon` | Left icon |
 | Dismissable | `true` | Close button available |
 
 ### Conditional Rendering

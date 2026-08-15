@@ -175,7 +175,9 @@ server/src/
 |--------|----------------------|----------------|--------|
 | POST   | `/api/auth/register` | Register user  | Public |
 | POST   | `/api/auth/login`    | Login user     | Public |
-| GET    | `/api/auth/profile`  | Get profile    | Bearer |
+| GET    | `/api/auth/profile`  | Get profile with roles, permissions, guards | Bearer |
+
+**Note**: `GET /api/auth/profile` returns full user data including nested relations: `roles[].guards[].urls[]` and `roles[].permissions[].methods[]` + `roles[].permissions[].urls[]`. This data is used by `useAuthorization` composable for client-side access control.
 
 **RBAC Modules** (Implemented):
 | Module | Endpoint Prefix | Entities | Description |
@@ -215,3 +217,5 @@ Start Storybook first (`npm run storybook` in `client/`) before using MCP featur
 - Server tests use `ts-jest` with `rootDir: "src"` — test files must be `*.spec.ts` in `src/`
 - Server builds with `better-sqlite3` native addon — may take a while on first install
 - JWT secret defaults to `default-secret-change-me` — set `JWT_SECRET` env var for production
+- AccessDeniedAlert uses CSS transition animation (slide-in from right) — uses `v-show` not `v-if` to avoid layout shift
+- To re-seed database: delete `server/db.sqlite` then restart server (`npm run start:dev`)

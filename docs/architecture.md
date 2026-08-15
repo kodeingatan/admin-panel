@@ -298,7 +298,26 @@ User Management (group)
 |--------|----------|-------------|------|
 | POST | `/api/auth/register` | Register user | Public |
 | POST | `/api/auth/login` | Login user | Public |
-| GET | `/api/auth/profile` | Get profile | Bearer |
+| GET | `/api/auth/profile` | Get profile with roles, permissions, guards | Bearer |
+
+**Profile Response** includes full user data with nested relations:
+```json
+{
+  "id": 1,
+  "firstName": "Super",
+  "lastName": "Admin",
+  "username": "admin",
+  "email": "admin@admin.com",
+  "roles": [
+    {
+      "id": 1,
+      "roleName": "Super Admin",
+      "guards": [{ "guardName": "Full Access", "urls": [{ "url": "/*", "type": "allow" }] }],
+      "permissions": [{ "permissionName": "Full Access", "methods": [{ "method": "*" }], "urls": [{ "url": "/*" }] }]
+    }
+  ]
+}
+```
 
 ### Users
 

@@ -30,25 +30,41 @@ const routes = [
     path: '/dashboard/users',
     name: 'Users',
     component: UsersPage,
-    meta: { requiresAuth: true },
+    meta: {
+      requiresAuth: true,
+      requiredRoles: ['Admin', 'Super Admin'],
+      requiredPermission: 'User Management',
+    },
   },
   {
     path: '/dashboard/roles',
     name: 'Roles',
     component: RolesPage,
-    meta: { requiresAuth: true },
+    meta: {
+      requiresAuth: true,
+      requiredRoles: ['Admin', 'Super Admin'],
+      requiredPermission: 'Role Management',
+    },
   },
   {
     path: '/dashboard/permissions',
     name: 'Permissions',
     component: PermissionsPage,
-    meta: { requiresAuth: true },
+    meta: {
+      requiresAuth: true,
+      requiredRoles: ['Admin', 'Super Admin'],
+      requiredPermission: 'Permission Management',
+    },
   },
   {
     path: '/dashboard/guards',
     name: 'Guards',
     component: GuardsPage,
-    meta: { requiresAuth: true },
+    meta: {
+      requiresAuth: true,
+      requiredRoles: ['Admin', 'Super Admin'],
+      requiredPermission: 'Guard Management',
+    },
   },
   {
     path: '/',
@@ -65,12 +81,36 @@ router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('accessToken')
 
   if (to.meta.requiresAuth && !token) {
-    next('/login')
-  } else if (to.meta.guest && token) {
-    next('/dashboard')
-  } else {
-    next()
+    return next('/login')
   }
+
+  if (to.meta.guest && token) {
+    return next('/dashboard')
+  }
+
+  if (to.meta.requiredRoles && token) {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      const userRoles = user.roles?.map((r: { roleName: string }) => r.roleName) || []
+      const hasRole = (to.meta.requiredRoles as string[]).some((r: string) =>
+        userRoles.includes(r),
+      )
+      if (!hasRole) {
+        window.dispatchEvent(
+          new CustomEvent('rbac-denied', {
+            detail: {
+              message: `You need one of these roles: ${(to.meta.requiredRoles as string[]).join(', ')}`,
+            },
+          }),
+        )
+        return next('/dashboard')
+      }
+    } catch {
+      // If user data is corrupted, allow navigation (server will enforce)
+    }
+  }
+
+  next()
 })
 
 export default router

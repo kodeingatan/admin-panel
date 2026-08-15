@@ -47,7 +47,7 @@ export class SeederService implements OnModuleInit {
     this.logger.log('Database seeded successfully');
   }
 
-  private async seedGuards(): Promise<Role[]> {
+  private async seedGuards(): Promise<Guard[]> {
     const fullAccess = this.guardsRepo.create({
       guardName: 'Full Access',
       description: 'Izinkan semua URL',
@@ -80,7 +80,60 @@ export class SeederService implements OnModuleInit {
       this.guardUrlsRepo.create({ url: '/api/*', type: 'allow', guard: apiOnly }),
     );
 
-    return [fullAccess, webAccess, apiOnly] as any;
+    const adminOnly = this.guardsRepo.create({
+      guardName: 'Admin Only',
+      description: 'Hanya akses admin dan user management',
+    });
+    await this.guardsRepo.save(adminOnly);
+    await this.guardUrlsRepo.save([
+      this.guardUrlsRepo.create({ url: '/api/admin/*', type: 'allow', guard: adminOnly }),
+      this.guardUrlsRepo.create({ url: '/api/users/*', type: 'allow', guard: adminOnly }),
+      this.guardUrlsRepo.create({ url: '/api/roles/*', type: 'allow', guard: adminOnly }),
+    ]);
+
+    const readOnlyGuard = this.guardsRepo.create({
+      guardName: 'Read Only Guard',
+      description: 'Akses baca saja, tolak user dan role management',
+    });
+    await this.guardsRepo.save(readOnlyGuard);
+    await this.guardUrlsRepo.save([
+      this.guardUrlsRepo.create({ url: '/api/*', type: 'allow', guard: readOnlyGuard }),
+      this.guardUrlsRepo.create({ url: '/api/users', type: 'deny', guard: readOnlyGuard }),
+      this.guardUrlsRepo.create({ url: '/api/roles', type: 'deny', guard: readOnlyGuard }),
+    ]);
+
+    const userMgmtGuard = this.guardsRepo.create({
+      guardName: 'User Management Guard',
+      description: 'Hanya akses user management',
+    });
+    await this.guardsRepo.save(userMgmtGuard);
+    await this.guardUrlsRepo.save(
+      this.guardUrlsRepo.create({ url: '/api/users/*', type: 'allow', guard: userMgmtGuard }),
+    );
+
+    const roleMgmtGuard = this.guardsRepo.create({
+      guardName: 'Role Management Guard',
+      description: 'Hanya akses role management',
+    });
+    await this.guardsRepo.save(roleMgmtGuard);
+    await this.guardUrlsRepo.save(
+      this.guardUrlsRepo.create({ url: '/api/roles/*', type: 'allow', guard: roleMgmtGuard }),
+    );
+
+    const dashboardOnly = this.guardsRepo.create({
+      guardName: 'Dashboard Only',
+      description: 'Hanya akses profile, tolak semua management',
+    });
+    await this.guardsRepo.save(dashboardOnly);
+    await this.guardUrlsRepo.save([
+      this.guardUrlsRepo.create({ url: '/api/auth/profile', type: 'allow', guard: dashboardOnly }),
+      this.guardUrlsRepo.create({ url: '/api/users/*', type: 'deny', guard: dashboardOnly }),
+      this.guardUrlsRepo.create({ url: '/api/roles/*', type: 'deny', guard: dashboardOnly }),
+      this.guardUrlsRepo.create({ url: '/api/permissions/*', type: 'deny', guard: dashboardOnly }),
+      this.guardUrlsRepo.create({ url: '/api/guards/*', type: 'deny', guard: dashboardOnly }),
+    ]);
+
+    return [fullAccess, webAccess, apiOnly, adminOnly, readOnlyGuard, userMgmtGuard, roleMgmtGuard, dashboardOnly];
   }
 
   private async seedPermissions(): Promise<Permission[]> {
@@ -144,7 +197,79 @@ export class SeederService implements OnModuleInit {
       this.permissionUrlsRepo.create({ url: '/*', permission: readWrite }),
     );
 
-    return [fullAccess, readOnly, readWrite] as any;
+    const userMgmt = this.permissionsRepo.create({
+      permissionName: 'User Management',
+      description: 'Izinkan CRUD user',
+    });
+    await this.permissionsRepo.save(userMgmt);
+    await this.permissionMethodsRepo.save([
+      this.permissionMethodsRepo.create({ method: 'GET', permission: userMgmt }),
+      this.permissionMethodsRepo.create({ method: 'POST', permission: userMgmt }),
+      this.permissionMethodsRepo.create({ method: 'PUT', permission: userMgmt }),
+      this.permissionMethodsRepo.create({ method: 'DELETE', permission: userMgmt }),
+    ]);
+    await this.permissionUrlsRepo.save(
+      this.permissionUrlsRepo.create({ url: '/api/users/*', permission: userMgmt }),
+    );
+
+    const roleMgmt = this.permissionsRepo.create({
+      permissionName: 'Role Management',
+      description: 'Izinkan CRUD role',
+    });
+    await this.permissionsRepo.save(roleMgmt);
+    await this.permissionMethodsRepo.save([
+      this.permissionMethodsRepo.create({ method: 'GET', permission: roleMgmt }),
+      this.permissionMethodsRepo.create({ method: 'POST', permission: roleMgmt }),
+      this.permissionMethodsRepo.create({ method: 'PUT', permission: roleMgmt }),
+      this.permissionMethodsRepo.create({ method: 'DELETE', permission: roleMgmt }),
+    ]);
+    await this.permissionUrlsRepo.save(
+      this.permissionUrlsRepo.create({ url: '/api/roles/*', permission: roleMgmt }),
+    );
+
+    const guardMgmt = this.permissionsRepo.create({
+      permissionName: 'Guard Management',
+      description: 'Izinkan CRUD guard',
+    });
+    await this.permissionsRepo.save(guardMgmt);
+    await this.permissionMethodsRepo.save([
+      this.permissionMethodsRepo.create({ method: 'GET', permission: guardMgmt }),
+      this.permissionMethodsRepo.create({ method: 'POST', permission: guardMgmt }),
+      this.permissionMethodsRepo.create({ method: 'PUT', permission: guardMgmt }),
+      this.permissionMethodsRepo.create({ method: 'DELETE', permission: guardMgmt }),
+    ]);
+    await this.permissionUrlsRepo.save(
+      this.permissionUrlsRepo.create({ url: '/api/guards/*', permission: guardMgmt }),
+    );
+
+    const permMgmt = this.permissionsRepo.create({
+      permissionName: 'Permission Management',
+      description: 'Izinkan CRUD permission',
+    });
+    await this.permissionsRepo.save(permMgmt);
+    await this.permissionMethodsRepo.save([
+      this.permissionMethodsRepo.create({ method: 'GET', permission: permMgmt }),
+      this.permissionMethodsRepo.create({ method: 'POST', permission: permMgmt }),
+      this.permissionMethodsRepo.create({ method: 'PUT', permission: permMgmt }),
+      this.permissionMethodsRepo.create({ method: 'DELETE', permission: permMgmt }),
+    ]);
+    await this.permissionUrlsRepo.save(
+      this.permissionUrlsRepo.create({ url: '/api/permissions/*', permission: permMgmt }),
+    );
+
+    const dashRead = this.permissionsRepo.create({
+      permissionName: 'Dashboard Read',
+      description: 'Hanya baca profile',
+    });
+    await this.permissionsRepo.save(dashRead);
+    await this.permissionMethodsRepo.save(
+      this.permissionMethodsRepo.create({ method: 'GET', permission: dashRead }),
+    );
+    await this.permissionUrlsRepo.save(
+      this.permissionUrlsRepo.create({ url: '/api/auth/profile', permission: dashRead }),
+    );
+
+    return [fullAccess, readOnly, readWrite, userMgmt, roleMgmt, guardMgmt, permMgmt, dashRead];
   }
 
   private async seedRoles(guards: any[], permissions: any[]): Promise<Role[]> {
@@ -172,11 +297,44 @@ export class SeederService implements OnModuleInit {
     });
     await this.rolesRepo.save(user);
 
-    return [superAdmin, admin, user];
+    const editor = this.rolesRepo.create({
+      roleName: 'Editor',
+      description: 'Akses edit user dan content',
+      guards: [guards[2]],
+      permissions: [permissions[2], permissions[3]],
+    });
+    await this.rolesRepo.save(editor);
+
+    const viewer = this.rolesRepo.create({
+      roleName: 'Viewer',
+      description: 'Hanya melihat data',
+      guards: [guards[4]],
+      permissions: [permissions[1], permissions[7]],
+    });
+    await this.rolesRepo.save(viewer);
+
+    const manager = this.rolesRepo.create({
+      roleName: 'Manager',
+      description: 'Akses management user dan role',
+      guards: [guards[1], guards[5]],
+      permissions: [permissions[2], permissions[3], permissions[4]],
+    });
+    await this.rolesRepo.save(manager);
+
+    const guest = this.rolesRepo.create({
+      roleName: 'Guest',
+      description: 'Akses terbatas hanya dashboard',
+      guards: [guards[7]],
+      permissions: [permissions[7]],
+    });
+    await this.rolesRepo.save(guest);
+
+    return [superAdmin, admin, user, editor, viewer, manager, guest];
   }
 
   private async seedUsers(roles: Role[]) {
     const hashedPassword = await bcrypt.hash('P455w0rd!!!', 10);
+
     const admin = this.usersRepo.create({
       firstName: 'Super',
       lastName: 'Admin',
@@ -186,5 +344,45 @@ export class SeederService implements OnModuleInit {
       roles: [roles[0]],
     });
     await this.usersRepo.save(admin);
+
+    const editor = this.usersRepo.create({
+      firstName: 'John',
+      lastName: 'Editor',
+      username: 'editor',
+      email: 'editor@example.com',
+      password: hashedPassword,
+      roles: [roles[3]],
+    });
+    await this.usersRepo.save(editor);
+
+    const viewer = this.usersRepo.create({
+      firstName: 'Jane',
+      lastName: 'Viewer',
+      username: 'viewer',
+      email: 'viewer@example.com',
+      password: hashedPassword,
+      roles: [roles[4]],
+    });
+    await this.usersRepo.save(viewer);
+
+    const manager = this.usersRepo.create({
+      firstName: 'Bob',
+      lastName: 'Manager',
+      username: 'manager',
+      email: 'manager@example.com',
+      password: hashedPassword,
+      roles: [roles[5]],
+    });
+    await this.usersRepo.save(manager);
+
+    const guest = this.usersRepo.create({
+      firstName: 'Alice',
+      lastName: 'Guest',
+      username: 'guest',
+      email: 'guest@example.com',
+      password: hashedPassword,
+      roles: [roles[6]],
+    });
+    await this.usersRepo.save(guest);
   }
 }
