@@ -159,6 +159,98 @@ Design system menggunakan **Naive UI** sebagai komponen utama dengan Tailwind CS
 
 ---
 
+## Detail View (Read Detail)
+
+Standar layout untuk semua tampilan **read detail** (drawer sidebar, inline card). Menggantikan `NDescriptions` (table layout) dengan format vertikal **label → value** yang lebih mudah dibaca.
+
+### Pattern
+
+```html
+<div class="detail-view">
+  <div class="detail-field">
+    <span class="detail-label">{LABEL}</span>
+    <span class="detail-value">{VALUE}</span>
+  </div>
+</div>
+```
+
+### CSS Tokens (Scoped)
+
+| Class | Property | Value |
+|-------|----------|-------|
+| `.detail-view` | display | `flex` |
+| `.detail-view` | flex-direction | `column` |
+| `.detail-field` | padding | `12px 0` |
+| `.detail-field` | border-bottom | `1px solid rgba(0,0,0,0.06)` |
+| `.detail-field:last-child` | border-bottom | `none` |
+| `.detail-label` | display | `block` |
+| `.detail-label` | font-size | `11px` |
+| `.detail-label` | font-weight | `600` |
+| `.detail-label` | text-transform | `uppercase` |
+| `.detail-label` | letter-spacing | `0.05em` |
+| `.detail-label` | color | `#94a3b8` |
+| `.detail-label` | margin-bottom | `4px` |
+| `.detail-value` | display | `block` |
+| `.detail-value` | font-size | `14px` |
+| `.detail-value` | font-weight | `500` |
+| `.detail-value` | color | `#1e293b` |
+| `.detail-value` | line-height | `1.5` |
+| `.detail-value` | word-break | `break-word` |
+
+### Modifiers
+
+| Class | Usage |
+|-------|-------|
+| `.detail-value--text` | Long text content. `font-weight: 400; color: #334155` |
+| `.detail-value--mono` | IDs, timestamps, IPs, code paths. `font-family: SF Mono/Fira Code/Menlo/Consolas; font-size: 13px` |
+| `.detail-value--code` | JSON metadata, raw content. `bg: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px` |
+| `.detail-value--dark` | Stack traces, dark code blocks. `bg: #1e293b; border: #334155; pre color: #e2e8f0` |
+
+### Action Buttons
+
+Jika detail view memiliki action buttons (Edit, Open in VS Code, Copy, dll):
+- Letakkan di **footer drawer** (`<template #footer>`) ATAU inline setelah field terakhir
+- Gunakan `NSpace` atau flex container dengan `gap: 8px`
+- Jangan hapus action buttons yang sudah ada
+
+```html
+<!-- Inline actions (e.g., code link buttons) -->
+<div class="detail-field">
+  <span class="detail-label">Source Code</span>
+  <span class="detail-value detail-value--mono">{path}:{line}</span>
+  <div class="detail-actions">
+    <NButton size="small" type="primary" secondary>Open in VS Code</NButton>
+    <NButton size="small">Copy Path</NButton>
+  </div>
+</div>
+```
+
+### Visual Reference
+
+```
+LABEL (11px, uppercase, slate-400, semibold)
+Value (14px, slate-800, medium weight)
+─────────────────────────────────────────
+```
+
+### Implementation Checklist
+
+Semua detail views **WAJIB** menggunakan pola ini:
+
+| Component | File | Status |
+|-----------|------|--------|
+| Activity Log Detail | `views/ActivityLogsPage.vue` | Done |
+| User Detail | `features/users/components/UserDetailDrawer.vue` | Done |
+| Role Detail | `features/users/components/RoleDetailDrawer.vue` | Done |
+| Permission Detail | `features/users/components/PermissionDetailDrawer.vue` | Done |
+| Guard Detail | `features/users/components/GuardDetailDrawer.vue` | Done |
+| Profile Info | `views/DashboardPage.vue` | Done |
+| System Log Detail | `features/logging/components/LogDetailDrawer.vue` | Done |
+
+**Larangan**: Gunakan `NDescriptions` / `NDescriptionsItem` untuk detail views. Gunakan pola `.detail-view` di atas.
+
+---
+
 ## Table
 
 ### Dimensions

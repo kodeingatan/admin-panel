@@ -9,10 +9,7 @@ import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import { playwright } from "@vitest/browser-playwright";
 import tailwindcss from "@tailwindcss/vite";
 
-const dirname =
-  typeof __dirname !== "undefined"
-    ? __dirname
-    : path.dirname(fileURLToPath(import.meta.url));
+const dirname = import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url));
 
 const srcDir = path.resolve(dirname, "src");
 

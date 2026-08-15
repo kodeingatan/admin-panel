@@ -4,8 +4,6 @@ import { useRouter } from 'vue-router'
 import {
   NSpin,
   NCard,
-  NDescriptions,
-  NDescriptionsItem,
   NButton,
   NGrid,
   NGi,
@@ -43,14 +41,16 @@ onMounted(async () => {
         <NGrid :cols="2" :x-gap="16" :y-gap="16">
           <NGi>
             <NCard title="Profile Information">
-              <NDescriptions label-placement="left" bordered :column="1">
-                <NDescriptionsItem label="Username">
-                  {{ authStore.user.username }}
-                </NDescriptionsItem>
-                <NDescriptionsItem label="Email">
-                  {{ authStore.user.email }}
-                </NDescriptionsItem>
-              </NDescriptions>
+              <div class="detail-view">
+                <div class="detail-field">
+                  <span class="detail-label">Username</span>
+                  <span class="detail-value detail-value--mono">{{ authStore.user.username }}</span>
+                </div>
+                <div class="detail-field">
+                  <span class="detail-label">Email</span>
+                  <span class="detail-value">{{ authStore.user.email }}</span>
+                </div>
+              </div>
             </NCard>
           </NGi>
           <NGi>
@@ -104,3 +104,43 @@ onMounted(async () => {
     </NSpin>
   </AppLayout>
 </template>
+
+<style scoped>
+.detail-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-field {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.detail-field:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.detail-value {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.detail-value--mono {
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+</style>

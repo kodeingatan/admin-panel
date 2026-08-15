@@ -49,33 +49,75 @@
       />
     </n-card>
 
-    <n-drawer v-model:show="showDetail" :width="500" placement="right">
+    <n-drawer v-model:show="showDetail" :width="480" placement="right">
       <n-drawer-content title="Activity Log Detail">
         <template v-if="selectedLog">
-          <n-descriptions :column="1" bordered label-placement="left">
-            <n-descriptions-item label="ID">{{ selectedLog.id }}</n-descriptions-item>
-            <n-descriptions-item label="User">
-              {{ selectedLog.user ? `${selectedLog.user.firstName} ${selectedLog.user.lastName}` : 'System' }}
-            </n-descriptions-item>
-            <n-descriptions-item label="Action">
-              <n-tag :type="getActionType(selectedLog.action)" size="small">{{ selectedLog.action }}</n-tag>
-            </n-descriptions-item>
-            <n-descriptions-item label="Entity">
-              <n-tag size="small">{{ selectedLog.entity }}</n-tag>
-            </n-descriptions-item>
-            <n-descriptions-item label="Entity ID">{{ selectedLog.entityId ?? '-' }}</n-descriptions-item>
-            <n-descriptions-item label="Level">
-              <n-tag :type="getLevelType(selectedLog.level)" size="small">{{ selectedLog.level }}</n-tag>
-            </n-descriptions-item>
-            <n-descriptions-item label="Description">{{ selectedLog.description ?? '-' }}</n-descriptions-item>
-            <n-descriptions-item label="IP Address">{{ selectedLog.ipAddress ?? '-' }}</n-descriptions-item>
-            <n-descriptions-item label="User Agent">{{ selectedLog.userAgent ?? '-' }}</n-descriptions-item>
-            <n-descriptions-item label="Metadata">
-              <pre v-if="selectedLog.metadata" style="white-space: pre-wrap; font-size: 12px;">{{ formatMetadata(selectedLog.metadata) }}</pre>
-              <span v-else>-</span>
-            </n-descriptions-item>
-            <n-descriptions-item label="Created At">{{ selectedLog.createdAt }}</n-descriptions-item>
-          </n-descriptions>
+          <div class="detail-view">
+            <div class="detail-field">
+              <span class="detail-label">ID</span>
+              <span class="detail-value">{{ selectedLog.id }}</span>
+            </div>
+
+            <div class="detail-field">
+              <span class="detail-label">User</span>
+              <span class="detail-value">
+                {{ selectedLog.user ? `${selectedLog.user.firstName} ${selectedLog.user.lastName}` : 'System' }}
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <span class="detail-label">Action</span>
+              <span class="detail-value">
+                <n-tag :type="getActionType(selectedLog.action)" size="small" round>{{ selectedLog.action }}</n-tag>
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <span class="detail-label">Entity</span>
+              <span class="detail-value">
+                <n-tag size="small" round>{{ selectedLog.entity }}</n-tag>
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <span class="detail-label">Entity ID</span>
+              <span class="detail-value">{{ selectedLog.entityId ?? '-' }}</span>
+            </div>
+
+            <div class="detail-field">
+              <span class="detail-label">Level</span>
+              <span class="detail-value">
+                <n-tag :type="getLevelType(selectedLog.level)" size="small" round>{{ selectedLog.level }}</n-tag>
+              </span>
+            </div>
+
+            <div class="detail-field">
+              <span class="detail-label">Description</span>
+              <span class="detail-value detail-value--text">{{ selectedLog.description ?? '-' }}</span>
+            </div>
+
+            <div class="detail-field">
+              <span class="detail-label">IP Address</span>
+              <span class="detail-value detail-value--mono">{{ selectedLog.ipAddress ?? '-' }}</span>
+            </div>
+
+            <div class="detail-field">
+              <span class="detail-label">User Agent</span>
+              <span class="detail-value detail-value--text detail-value--mono">{{ selectedLog.userAgent ?? '-' }}</span>
+            </div>
+
+            <div class="detail-field" v-if="selectedLog.metadata">
+              <span class="detail-label">Metadata</span>
+              <div class="detail-value detail-value--code">
+                <pre>{{ formatMetadata(selectedLog.metadata) }}</pre>
+              </div>
+            </div>
+
+            <div class="detail-field">
+              <span class="detail-label">Created At</span>
+              <span class="detail-value detail-value--mono">{{ selectedLog.createdAt }}</span>
+            </div>
+          </div>
         </template>
       </n-drawer-content>
     </n-drawer>
@@ -84,7 +126,7 @@
 
 <script setup lang="ts">
 import { ref, h, onMounted } from 'vue';
-import { NTag, NSpace, NSelect, NCard, NDrawer, NDrawerContent, NDescriptions, NDescriptionsItem } from 'naive-ui';
+import { NTag, NSpace, NSelect, NCard, NDrawer, NDrawerContent } from 'naive-ui';
 import AppLayout from '@/components/layout/AppLayout/AppLayout.vue';
 import DataTable from '@/components/common/DataTable/DataTable.vue';
 import { activityLogService } from '@/services/activity-log.service';
@@ -293,3 +335,67 @@ onMounted(() => {
   fetchLogs();
 });
 </script>
+
+<style scoped>
+.detail-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.detail-field {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.detail-field:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.detail-value {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.detail-value--text {
+  font-weight: 400;
+  color: #334155;
+}
+
+.detail-value--mono {
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+.detail-value--code {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 2px;
+}
+
+.detail-value--code pre {
+  margin: 0;
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #334155;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+</style>

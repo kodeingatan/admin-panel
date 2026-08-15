@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {
-  NDrawer, NDrawerContent, NCode, NButton, NSpace, NIcon, NTag,
+  NDrawer, NDrawerContent, NCode, NButton, NIcon, NTag,
 } from 'naive-ui'
 import { Launch, Copy, Document } from '@vicons/carbon'
 import type { LogEntry } from '@/types/system-log'
@@ -30,50 +30,51 @@ function copyToClipboard(text: string) {
   <NDrawer :show="visible" @update:show="emit('update:visible', $event)" :width="520" placement="right">
     <NDrawerContent title="Log Detail">
       <template v-if="entry">
-        <div class="space-y-5">
-          <!-- Header: Level + Timestamp -->
-          <div class="flex items-center justify-between">
-            <LogLevelBadge :level="entry.level" size="medium" />
-            <span class="text-xs text-gray-400 font-mono">{{ entry.timestamp }}</span>
+        <div class="detail-view">
+          <div class="detail-field">
+            <span class="detail-label">Level</span>
+            <span class="detail-value">
+              <LogLevelBadge :level="entry.level" size="medium" />
+            </span>
           </div>
 
-          <!-- Context -->
-          <div>
-            <div class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Context</div>
-            <NTag size="small" :bordered="false" type="info">{{ entry.context }}</NTag>
+          <div class="detail-field">
+            <span class="detail-label">Timestamp</span>
+            <span class="detail-value detail-value--mono">{{ entry.timestamp }}</span>
           </div>
 
-          <!-- Message -->
-          <div>
-            <div class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Message</div>
-            <div class="text-sm text-gray-800 bg-gray-50 rounded-lg p-3 whitespace-pre-wrap break-all leading-relaxed">
-              {{ entry.message }}
-            </div>
+          <div class="detail-field">
+            <span class="detail-label">Context</span>
+            <span class="detail-value">
+              <NTag size="small" type="info" round>{{ entry.context }}</NTag>
+            </span>
           </div>
 
-          <!-- Stack Trace -->
-          <div v-if="entry.stackTrace">
-            <div class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Stack Trace</div>
-            <div class="bg-gray-900 rounded-lg p-3 overflow-x-auto">
+          <div class="detail-field">
+            <span class="detail-label">Message</span>
+            <span class="detail-value detail-value--text">{{ entry.message }}</span>
+          </div>
+
+          <div v-if="entry.stackTrace" class="detail-field">
+            <span class="detail-label">Stack Trace</span>
+            <div class="detail-value detail-value--code detail-value--dark">
               <NCode :code="entry.stackTrace" language="typescript" class="text-xs" />
             </div>
           </div>
 
-          <!-- Raw Line -->
-          <div v-if="entry.rawLine">
-            <div class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Raw Line</div>
-            <div class="bg-gray-50 rounded-lg p-3 overflow-x-auto">
+          <div v-if="entry.rawLine" class="detail-field">
+            <span class="detail-label">Raw Line</span>
+            <div class="detail-value detail-value--code">
               <NCode :code="entry.rawLine" class="text-xs" />
             </div>
           </div>
 
-          <!-- Code Link Actions -->
-          <div v-if="entry.codePath" class="pt-2 border-t border-gray-100">
-            <div class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Source Code</div>
-            <div class="text-xs text-gray-500 font-mono mb-2 truncate" :title="entry.codePath">
+          <div v-if="entry.codePath" class="detail-field">
+            <span class="detail-label">Source Code</span>
+            <span class="detail-value detail-value--mono detail-value--text">
               {{ entry.codePath }}<template v-if="entry.codeLine">:{{ entry.codeLine }}</template>
-            </div>
-            <NSpace :size="8">
+            </span>
+            <div class="detail-actions">
               <NButton size="small" type="primary" secondary @click="openInVSCode(entry.codePath, entry.codeLine)">
                 <template #icon><NIcon><Launch /></NIcon></template>
                 Open in VS Code
@@ -86,10 +87,89 @@ function copyToClipboard(text: string) {
                 <template #icon><NIcon><Document /></NIcon></template>
                 Line {{ entry.codeLine }}
               </NButton>
-            </NSpace>
+            </div>
           </div>
         </div>
       </template>
     </NDrawerContent>
   </NDrawer>
 </template>
+
+<style scoped>
+.detail-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-field {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.detail-field:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.detail-value {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.detail-value--text {
+  font-weight: 400;
+  color: #334155;
+}
+
+.detail-value--mono {
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+.detail-value--code {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 2px;
+  overflow-x: auto;
+}
+
+.detail-value--code :deep(pre) {
+  margin: 0;
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #334155;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.detail-value--dark {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.detail-value--dark :deep(pre) {
+  color: #e2e8f0;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+</style>

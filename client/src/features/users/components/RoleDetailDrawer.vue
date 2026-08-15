@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { watch, ref } from 'vue'
 import {
-  NDrawer, NDrawerContent, NDescriptions, NDescriptionsItem,
+  NDrawer, NDrawerContent,
   NTag, NButton, NSpace, NSpin,
 } from 'naive-ui'
 import { Edit } from '@vicons/carbon'
@@ -36,43 +36,97 @@ watch(() => props.visible, async (val) => {
 })
 </script>
 
+<style scoped>
+.detail-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-field {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.detail-field:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.detail-value {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.detail-value--text {
+  font-weight: 400;
+  color: #334155;
+}
+
+.detail-value--mono {
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+</style>
+
 <template>
   <NDrawer :show="visible" @update:show="(v) => emit('update:visible', v)" :width="400">
     <NDrawerContent title="Role Detail">
       <NSpin :show="loading">
-        <NDescriptions v-if="role" bordered :column="1" label-placement="left">
-          <NDescriptionsItem label="ID">{{ role.id }}</NDescriptionsItem>
-          <NDescriptionsItem label="Role Name">{{ role.roleName }}</NDescriptionsItem>
-          <NDescriptionsItem label="Description">{{ role.description || '-' }}</NDescriptionsItem>
-          <NDescriptionsItem label="Guards">
-            <NSpace :size="4">
-              <NTag
-                v-for="g in role.guards"
-                :key="g.id"
-                size="small"
-                type="warning"
-                :bordered="false"
-              >
-                {{ g.guardName }}
-              </NTag>
-            </NSpace>
-          </NDescriptionsItem>
-          <NDescriptionsItem label="Permissions">
-            <NSpace :size="4">
-              <NTag
-                v-for="p in role.permissions"
-                :key="p.id"
-                size="small"
-                type="info"
-                :bordered="false"
-              >
-                {{ p.permissionName }}
-              </NTag>
-            </NSpace>
-          </NDescriptionsItem>
-          <NDescriptionsItem label="Created At">{{ new Date(role.createdAt).toLocaleString() }}</NDescriptionsItem>
-          <NDescriptionsItem label="Updated At">{{ new Date(role.updatedAt).toLocaleString() }}</NDescriptionsItem>
-        </NDescriptions>
+        <div v-if="role" class="detail-view">
+          <div class="detail-field">
+            <span class="detail-label">ID</span>
+            <span class="detail-value">{{ role.id }}</span>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Role Name</span>
+            <span class="detail-value">{{ role.roleName }}</span>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Description</span>
+            <span class="detail-value detail-value--text">{{ role.description || '-' }}</span>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Guards</span>
+            <div class="detail-value">
+              <NSpace :size="4">
+                <NTag v-for="g in role.guards" :key="g.id" size="small" type="warning" round>
+                  {{ g.guardName }}
+                </NTag>
+              </NSpace>
+            </div>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Permissions</span>
+            <div class="detail-value">
+              <NSpace :size="4">
+                <NTag v-for="p in role.permissions" :key="p.id" size="small" type="info" round>
+                  {{ p.permissionName }}
+                </NTag>
+              </NSpace>
+            </div>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Created At</span>
+            <span class="detail-value detail-value--mono">{{ new Date(role.createdAt).toLocaleString() }}</span>
+          </div>
+          <div class="detail-field">
+            <span class="detail-label">Updated At</span>
+            <span class="detail-value detail-value--mono">{{ new Date(role.updatedAt).toLocaleString() }}</span>
+          </div>
+        </div>
       </NSpin>
       <template #footer>
         <NSpace>
