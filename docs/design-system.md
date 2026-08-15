@@ -161,52 +161,209 @@ Design system menggunakan **Naive UI** sebagai komponen utama dengan Tailwind CS
 
 ## Table
 
+### Dimensions
+
 | Item          | Value |
 | ------------- | ----- |
 | Row Height    | 36px  |
 | Cell Padding  | 8px   |
 | Header Height | 40px  |
 
-### Table Interaction Patterns
+### Required Features
 
-#### Sort Indicators
+Semua tabel di sistem **WAJIB** memiliki fitur berikut:
+
+| Feature | Description | Component |
+|---------|-------------|-----------|
+| **Global Search** | Pencarian global across semua kolom. Input harus lebar minimal `320px` agar teks terlihat jelas. | `NInput` with prefix icon `Search` |
+| **Field-Specific Search** | Dropdown untuk memilih kolom tertentu yang ingin dicari. Default: "All Fields". | `NSelect` (filterable, width: `160px`) |
+| **Column Visibility** | Toggle show/hide kolom. Persist ke localStorage. | `NPopover` + `NCheckbox` items |
+| **Sorting** | Klik header kolom untuk sort ASC/DESC. | `NDataTable` sorter prop |
+| **Pagination** | Navigasi halaman dengan page selector. | `NDataTable` built-in pagination |
+| **Page Size** | Pilihan jumlah baris per halaman: 10, 20, 50, 100. Default: 20. | `NDataTable` page-sizes |
+| **Refresh/Reload** | Tombol refresh untuk fetch ulang data tanpa reset state. | `NButton` with `Restart` icon |
+
+### Search Input Specification
+
+**KENDALA YANG HARUS DIPERBAIKI**: Input search sebelumnya terlalu pendek dan input tidak terlihat.
+
+| Property | Value | Description |
+|----------|-------|-------------|
+| Min Width | `320px` | Agar placeholder dan input terlihat jelas |
+| Max Width | `flex-1` (sisa ruang) | Mengisi ruang yang tersedia |
+| Height | `32px` | Sesuai standar Naive UI |
+| Placeholder | `Search {entity}...` | Context-aware placeholder |
+| Clearable | `true` | Tombol X untuk clear |
+| Prefix Icon | `Search` (Carbon) | Icon di sebelah kiri input |
+| Debounce | `300ms` | Delay sebelum fetch data |
+
+**Layout Search Bar**:
+```
+┌──────────────────────────────────────────────────────────┐
+│ [Search icon] Search activity logs...          [X clear] │  ← NInput (flex-1, min 320px)
+│ [All Fields ▼]                            [Reset] [⚙️]  │  ← NSelect + NButton + NPopover
+└──────────────────────────────────────────────────────────┘
+```
+
+### Toolbar Layout
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ [Search input (flex-1)] [Search Field Select] [Reset] [Settings]│  ← Toolbar row
+│                                                                 │
+│ [Action buttons: Create, Export, etc.]           [Page info]    │  ← Optional secondary row
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Sort Indicators
 - **Unsorted**: No indicator (column header text only)
 - **Ascending**: ↑ arrow (Carbon `ArrowUp` icon, 14px, Primary 500 color)
 - **Descending**: ↓ arrow (Carbon `ArrowDown` icon, 14px, Primary 500 color)
 - **Transition**: 150ms ease-out color change on hover
 
-#### Column Visibility Toggle
-- **Trigger**: NDropdown with checkbox items
-- **Icon**: Carbon `View` / `ViewOff` icon
+### Column Visibility Toggle
+- **Trigger**: NPopover with checkbox items
+- **Icon**: Carbon `Settings` icon
 - **Position**: Toolbar right side, next to refresh button
 - **Behavior**: Toggle visibility immediately, persist in localStorage
 
-#### Search Field Selector
+### Search Field Selector
 - **Component**: NSelect (filterable, small size)
 - **Default**: "All Fields" option
 - **Position**: Toolbar left side, adjacent to search input
 - **Width**: 160px fixed
 
-#### Pagination Text
+### Pagination Text
 - **Format**: "Showing {from}-{to} of {total}"
 - **Position**: Below table, left-aligned
 - **Style**: `text-sm text-gray-500`
 
-#### Loading State
+### Loading State
 - **Component**: NSpin with `show` prop
 - **Overlay**: Semi-transparent white background
 - **Position**: Absolute overlay on table
 
-#### Empty State
+### Empty State
 - **Component**: NEmpty
 - **Description**: "No {entity} found"
 - **Position**: Centered in table body
 
-#### Error State
+### Error State
 - **Component**: NAlert
 - **Type**: error
 - **Position**: Above table, full width
 - **Dismissable**: Yes (close button)
+
+---
+
+## System Logs Design
+
+### Log Levels
+
+Sistem harus mendukung semua standar log levels:
+
+| Level | Color | Icon | Description |
+|-------|-------|------|-------------|
+| `TRACE` | `#6B7280` (Gray) | `Information` | Detail trace information |
+| `DEBUG` | `#3B82F6` (Blue) | `Bug` | Debugging information |
+| `INFO` | `#22C55E` (Green) | `CheckmarkFilled` | General information |
+| `NOTICE` | `#0EA5E9` (Sky) | `Warning` | Normal but significant |
+| `WARNING` | `#F59E0B` (Amber) | `Warning` | Warning conditions |
+| `ERROR` | `#EF4444` (Red) | `Error` | Error conditions |
+| `CRITICAL` | `#DC2626` (Red Dark) | `ErrorFilled` | Critical failure |
+| `FATAL` | `#991B1B` (Red Darkest) | `Misuse` | Fatal, system will stop |
+| `EMERGENCY` | `#7F1D1D` (Red Ultra) | `Power` | System unusable |
+
+### Log Level Badge
+
+```vue
+<NTag :type="levelType" size="small" :bordered="false">
+  {{ level }}
+</NTag>
+```
+
+| Level | NTag Type |
+|-------|-----------|
+| TRACE | `default` |
+| DEBUG | `default` |
+| INFO | `info` |
+| NOTICE | `info` |
+| WARNING | `warning` |
+| ERROR | `error` |
+| CRITICAL | `error` |
+| FATAL | `error` |
+| EMERGENCY | `error` |
+
+### Log Table Columns
+
+| Column | Key | Width | Sortable | Description |
+|--------|-----|-------|----------|-------------|
+| Timestamp | `timestamp` | 200px | Yes | ISO format timestamp |
+| Level | `level` | 100px | Yes | Log level badge |
+| Context | `context` | 150px | Yes | Logger context/service name |
+| Message | `message` | flex-1 | No | Log message (ellipsis + tooltip) |
+| Actions | `actions` | 120px | No | Detail + Code buttons |
+
+### Log Detail Drawer
+
+Drawer untuk melihat detail log entry:
+
+| Section | Content |
+|---------|---------|
+| **Timestamp** | Full ISO timestamp + relative time (e.g., "2 hours ago") |
+| **Level** | Colored badge |
+| **Context** | Service/module name |
+| **Message** | Full message, no truncation |
+| **Stack Trace** | Pre-formatted code block (if available) |
+| **Metadata** | JSON viewer with syntax highlighting |
+| **Raw Line** | Original log line for debugging |
+
+### Code Link Action
+
+**Fitur untuk mengarahkan ke kode sumber:**
+
+| Action | Description | Implementation |
+|--------|-------------|----------------|
+| **Open in VS Code** | Buka file di VS Code dengan baris spesifik | `vscode://file/{path}:{line}` URI scheme |
+| **Copy Path** | Salin path file ke clipboard | `navigator.clipboard.writeText()` |
+| **Copy Line** | Salin nomor baris | `navigator.clipboard.writeText()` |
+
+**VS Code URI Format**:
+```
+vscode://file/{absolutePath}:{lineNumber}
+```
+
+**Contoh**:
+```
+vscode://file/home/afdal/project/server/src/modules/auth/auth.service.ts:42
+```
+
+**Pattern Detection** (untuk extract path dari stack trace):
+```regex
+at\s+(?:(?:\S+\s+\()?(\/[^\s:]+):(\d+):\d+\)?)|(?:at\s+(\/[^\s:]+):(\d+))
+```
+
+### Log File Selector
+
+| Property | Value |
+|----------|-------|
+| Component | `NSelect` |
+| Width | `300px` |
+| Display | `{filename} ({size} KB)` |
+| Default | First file in list |
+| Refresh | Auto-refresh on file change |
+
+### Log Statistics Bar
+
+Tampilan statistik di atas table:
+
+```
+┌─────────────┬─────────────┬─────────────┬─────────────┬─────────────┐
+│ Total: 1,234│ INFO: 800   │ WARN: 200   │ ERROR: 30   │ DEBUG: 204  │
+└─────────────┴─────────────┴─────────────┴─────────────┴─────────────┘
+```
+
+Each stat is an `NStatistic` component with colored label matching log level.
 
 ---
 

@@ -74,6 +74,16 @@ client/
 - Naive UI components use `GlobalThemeOverrides` for theming, wrap app with `NConfigProvider`
 - Table browse: Use `DataTable` component for all list/table pages (supports sort, search, column visibility, pagination)
 
+**DataTable Requirements** (ALL tables must have):
+- Global search input (min-width: `320px`, clearable, debounced 300ms)
+- Field-specific search selector (NSelect, width: `160px`, default: "All Fields")
+- Column visibility toggle (NPopover + NCheckbox, persist to localStorage)
+- Sorting (ASC/DESC per column via header click)
+- Pagination (page navigation)
+- Page size selector (10, 20, 50, 100 items)
+- Refresh/reload button (fetch data without state reset)
+- See `docs/design-system.md` Table section for full specification
+
 **Routing**: Vue Router configured in `src/router/index.ts`
 - `/login` — LoginPage (guest only)
 - `/register` — RegisterPage (guest only)

@@ -26,7 +26,14 @@ export class PermissionsService {
   ) {}
 
   async findAll(query: QueryPermissionDto) {
-    const { page = 1, limit = 20, search, searchField, sortBy, sortOrder } = query;
+    const {
+      page = 1,
+      limit = 20,
+      search,
+      searchField,
+      sortBy,
+      sortOrder,
+    } = query;
     const qb = this.permissionsRepository
       .createQueryBuilder('permission')
       .leftJoinAndSelect('permission.methods', 'method')
@@ -35,15 +42,22 @@ export class PermissionsService {
     if (search && searchField) {
       const allowed = QueryPermissionDto.searchFields;
       if (allowed.includes(searchField)) {
-        qb.where(`permission.${searchField} LIKE :search`, { search: `%${search}%` });
+        qb.where(`permission.${searchField} LIKE :search`, {
+          search: `%${search}%`,
+        });
       }
     } else if (search) {
-      const conditions = QueryPermissionDto.searchFields.map((f) => `permission.${f} LIKE :search`);
+      const conditions = QueryPermissionDto.searchFields.map(
+        (f) => `permission.${f} LIKE :search`,
+      );
       qb.where(`(${conditions.join(' OR ')})`, { search: `%${search}%` });
     }
 
     const sortable = QueryPermissionDto.sortableFields;
-    const field = sortBy && sortable.includes(sortBy) ? `permission.${sortBy}` : 'permission.id';
+    const field =
+      sortBy && sortable.includes(sortBy)
+        ? `permission.${sortBy}`
+        : 'permission.id';
     const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
     const [permissions, total] = await qb
@@ -121,11 +135,15 @@ export class PermissionsService {
     });
     if (!permission) throw new NotFoundException('Permission not found');
 
-    if (dto.permissionName && dto.permissionName !== permission.permissionName) {
+    if (
+      dto.permissionName &&
+      dto.permissionName !== permission.permissionName
+    ) {
       const existing = await this.permissionsRepository.findOne({
         where: { permissionName: dto.permissionName },
       });
-      if (existing) throw new ConflictException('Permission name already exists');
+      if (existing)
+        throw new ConflictException('Permission name already exists');
     }
 
     if (dto.permissionName) permission.permissionName = dto.permissionName;
@@ -165,7 +183,9 @@ export class PermissionsService {
   }
 
   async remove(id: number, req?: any) {
-    const permission = await this.permissionsRepository.findOne({ where: { id } });
+    const permission = await this.permissionsRepository.findOne({
+      where: { id },
+    });
     if (!permission) throw new NotFoundException('Permission not found');
 
     const permissionName = permission.permissionName;

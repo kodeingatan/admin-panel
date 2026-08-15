@@ -8,7 +8,10 @@ import { RolesService } from '@/modules/roles/services/roles.service';
 import { ActivityLogsModule } from '@/modules/activity-logs/activity-logs.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Role, Guard, Permission]), ActivityLogsModule],
+  imports: [
+    TypeOrmModule.forFeature([Role, Guard, Permission]),
+    ActivityLogsModule,
+  ],
   controllers: [RolesController],
   providers: [RolesService],
   exports: [RolesService],

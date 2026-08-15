@@ -26,7 +26,14 @@ export class RolesService {
   ) {}
 
   async findAll(query: QueryRoleDto) {
-    const { page = 1, limit = 20, search, searchField, sortBy, sortOrder } = query;
+    const {
+      page = 1,
+      limit = 20,
+      search,
+      searchField,
+      sortBy,
+      sortOrder,
+    } = query;
     const qb = this.rolesRepository
       .createQueryBuilder('role')
       .leftJoinAndSelect('role.guards', 'guard')
@@ -38,12 +45,15 @@ export class RolesService {
         qb.where(`role.${searchField} LIKE :search`, { search: `%${search}%` });
       }
     } else if (search) {
-      const conditions = QueryRoleDto.searchFields.map((f) => `role.${f} LIKE :search`);
+      const conditions = QueryRoleDto.searchFields.map(
+        (f) => `role.${f} LIKE :search`,
+      );
       qb.where(`(${conditions.join(' OR ')})`, { search: `%${search}%` });
     }
 
     const sortable = QueryRoleDto.sortableFields;
-    const field = sortBy && sortable.includes(sortBy) ? `role.${sortBy}` : 'role.id';
+    const field =
+      sortBy && sortable.includes(sortBy) ? `role.${sortBy}` : 'role.id';
     const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
     const [roles, total] = await qb
@@ -131,7 +141,9 @@ export class RolesService {
     if (dto.description !== undefined) role.description = dto.description;
 
     if (dto.guardIds) {
-      role.guards = await this.guardsRepository.findBy({ id: In(dto.guardIds) });
+      role.guards = await this.guardsRepository.findBy({
+        id: In(dto.guardIds),
+      });
     }
     if (dto.permissionIds) {
       role.permissions = await this.permissionsRepository.findBy({

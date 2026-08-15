@@ -45,7 +45,11 @@ export class GuardsController {
   @Put(':id')
   @Permissions('Guard Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateGuardDto, @Request() req) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateGuardDto,
+    @Request() req,
+  ) {
     return this.guardsService.update(id, dto, req);
   }
 

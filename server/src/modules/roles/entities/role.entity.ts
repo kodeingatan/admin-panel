@@ -34,7 +34,9 @@ export class Role {
   })
   guards: Guard[];
 
-  @ManyToMany(() => Permission, (permission) => permission.roles, { eager: true })
+  @ManyToMany(() => Permission, (permission) => permission.roles, {
+    eager: true,
+  })
   @JoinTable({
     name: 'roles_permissions',
     joinColumn: { name: 'roleId', referencedColumnName: 'id' },

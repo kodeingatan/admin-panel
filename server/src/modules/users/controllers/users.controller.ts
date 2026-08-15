@@ -45,7 +45,11 @@ export class UsersController {
   @Put(':id')
   @Permissions('User Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Request() req) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateUserDto,
+    @Request() req,
+  ) {
     return this.usersService.update(id, dto, req);
   }
 

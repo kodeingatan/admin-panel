@@ -17,7 +17,8 @@ export class SeederService implements OnModuleInit {
   constructor(
     @InjectRepository(User) private usersRepo: Repository<User>,
     @InjectRepository(Role) private rolesRepo: Repository<Role>,
-    @InjectRepository(Permission) private permissionsRepo: Repository<Permission>,
+    @InjectRepository(Permission)
+    private permissionsRepo: Repository<Permission>,
     @InjectRepository(PermissionMethod)
     private permissionMethodsRepo: Repository<PermissionMethod>,
     @InjectRepository(PermissionUrl)
@@ -54,7 +55,11 @@ export class SeederService implements OnModuleInit {
     });
     await this.guardsRepo.save(fullAccess);
     await this.guardUrlsRepo.save(
-      this.guardUrlsRepo.create({ url: '/*', type: 'allow', guard: fullAccess }),
+      this.guardUrlsRepo.create({
+        url: '/*',
+        type: 'allow',
+        guard: fullAccess,
+      }),
     );
 
     const webAccess = this.guardsRepo.create({
@@ -63,7 +68,11 @@ export class SeederService implements OnModuleInit {
     });
     await this.guardsRepo.save(webAccess);
     await this.guardUrlsRepo.save([
-      this.guardUrlsRepo.create({ url: '/api/*', type: 'allow', guard: webAccess }),
+      this.guardUrlsRepo.create({
+        url: '/api/*',
+        type: 'allow',
+        guard: webAccess,
+      }),
       this.guardUrlsRepo.create({
         url: '/api/admin/*',
         type: 'deny',
@@ -77,7 +86,11 @@ export class SeederService implements OnModuleInit {
     });
     await this.guardsRepo.save(apiOnly);
     await this.guardUrlsRepo.save(
-      this.guardUrlsRepo.create({ url: '/api/*', type: 'allow', guard: apiOnly }),
+      this.guardUrlsRepo.create({
+        url: '/api/*',
+        type: 'allow',
+        guard: apiOnly,
+      }),
     );
 
     const adminOnly = this.guardsRepo.create({
@@ -86,9 +99,21 @@ export class SeederService implements OnModuleInit {
     });
     await this.guardsRepo.save(adminOnly);
     await this.guardUrlsRepo.save([
-      this.guardUrlsRepo.create({ url: '/api/admin/*', type: 'allow', guard: adminOnly }),
-      this.guardUrlsRepo.create({ url: '/api/users/*', type: 'allow', guard: adminOnly }),
-      this.guardUrlsRepo.create({ url: '/api/roles/*', type: 'allow', guard: adminOnly }),
+      this.guardUrlsRepo.create({
+        url: '/api/admin/*',
+        type: 'allow',
+        guard: adminOnly,
+      }),
+      this.guardUrlsRepo.create({
+        url: '/api/users/*',
+        type: 'allow',
+        guard: adminOnly,
+      }),
+      this.guardUrlsRepo.create({
+        url: '/api/roles/*',
+        type: 'allow',
+        guard: adminOnly,
+      }),
     ]);
 
     const readOnlyGuard = this.guardsRepo.create({
@@ -97,9 +122,21 @@ export class SeederService implements OnModuleInit {
     });
     await this.guardsRepo.save(readOnlyGuard);
     await this.guardUrlsRepo.save([
-      this.guardUrlsRepo.create({ url: '/api/*', type: 'allow', guard: readOnlyGuard }),
-      this.guardUrlsRepo.create({ url: '/api/users', type: 'deny', guard: readOnlyGuard }),
-      this.guardUrlsRepo.create({ url: '/api/roles', type: 'deny', guard: readOnlyGuard }),
+      this.guardUrlsRepo.create({
+        url: '/api/*',
+        type: 'allow',
+        guard: readOnlyGuard,
+      }),
+      this.guardUrlsRepo.create({
+        url: '/api/users',
+        type: 'deny',
+        guard: readOnlyGuard,
+      }),
+      this.guardUrlsRepo.create({
+        url: '/api/roles',
+        type: 'deny',
+        guard: readOnlyGuard,
+      }),
     ]);
 
     const userMgmtGuard = this.guardsRepo.create({
@@ -108,7 +145,11 @@ export class SeederService implements OnModuleInit {
     });
     await this.guardsRepo.save(userMgmtGuard);
     await this.guardUrlsRepo.save(
-      this.guardUrlsRepo.create({ url: '/api/users/*', type: 'allow', guard: userMgmtGuard }),
+      this.guardUrlsRepo.create({
+        url: '/api/users/*',
+        type: 'allow',
+        guard: userMgmtGuard,
+      }),
     );
 
     const roleMgmtGuard = this.guardsRepo.create({
@@ -117,7 +158,11 @@ export class SeederService implements OnModuleInit {
     });
     await this.guardsRepo.save(roleMgmtGuard);
     await this.guardUrlsRepo.save(
-      this.guardUrlsRepo.create({ url: '/api/roles/*', type: 'allow', guard: roleMgmtGuard }),
+      this.guardUrlsRepo.create({
+        url: '/api/roles/*',
+        type: 'allow',
+        guard: roleMgmtGuard,
+      }),
     );
 
     const dashboardOnly = this.guardsRepo.create({
@@ -126,14 +171,43 @@ export class SeederService implements OnModuleInit {
     });
     await this.guardsRepo.save(dashboardOnly);
     await this.guardUrlsRepo.save([
-      this.guardUrlsRepo.create({ url: '/api/auth/profile', type: 'allow', guard: dashboardOnly }),
-      this.guardUrlsRepo.create({ url: '/api/users/*', type: 'deny', guard: dashboardOnly }),
-      this.guardUrlsRepo.create({ url: '/api/roles/*', type: 'deny', guard: dashboardOnly }),
-      this.guardUrlsRepo.create({ url: '/api/permissions/*', type: 'deny', guard: dashboardOnly }),
-      this.guardUrlsRepo.create({ url: '/api/guards/*', type: 'deny', guard: dashboardOnly }),
+      this.guardUrlsRepo.create({
+        url: '/api/auth/profile',
+        type: 'allow',
+        guard: dashboardOnly,
+      }),
+      this.guardUrlsRepo.create({
+        url: '/api/users/*',
+        type: 'deny',
+        guard: dashboardOnly,
+      }),
+      this.guardUrlsRepo.create({
+        url: '/api/roles/*',
+        type: 'deny',
+        guard: dashboardOnly,
+      }),
+      this.guardUrlsRepo.create({
+        url: '/api/permissions/*',
+        type: 'deny',
+        guard: dashboardOnly,
+      }),
+      this.guardUrlsRepo.create({
+        url: '/api/guards/*',
+        type: 'deny',
+        guard: dashboardOnly,
+      }),
     ]);
 
-    return [fullAccess, webAccess, apiOnly, adminOnly, readOnlyGuard, userMgmtGuard, roleMgmtGuard, dashboardOnly];
+    return [
+      fullAccess,
+      webAccess,
+      apiOnly,
+      adminOnly,
+      readOnlyGuard,
+      userMgmtGuard,
+      roleMgmtGuard,
+      dashboardOnly,
+    ];
   }
 
   private async seedPermissions(): Promise<Permission[]> {
@@ -158,7 +232,10 @@ export class SeederService implements OnModuleInit {
     });
     await this.permissionsRepo.save(readOnly);
     await this.permissionMethodsRepo.save([
-      this.permissionMethodsRepo.create({ method: 'GET', permission: readOnly }),
+      this.permissionMethodsRepo.create({
+        method: 'GET',
+        permission: readOnly,
+      }),
       this.permissionMethodsRepo.create({
         method: 'OPTIONS',
         permission: readOnly,
@@ -174,12 +251,18 @@ export class SeederService implements OnModuleInit {
     });
     await this.permissionsRepo.save(readWrite);
     await this.permissionMethodsRepo.save([
-      this.permissionMethodsRepo.create({ method: 'GET', permission: readWrite }),
+      this.permissionMethodsRepo.create({
+        method: 'GET',
+        permission: readWrite,
+      }),
       this.permissionMethodsRepo.create({
         method: 'POST',
         permission: readWrite,
       }),
-      this.permissionMethodsRepo.create({ method: 'PUT', permission: readWrite }),
+      this.permissionMethodsRepo.create({
+        method: 'PUT',
+        permission: readWrite,
+      }),
       this.permissionMethodsRepo.create({
         method: 'DELETE',
         permission: readWrite,
@@ -203,13 +286,28 @@ export class SeederService implements OnModuleInit {
     });
     await this.permissionsRepo.save(userMgmt);
     await this.permissionMethodsRepo.save([
-      this.permissionMethodsRepo.create({ method: 'GET', permission: userMgmt }),
-      this.permissionMethodsRepo.create({ method: 'POST', permission: userMgmt }),
-      this.permissionMethodsRepo.create({ method: 'PUT', permission: userMgmt }),
-      this.permissionMethodsRepo.create({ method: 'DELETE', permission: userMgmt }),
+      this.permissionMethodsRepo.create({
+        method: 'GET',
+        permission: userMgmt,
+      }),
+      this.permissionMethodsRepo.create({
+        method: 'POST',
+        permission: userMgmt,
+      }),
+      this.permissionMethodsRepo.create({
+        method: 'PUT',
+        permission: userMgmt,
+      }),
+      this.permissionMethodsRepo.create({
+        method: 'DELETE',
+        permission: userMgmt,
+      }),
     ]);
     await this.permissionUrlsRepo.save(
-      this.permissionUrlsRepo.create({ url: '/api/users/*', permission: userMgmt }),
+      this.permissionUrlsRepo.create({
+        url: '/api/users/*',
+        permission: userMgmt,
+      }),
     );
 
     const roleMgmt = this.permissionsRepo.create({
@@ -218,13 +316,28 @@ export class SeederService implements OnModuleInit {
     });
     await this.permissionsRepo.save(roleMgmt);
     await this.permissionMethodsRepo.save([
-      this.permissionMethodsRepo.create({ method: 'GET', permission: roleMgmt }),
-      this.permissionMethodsRepo.create({ method: 'POST', permission: roleMgmt }),
-      this.permissionMethodsRepo.create({ method: 'PUT', permission: roleMgmt }),
-      this.permissionMethodsRepo.create({ method: 'DELETE', permission: roleMgmt }),
+      this.permissionMethodsRepo.create({
+        method: 'GET',
+        permission: roleMgmt,
+      }),
+      this.permissionMethodsRepo.create({
+        method: 'POST',
+        permission: roleMgmt,
+      }),
+      this.permissionMethodsRepo.create({
+        method: 'PUT',
+        permission: roleMgmt,
+      }),
+      this.permissionMethodsRepo.create({
+        method: 'DELETE',
+        permission: roleMgmt,
+      }),
     ]);
     await this.permissionUrlsRepo.save(
-      this.permissionUrlsRepo.create({ url: '/api/roles/*', permission: roleMgmt }),
+      this.permissionUrlsRepo.create({
+        url: '/api/roles/*',
+        permission: roleMgmt,
+      }),
     );
 
     const guardMgmt = this.permissionsRepo.create({
@@ -233,13 +346,28 @@ export class SeederService implements OnModuleInit {
     });
     await this.permissionsRepo.save(guardMgmt);
     await this.permissionMethodsRepo.save([
-      this.permissionMethodsRepo.create({ method: 'GET', permission: guardMgmt }),
-      this.permissionMethodsRepo.create({ method: 'POST', permission: guardMgmt }),
-      this.permissionMethodsRepo.create({ method: 'PUT', permission: guardMgmt }),
-      this.permissionMethodsRepo.create({ method: 'DELETE', permission: guardMgmt }),
+      this.permissionMethodsRepo.create({
+        method: 'GET',
+        permission: guardMgmt,
+      }),
+      this.permissionMethodsRepo.create({
+        method: 'POST',
+        permission: guardMgmt,
+      }),
+      this.permissionMethodsRepo.create({
+        method: 'PUT',
+        permission: guardMgmt,
+      }),
+      this.permissionMethodsRepo.create({
+        method: 'DELETE',
+        permission: guardMgmt,
+      }),
     ]);
     await this.permissionUrlsRepo.save(
-      this.permissionUrlsRepo.create({ url: '/api/guards/*', permission: guardMgmt }),
+      this.permissionUrlsRepo.create({
+        url: '/api/guards/*',
+        permission: guardMgmt,
+      }),
     );
 
     const permMgmt = this.permissionsRepo.create({
@@ -248,13 +376,28 @@ export class SeederService implements OnModuleInit {
     });
     await this.permissionsRepo.save(permMgmt);
     await this.permissionMethodsRepo.save([
-      this.permissionMethodsRepo.create({ method: 'GET', permission: permMgmt }),
-      this.permissionMethodsRepo.create({ method: 'POST', permission: permMgmt }),
-      this.permissionMethodsRepo.create({ method: 'PUT', permission: permMgmt }),
-      this.permissionMethodsRepo.create({ method: 'DELETE', permission: permMgmt }),
+      this.permissionMethodsRepo.create({
+        method: 'GET',
+        permission: permMgmt,
+      }),
+      this.permissionMethodsRepo.create({
+        method: 'POST',
+        permission: permMgmt,
+      }),
+      this.permissionMethodsRepo.create({
+        method: 'PUT',
+        permission: permMgmt,
+      }),
+      this.permissionMethodsRepo.create({
+        method: 'DELETE',
+        permission: permMgmt,
+      }),
     ]);
     await this.permissionUrlsRepo.save(
-      this.permissionUrlsRepo.create({ url: '/api/permissions/*', permission: permMgmt }),
+      this.permissionUrlsRepo.create({
+        url: '/api/permissions/*',
+        permission: permMgmt,
+      }),
     );
 
     const dashRead = this.permissionsRepo.create({
@@ -263,10 +406,16 @@ export class SeederService implements OnModuleInit {
     });
     await this.permissionsRepo.save(dashRead);
     await this.permissionMethodsRepo.save(
-      this.permissionMethodsRepo.create({ method: 'GET', permission: dashRead }),
+      this.permissionMethodsRepo.create({
+        method: 'GET',
+        permission: dashRead,
+      }),
     );
     await this.permissionUrlsRepo.save(
-      this.permissionUrlsRepo.create({ url: '/api/auth/profile', permission: dashRead }),
+      this.permissionUrlsRepo.create({
+        url: '/api/auth/profile',
+        permission: dashRead,
+      }),
     );
 
     const activityLogs = this.permissionsRepo.create({
@@ -275,10 +424,16 @@ export class SeederService implements OnModuleInit {
     });
     await this.permissionsRepo.save(activityLogs);
     await this.permissionMethodsRepo.save(
-      this.permissionMethodsRepo.create({ method: 'GET', permission: activityLogs }),
+      this.permissionMethodsRepo.create({
+        method: 'GET',
+        permission: activityLogs,
+      }),
     );
     await this.permissionUrlsRepo.save(
-      this.permissionUrlsRepo.create({ url: '/api/activity-logs/*', permission: activityLogs }),
+      this.permissionUrlsRepo.create({
+        url: '/api/activity-logs/*',
+        permission: activityLogs,
+      }),
     );
 
     const systemLogs = this.permissionsRepo.create({
@@ -287,13 +442,30 @@ export class SeederService implements OnModuleInit {
     });
     await this.permissionsRepo.save(systemLogs);
     await this.permissionMethodsRepo.save(
-      this.permissionMethodsRepo.create({ method: 'GET', permission: systemLogs }),
+      this.permissionMethodsRepo.create({
+        method: 'GET',
+        permission: systemLogs,
+      }),
     );
     await this.permissionUrlsRepo.save(
-      this.permissionUrlsRepo.create({ url: '/api/system-logs/*', permission: systemLogs }),
+      this.permissionUrlsRepo.create({
+        url: '/api/system-logs/*',
+        permission: systemLogs,
+      }),
     );
 
-    return [fullAccess, readOnly, readWrite, userMgmt, roleMgmt, guardMgmt, permMgmt, dashRead, activityLogs, systemLogs];
+    return [
+      fullAccess,
+      readOnly,
+      readWrite,
+      userMgmt,
+      roleMgmt,
+      guardMgmt,
+      permMgmt,
+      dashRead,
+      activityLogs,
+      systemLogs,
+    ];
   }
 
   private async seedRoles(guards: any[], permissions: any[]): Promise<Role[]> {

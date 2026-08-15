@@ -45,7 +45,11 @@ export class RolesController {
   @Put(':id')
   @Permissions('Role Management', 'Full Access')
   @Roles('Admin', 'Super Admin')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateRoleDto, @Request() req) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateRoleDto,
+    @Request() req,
+  ) {
     return this.rolesService.update(id, dto, req);
   }
 

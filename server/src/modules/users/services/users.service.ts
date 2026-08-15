@@ -24,7 +24,14 @@ export class UsersService {
   ) {}
 
   async findAll(query: QueryUserDto) {
-    const { page = 1, limit = 20, search, searchField, sortBy, sortOrder } = query;
+    const {
+      page = 1,
+      limit = 20,
+      search,
+      searchField,
+      sortBy,
+      sortOrder,
+    } = query;
     const qb = this.usersRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.roles', 'role');
@@ -35,12 +42,15 @@ export class UsersService {
         qb.where(`user.${searchField} LIKE :search`, { search: `%${search}%` });
       }
     } else if (search) {
-      const conditions = QueryUserDto.searchFields.map((f) => `user.${f} LIKE :search`);
+      const conditions = QueryUserDto.searchFields.map(
+        (f) => `user.${f} LIKE :search`,
+      );
       qb.where(`(${conditions.join(' OR ')})`, { search: `%${search}%` });
     }
 
     const sortable = QueryUserDto.sortableFields;
-    const field = sortBy && sortable.includes(sortBy) ? `user.${sortBy}` : 'user.id';
+    const field =
+      sortBy && sortable.includes(sortBy) ? `user.${sortBy}` : 'user.id';
     const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
     const [users, total] = await qb

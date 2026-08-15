@@ -8,7 +8,10 @@ import { PermissionsService } from '@/modules/permissions/services/permissions.s
 import { ActivityLogsModule } from '@/modules/activity-logs/activity-logs.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Permission, PermissionMethod, PermissionUrl]), ActivityLogsModule],
+  imports: [
+    TypeOrmModule.forFeature([Permission, PermissionMethod, PermissionUrl]),
+    ActivityLogsModule,
+  ],
   controllers: [PermissionsController],
   providers: [PermissionsService],
   exports: [PermissionsService],

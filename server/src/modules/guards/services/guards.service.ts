@@ -23,7 +23,14 @@ export class GuardsService {
   ) {}
 
   async findAll(query: QueryGuardDto) {
-    const { page = 1, limit = 20, search, searchField, sortBy, sortOrder } = query;
+    const {
+      page = 1,
+      limit = 20,
+      search,
+      searchField,
+      sortBy,
+      sortOrder,
+    } = query;
     const qb = this.guardsRepository
       .createQueryBuilder('guard')
       .leftJoinAndSelect('guard.urls', 'url');
@@ -31,15 +38,20 @@ export class GuardsService {
     if (search && searchField) {
       const allowed = QueryGuardDto.searchFields;
       if (allowed.includes(searchField)) {
-        qb.where(`guard.${searchField} LIKE :search`, { search: `%${search}%` });
+        qb.where(`guard.${searchField} LIKE :search`, {
+          search: `%${search}%`,
+        });
       }
     } else if (search) {
-      const conditions = QueryGuardDto.searchFields.map((f) => `guard.${f} LIKE :search`);
+      const conditions = QueryGuardDto.searchFields.map(
+        (f) => `guard.${f} LIKE :search`,
+      );
       qb.where(`(${conditions.join(' OR ')})`, { search: `%${search}%` });
     }
 
     const sortable = QueryGuardDto.sortableFields;
-    const field = sortBy && sortable.includes(sortBy) ? `guard.${sortBy}` : 'guard.id';
+    const field =
+      sortBy && sortable.includes(sortBy) ? `guard.${sortBy}` : 'guard.id';
     const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
     const [guards, total] = await qb
