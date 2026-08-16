@@ -56,10 +56,26 @@ function renderIcon(icon: any) {
   return () => h(NIcon, null, { default: () => h(icon) })
 }
 
+function renderMenuLabel(label: string, routePath: string) {
+  return () =>
+    h(
+      'a',
+      {
+        href: routePath,
+        onClick: (e: MouseEvent) => {
+          e.preventDefault()
+          router.push(routePath)
+        },
+        style: 'text-decoration: none; color: inherit;',
+      },
+      label,
+    )
+}
+
 const menuOptions = computed<MenuOption[]>(() => {
   const options: MenuOption[] = [
     {
-      label: 'Dashboard',
+      label: renderMenuLabel('Dashboard', '/dashboard'),
       key: 'dashboard',
       icon: renderIcon(Grid),
     },
@@ -72,22 +88,22 @@ const menuOptions = computed<MenuOption[]>(() => {
       icon: renderIcon(UserMultiple),
       children: [
         {
-          label: 'User',
+          label: renderMenuLabel('User', '/dashboard/users'),
           key: 'users',
           icon: renderIcon(User),
         },
         {
-          label: 'Guard',
+          label: renderMenuLabel('Guard', '/dashboard/guards'),
           key: 'guards',
           icon: renderIcon(Security),
         },
         {
-          label: 'Role',
+          label: renderMenuLabel('Role', '/dashboard/roles'),
           key: 'roles',
           icon: renderIcon(Rule),
         },
         {
-          label: 'Permissions',
+          label: renderMenuLabel('Permissions', '/dashboard/permissions'),
           key: 'permissions',
           icon: renderIcon(Document),
         },
@@ -100,12 +116,12 @@ const menuOptions = computed<MenuOption[]>(() => {
       icon: renderIcon(Settings),
       children: [
         {
-          label: 'Activity Logs',
+          label: renderMenuLabel('Activity Logs', '/dashboard/activity-logs'),
           key: 'activity-logs',
           icon: renderIcon(Activity),
         },
         {
-          label: 'System Logs',
+          label: renderMenuLabel('System Logs', '/dashboard/system-logs'),
           key: 'system-logs',
           icon: renderIcon(Report),
         },
@@ -136,22 +152,8 @@ watch(
   { immediate: true },
 )
 
-const menuRouteMap: Record<string, string> = {
-  dashboard: '/dashboard',
-  users: '/dashboard/users',
-  guards: '/dashboard/guards',
-  roles: '/dashboard/roles',
-  permissions: '/dashboard/permissions',
-  'activity-logs': '/dashboard/activity-logs',
-  'system-logs': '/dashboard/system-logs',
-}
-
 function handleMenuUpdate(key: string) {
   activeKey.value = key
-  const target = menuRouteMap[key]
-  if (target) {
-    router.push(target)
-  }
 }
 
 const avatarLabel = computed(() => `${props.user.firstName.charAt(0)}${props.user.lastName.charAt(0)}`)

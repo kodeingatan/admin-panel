@@ -477,6 +477,43 @@ Each stat is an `NStatistic` component with colored label matching log level.
 
 ---
 
+## Sidebar Navigation
+
+### Menu Item Link Behavior
+
+Setiap menu item (leaf node) dirender sebagai `<a>` tag dengan atribut `href`, bukan `<button>` atau `<div>`.
+
+| Behavior | Implementation |
+|----------|---------------|
+| Left click | SPA navigation via `router.push()` (preventDefault) |
+| Right click | Browser native "Open link in new tab" |
+| Ctrl+Click | Browser native open in new tab |
+| Middle click | Browser native open in new tab |
+| Submenu group | String label (bukan link) |
+
+### Render Pattern
+
+```typescript
+// Leaf menu item (punya route)
+label: () =>
+  h('a', {
+    href: '/dashboard/users',
+    onClick: (e) => { e.preventDefault(); router.push('/dashboard/users') },
+    style: 'text-decoration: none; color: inherit;',
+  }, 'User')
+
+// Group submenu (tidak punya route sendiri)
+label: 'User Management'  // plain string
+```
+
+### Design Rationale
+
+- `<a>` tag memberikan UX browser native (right-click menu, middle-click, Ctrl+click)
+- `e.preventDefault()` + `router.push()` mempertahankan SPA behavior untuk left click
+- `href` tetap di-set agar URL addressable dan shareable
+
+---
+
 ## Responsive
 
 ### Device Reference
