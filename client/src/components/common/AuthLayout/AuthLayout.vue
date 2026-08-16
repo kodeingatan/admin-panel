@@ -1,0 +1,158 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+
+interface Props {
+  title: string
+  subtitle?: string
+  imagePosition?: 'left' | 'right'
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  imagePosition: 'right',
+})
+
+const isReversed = computed(() => props.imagePosition === 'left')
+</script>
+
+<template>
+  <div class="auth-layout" :class="{ 'auth-layout--reversed': isReversed }">
+    <!-- Image Panel -->
+    <div class="auth-image">
+      <div class="auth-image__overlay">
+        <div class="auth-image__content">
+          <svg class="auth-image__icon" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="58" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+            <circle cx="60" cy="60" r="40" stroke="currentColor" stroke-width="2" opacity="0.5"/>
+            <circle cx="60" cy="60" r="20" fill="currentColor" opacity="0.8"/>
+          </svg>
+          <h2 class="auth-image__title">Admin Panel</h2>
+          <p class="auth-image__subtitle">Sistem manajemen bisnis digital</p>
+        </div>
+      </div>
+      <div class="auth-image__pattern"></div>
+    </div>
+
+    <!-- Form Panel -->
+    <div class="auth-form">
+      <div class="auth-form__inner">
+        <div class="auth-form__header">
+          <h1 class="auth-form__title">{{ title }}</h1>
+          <p v-if="subtitle" class="auth-form__subtitle">{{ subtitle }}</p>
+        </div>
+        <slot />
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.auth-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.auth-layout--reversed {
+  flex-direction: row-reverse;
+}
+
+/* Image Panel */
+.auth-image {
+  flex: 1;
+  position: relative;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #6366f1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.auth-image__overlay {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: white;
+  padding: 2rem;
+}
+
+.auth-image__icon {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 1.5rem;
+  animation: authIconFloat 3s ease-in-out infinite;
+}
+
+@keyframes authIconFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.auth-image__title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.auth-image__subtitle {
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.auth-image__pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.15) 1px, transparent 0);
+  background-size: 32px 32px;
+}
+
+/* Form Panel */
+.auth-form {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: #fafafa;
+}
+
+.auth-form__inner {
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-form__header {
+  margin-bottom: 2rem;
+}
+
+.auth-form__title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.auth-form__subtitle {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .auth-layout {
+    flex-direction: column;
+  }
+
+  .auth-layout--reversed {
+    flex-direction: column;
+  }
+
+  .auth-image {
+    min-height: 200px;
+    flex: none;
+  }
+
+  .auth-form {
+    flex: 1;
+  }
+}
+</style>

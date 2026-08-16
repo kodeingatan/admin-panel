@@ -95,6 +95,32 @@
   }
 }
 
+/* Auth Page Animations */
+.auth-slide-enter-active,
+.auth-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.auth-slide-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.auth-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+/* Form Field Stagger */
+.auth-field-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.auth-field-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *,

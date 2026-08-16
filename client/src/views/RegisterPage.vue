@@ -6,7 +6,7 @@ import {
   type FormInst, type FormRules,
 } from 'naive-ui'
 import { UserAvatar } from '@vicons/carbon'
-import AuthForm from '@/components/common/AuthForm/AuthForm.vue'
+import AuthLayout from '@/components/common/AuthLayout/AuthLayout.vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { getErrorMessage } from '@/utils/error'
 
@@ -74,66 +74,87 @@ async function handleRegister() {
 </script>
 
 <template>
-  <AuthForm title="Buat Akun" subtitle="Mulai dengan akun gratis Anda">
-    <NAlert v-if="error" type="error" class="mb-4">
-      {{ error }}
-    </NAlert>
+  <AuthLayout title="Buat Akun" subtitle="Mulai dengan akun gratis Anda" image-position="right">
+    <Transition name="fade" appear>
+      <div class="auth-form-content">
+        <NAlert v-if="error" type="error" class="mb-4 alert-animate">
+          {{ error }}
+        </NAlert>
 
-    <NForm ref="formRef" :model="form" :rules="rules" label-placement="top" @submit.prevent="handleRegister">
-      <div class="grid grid-cols-2 gap-4">
-        <NFormItem label="Nama Depan" path="firstName">
-          <NInput v-model:value="form.firstName" placeholder="Nama depan" />
-        </NFormItem>
-        <NFormItem label="Nama Belakang" path="lastName">
-          <NInput v-model:value="form.lastName" placeholder="Nama belakang" />
-        </NFormItem>
+        <NForm ref="formRef" :model="form" :rules="rules" label-placement="top" @submit.prevent="handleRegister">
+          <div class="grid grid-cols-2 gap-4">
+            <NFormItem label="Nama Depan" path="firstName">
+              <NInput v-model:value="form.firstName" placeholder="Nama depan" />
+            </NFormItem>
+            <NFormItem label="Nama Belakang" path="lastName">
+              <NInput v-model:value="form.lastName" placeholder="Nama belakang" />
+            </NFormItem>
+          </div>
+
+          <NFormItem label="Username" path="username">
+            <NInput v-model:value="form.username" placeholder="Pilih username" />
+          </NFormItem>
+
+          <NFormItem label="Email" path="email">
+            <NInput v-model:value="form.email" placeholder="Masukkan email Anda" />
+          </NFormItem>
+
+          <NFormItem label="Password" path="password">
+            <NInput
+              v-model:value="form.password"
+              type="password"
+              show-password-on="click"
+              placeholder="Minimal 8 karakter"
+            />
+          </NFormItem>
+
+          <NFormItem label="Konfirmasi Password" path="confirmPassword">
+            <NInput
+              v-model:value="form.confirmPassword"
+              type="password"
+              show-password-on="click"
+              placeholder="Konfirmasi password Anda"
+            />
+          </NFormItem>
+
+          <NButton
+            type="primary"
+            block
+            :loading="authStore.loading"
+            attr-type="submit"
+            class="mt-2"
+          >
+            <template #icon>
+              <NIcon><UserAvatar /></NIcon>
+            </template>
+            Buat Akun
+          </NButton>
+        </NForm>
+
+        <p class="mt-4 text-center text-sm text-gray-600">
+          Sudah punya akun?
+          <RouterLink to="/login" class="text-indigo-600 hover:text-indigo-500 font-medium">
+            Masuk
+          </RouterLink>
+        </p>
       </div>
-
-      <NFormItem label="Username" path="username">
-        <NInput v-model:value="form.username" placeholder="Pilih username" />
-      </NFormItem>
-
-      <NFormItem label="Email" path="email">
-        <NInput v-model:value="form.email" placeholder="Masukkan email Anda" />
-      </NFormItem>
-
-      <NFormItem label="Password" path="password">
-        <NInput
-          v-model:value="form.password"
-          type="password"
-          show-password-on="click"
-          placeholder="Minimal 8 karakter"
-        />
-      </NFormItem>
-
-      <NFormItem label="Konfirmasi Password" path="confirmPassword">
-        <NInput
-          v-model:value="form.confirmPassword"
-          type="password"
-          show-password-on="click"
-          placeholder="Konfirmasi password Anda"
-        />
-      </NFormItem>
-
-      <NButton
-        type="primary"
-        block
-        :loading="authStore.loading"
-        attr-type="submit"
-        class="mt-2"
-      >
-        <template #icon>
-          <NIcon><UserAvatar /></NIcon>
-        </template>
-        Buat Akun
-      </NButton>
-    </NForm>
-
-    <p class="mt-4 text-center text-sm text-gray-600">
-      Sudah punya akun?
-      <RouterLink to="/login" class="text-indigo-600 hover:text-indigo-500 font-medium">
-        Masuk
-      </RouterLink>
-    </p>
-  </AuthForm>
+    </Transition>
+  </AuthLayout>
 </template>
+
+<style scoped>
+.auth-form-content {
+  animation: authFormEnter 0.4s ease-out;
+}
+
+@keyframes authFormEnter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
