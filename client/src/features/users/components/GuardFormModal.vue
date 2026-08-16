@@ -5,6 +5,7 @@ import {
   NSpace, NDynamicInput, useMessage, type FormInst, type FormRules,
 } from 'naive-ui'
 import { useGuardsStore } from '@/stores/guards.store'
+import { getErrorMessage } from '@/utils/error'
 import type { Guard, CreateGuard, UpdateGuard } from '@/types/guard'
 
 const props = defineProps<{
@@ -70,7 +71,7 @@ async function handleSubmit() {
     emit('update:visible', false)
     emit('success')
   } catch (e: any) {
-    message.error(e.response?.data?.message || 'Failed to save guard')
+    message.error(getErrorMessage(e, 'Gagal menyimpan guard'))
   } finally {
     submitting.value = false
   }

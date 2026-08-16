@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getErrorMessage } from '@/utils/error'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
@@ -23,9 +24,10 @@ api.interceptors.response.use(
       window.dispatchEvent(
         new CustomEvent('rbac-denied', {
           detail: {
-            message:
-              error.response?.data?.message ||
-              "Access denied. You don't have permission to perform this action.",
+            message: getErrorMessage(
+              error,
+              "Anda tidak memiliki akses untuk melakukan aktivitas ini.",
+            ),
           },
         }),
       )

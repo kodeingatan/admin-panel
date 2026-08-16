@@ -7,15 +7,22 @@ import {
   NIcon,
   NAlert,
   NSpace,
+  NForm,
+  NFormItem,
   useMessage,
+  type FormInst,
+  type FormRules,
 } from 'naive-ui'
 import { Save, UserAvatar } from '@vicons/carbon'
 import AppLayout from '@/components/layout/AppLayout/AppLayout.vue'
-import FormField from '@/components/common/FormField/FormField.vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { getErrorMessage } from '@/utils/error'
 
 const message = useMessage()
 const authStore = useAuthStore()
+
+const profileFormRef = ref<FormInst | null>(null)
+const passwordFormRef = ref<FormInst | null>(null)
 
 const profileForm = ref({
   firstName: '',
@@ -35,6 +42,41 @@ const passwordError = ref('')
 const savingProfile = ref(false)
 const savingPassword = ref(false)
 
+const profileRules: FormRules = {
+  firstName: { required: true, message: 'Nama depan wajib diisi', trigger: 'blur' },
+  lastName: { required: true, message: 'Nama belakang wajib diisi', trigger: 'blur' },
+  username: [
+    { required: true, message: 'Username wajib diisi', trigger: 'blur' },
+    { min: 3, message: 'Username minimal 3 karakter', trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9_]+$/, message: 'Username hanya boleh huruf, angka, dan underscore', trigger: 'blur' },
+  ],
+  email: [
+    { required: true, message: 'Email wajib diisi', trigger: 'blur' },
+    { type: 'email', message: 'Format email tidak valid', trigger: 'blur' },
+  ],
+}
+
+const passwordRules: FormRules = {
+  currentPassword: { required: true, message: 'Password saat ini wajib diisi', trigger: 'blur' },
+  newPassword: [
+    { required: true, message: 'Password baru wajib diisi', trigger: 'blur' },
+    { min: 8, message: 'Password minimal 8 karakter', trigger: 'blur' },
+    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, message: 'Password harus mengandung huruf besar, huruf kecil, dan angka', trigger: 'blur' },
+  ],
+  confirmPassword: [
+    { required: true, message: 'Konfirmasi password wajib diisi', trigger: 'blur' },
+    {
+      validator: (_rule: any, value: string) => {
+        if (value !== passwordForm.value.newPassword) {
+          return new Error('Konfirmasi password tidak cocok')
+        }
+        return true
+      },
+      trigger: 'blur',
+    },
+  ],
+}
+
 onMounted(async () => {
   await authStore.fetchProfile()
   if (authStore.user) {
@@ -47,12 +89,18 @@ onMounted(async () => {
 
 async function handleSaveProfile() {
   profileError.value = ''
+  try {
+    await profileFormRef.value?.validate()
+  } catch {
+    return
+  }
+
   savingProfile.value = true
   try {
     await authStore.updateProfile(profileForm.value)
-    message.success('Profile updated successfully')
+    message.success('Profil berhasil diperbarui')
   } catch (e: any) {
-    profileError.value = e.response?.data?.message || e.message || 'Failed to update profile'
+    profileError.value = getErrorMessage(e, 'Gagal memperbarui profil')
   } finally {
     savingProfile.value = false
   }
@@ -60,19 +108,19 @@ async function handleSaveProfile() {
 
 async function handleChangePassword() {
   passwordError.value = ''
-
-  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-    passwordError.value = 'Passwords do not match'
+  try {
+    await passwordFormRef.value?.validate()
+  } catch {
     return
   }
 
   savingPassword.value = true
   try {
     await authStore.changePassword(passwordForm.value)
-    message.success('Password changed successfully')
+    message.success('Password berhasil diubah')
     passwordForm.value = { currentPassword: '', newPassword: '', confirmPassword: '' }
   } catch (e: any) {
-    passwordError.value = e.response?.data?.message || e.message || 'Failed to change password'
+    passwordError.value = getErrorMessage(e, 'Gagal mengubah password')
   } finally {
     savingPassword.value = false
   }
@@ -82,90 +130,90 @@ async function handleChangePassword() {
 <template>
   <AppLayout v-if="authStore.user" :user="authStore.user">
     <div class="max-w-2xl">
-      <NCard title="Profile Information" class="mb-4">
+      <NCard title="Informasi Profil" class="mb-4">
         <NAlert v-if="profileError" type="error" class="mb-4">
           {{ profileError }}
         </NAlert>
 
-        <form @submit.prevent="handleSaveProfile">
+        <NForm ref="profileFormRef" :model="profileForm" :rules="profileRules" label-placement="top">
           <div class="grid grid-cols-2 gap-4">
-            <FormField label="First Name" required>
-              <NInput v-model:value="profileForm.firstName" placeholder="First name" />
-            </FormField>
-            <FormField label="Last Name" required>
-              <NInput v-model:value="profileForm.lastName" placeholder="Last name" />
-            </FormField>
+            <NFormItem label="Nama Depan" path="firstName">
+              <NInput v-model:value="profileForm.firstName" placeholder="Nama depan" />
+            </NFormItem>
+            <NFormItem label="Nama Belakang" path="lastName">
+              <NInput v-model:value="profileForm.lastName" placeholder="Nama belakang" />
+            </NFormItem>
           </div>
 
-          <FormField label="Username" required>
+          <NFormItem label="Username" path="username">
             <NInput v-model:value="profileForm.username" placeholder="Username" />
-          </FormField>
+          </NFormItem>
 
-          <FormField label="Email" required>
+          <NFormItem label="Email" path="email">
             <NInput v-model:value="profileForm.email" placeholder="Email" />
-          </FormField>
+          </NFormItem>
 
           <NSpace justify="end" class="mt-4">
             <NButton
               type="primary"
               :loading="savingProfile"
-              attr-type="submit"
+              @click="handleSaveProfile"
             >
               <template #icon>
                 <NIcon><Save /></NIcon>
               </template>
-              Save Changes
+              Simpan Perubahan
             </NButton>
           </NSpace>
-        </form>
+        </NForm>
       </NCard>
 
-      <NCard title="Change Password">
+      <NCard title="Ubah Password">
         <NAlert v-if="passwordError" type="error" class="mb-4">
           {{ passwordError }}
         </NAlert>
 
-        <form @submit.prevent="handleChangePassword">
-          <FormField label="Current Password" required>
+        <NForm ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-placement="top">
+          <NFormItem label="Password Saat Ini" path="currentPassword">
             <NInput
               v-model:value="passwordForm.currentPassword"
               type="password"
               show-password-on="click"
-              placeholder="Enter current password"
+              placeholder="Masukkan password saat ini"
             />
-          </FormField>
+          </NFormItem>
 
-          <FormField label="New Password" required>
+          <NFormItem label="Password Baru" path="newPassword">
             <NInput
               v-model:value="passwordForm.newPassword"
               type="password"
               show-password-on="click"
-              placeholder="Min 8 characters"
+              placeholder="Minimal 8 karakter"
             />
-          </FormField>
+          </NFormItem>
 
-          <FormField label="Confirm New Password" required>
+          <NFormItem label="Konfirmasi Password Baru" path="confirmPassword">
             <NInput
               v-model:value="passwordForm.confirmPassword"
               type="password"
               show-password-on="click"
-              placeholder="Confirm new password"
+              placeholder="Konfirmasi password baru"
             />
-          </FormField>
+          </NFormItem>
 
           <NSpace justify="end" class="mt-4">
             <NButton
               type="warning"
               :loading="savingPassword"
-              attr-type="submit"
+              @click="handleChangePassword"
             >
               <template #icon>
                 <NIcon><UserAvatar /></NIcon>
               </template>
-              Change Password
+              Ubah Password
             </NButton>
           </NSpace>
-        </form>
+        </NForm>
       </NCard>
     </div>
   </AppLayout>

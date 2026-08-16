@@ -6,6 +6,7 @@ import { UserAvatar } from '@vicons/carbon'
 import AuthForm from '@/components/common/AuthForm/AuthForm.vue'
 import FormField from '@/components/common/FormField/FormField.vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { getErrorMessage } from '@/utils/error'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -22,7 +23,7 @@ const error = ref('')
 
 async function handleRegister() {
   if (form.value.password !== form.value.confirmPassword) {
-    error.value = 'Passwords do not match'
+    error.value = 'Password tidak cocok'
     return
   }
 
@@ -32,7 +33,7 @@ async function handleRegister() {
     await authStore.register(form.value)
     router.push('/dashboard')
   } catch (e: any) {
-    error.value = e.response?.data?.message || e.message || 'Registration failed'
+    error.value = getErrorMessage(e, 'Registrasi gagal')
   }
 }
 </script>

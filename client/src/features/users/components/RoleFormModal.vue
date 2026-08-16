@@ -5,6 +5,7 @@ import {
   NSpace, useMessage, type FormInst, type FormRules,
 } from 'naive-ui'
 import { useRolesStore } from '@/stores/roles.store'
+import { getErrorMessage } from '@/utils/error'
 import { useGuardsStore } from '@/stores/guards.store'
 import { usePermissionsStore } from '@/stores/permissions.store'
 import type { Role, CreateRole, UpdateRole } from '@/types/role'
@@ -84,7 +85,7 @@ async function handleSubmit() {
     emit('update:visible', false)
     emit('success')
   } catch (e: any) {
-    message.error(e.response?.data?.message || 'Failed to save role')
+    message.error(getErrorMessage(e, 'Gagal menyimpan role'))
   } finally {
     submitting.value = false
   }

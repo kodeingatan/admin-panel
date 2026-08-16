@@ -5,6 +5,7 @@ import {
   NSpace, NDynamicInput, useMessage, type FormInst, type FormRules,
 } from 'naive-ui'
 import { usePermissionsStore } from '@/stores/permissions.store'
+import { getErrorMessage } from '@/utils/error'
 import type { Permission, CreatePermission, UpdatePermission } from '@/types/permission'
 
 const props = defineProps<{
@@ -80,7 +81,7 @@ async function handleSubmit() {
     emit('update:visible', false)
     emit('success')
   } catch (e: any) {
-    message.error(e.response?.data?.message || 'Failed to save permission')
+    message.error(getErrorMessage(e, 'Gagal menyimpan permission'))
   } finally {
     submitting.value = false
   }

@@ -5,6 +5,7 @@ import {
   NSpace, useMessage, type FormInst, type FormRules,
 } from 'naive-ui'
 import { useUsersStore } from '@/stores/users.store'
+import { getErrorMessage } from '@/utils/error'
 import { useRolesStore } from '@/stores/roles.store'
 import type { User, CreateUser, UpdateUser } from '@/types/user'
 
@@ -101,7 +102,7 @@ async function handleSubmit() {
     emit('update:visible', false)
     emit('success')
   } catch (e: any) {
-    message.error(e.response?.data?.message || 'Failed to save user')
+    message.error(getErrorMessage(e, 'Gagal menyimpan user'))
   } finally {
     submitting.value = false
   }

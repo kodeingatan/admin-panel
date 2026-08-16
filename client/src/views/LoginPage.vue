@@ -6,6 +6,7 @@ import { Login } from '@vicons/carbon'
 import AuthForm from '@/components/common/AuthForm/AuthForm.vue'
 import FormField from '@/components/common/FormField/FormField.vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { getErrorMessage } from '@/utils/error'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -21,7 +22,7 @@ async function handleLogin() {
     await authStore.login({ email: email.value, password: password.value })
     router.push('/dashboard')
   } catch (e: any) {
-    error.value = e.response?.data?.message || e.message || 'Login failed'
+    error.value = getErrorMessage(e, 'Login gagal')
   }
 }
 </script>
