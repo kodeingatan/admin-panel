@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { NInput, NButton, NAlert, NIcon } from 'naive-ui'
+import {
+  NInput, NButton, NAlert, NIcon, NForm, NFormItem,
+  type FormInst, type FormRules,
+} from 'naive-ui'
 import { UserAvatar } from '@vicons/carbon'
 import AuthForm from '@/components/common/AuthForm/AuthForm.vue'
-import FormField from '@/components/common/FormField/FormField.vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { getErrorMessage } from '@/utils/error'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const formRef = ref<FormInst | null>(null)
 
 const form = ref({
   firstName: '',
@@ -19,15 +22,47 @@ const form = ref({
   password: '',
   confirmPassword: '',
 })
+
+const rules = computed<FormRules>(() => ({
+  firstName: { required: true, message: 'Nama depan wajib diisi', trigger: 'blur' },
+  lastName: { required: true, message: 'Nama belakang wajib diisi', trigger: 'blur' },
+  username: [
+    { required: true, message: 'Username wajib diisi', trigger: 'blur' },
+    { min: 3, message: 'Username minimal 3 karakter', trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9_]+$/, message: 'Username hanya boleh huruf, angka, dan underscore', trigger: 'blur' },
+  ],
+  email: [
+    { required: true, message: 'Email wajib diisi', trigger: 'blur' },
+    { type: 'email', message: 'Format email tidak valid', trigger: 'blur' },
+  ],
+  password: [
+    { required: true, message: 'Password wajib diisi', trigger: 'blur' },
+    { min: 8, message: 'Password minimal 8 karakter', trigger: 'blur' },
+    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, message: 'Password harus mengandung huruf besar, huruf kecil, dan angka', trigger: 'blur' },
+  ],
+  confirmPassword: [
+    { required: true, message: 'Konfirmasi password wajib diisi', trigger: 'blur' },
+    {
+      validator: (_rule: any, value: string) => {
+        if (value !== form.value.password) {
+          return new Error('Konfirmasi password tidak cocok')
+        }
+        return true
+      },
+      trigger: 'blur',
+    },
+  ],
+}))
+
 const error = ref('')
 
 async function handleRegister() {
-  if (form.value.password !== form.value.confirmPassword) {
-    error.value = 'Password tidak cocok'
+  error.value = ''
+  try {
+    await formRef.value?.validate()
+  } catch {
     return
   }
-
-  error.value = ''
 
   try {
     await authStore.register(form.value)
@@ -39,46 +74,46 @@ async function handleRegister() {
 </script>
 
 <template>
-  <AuthForm title="Create Account" subtitle="Get started with your free account">
+  <AuthForm title="Buat Akun" subtitle="Mulai dengan akun gratis Anda">
     <NAlert v-if="error" type="error" class="mb-4">
       {{ error }}
     </NAlert>
 
-    <form @submit.prevent="handleRegister">
+    <NForm ref="formRef" :model="form" :rules="rules" label-placement="top" @submit.prevent="handleRegister">
       <div class="grid grid-cols-2 gap-4">
-        <FormField label="First Name" required>
-          <NInput v-model:value="form.firstName" placeholder="First name" />
-        </FormField>
-        <FormField label="Last Name" required>
-          <NInput v-model:value="form.lastName" placeholder="Last name" />
-        </FormField>
+        <NFormItem label="Nama Depan" path="firstName">
+          <NInput v-model:value="form.firstName" placeholder="Nama depan" />
+        </NFormItem>
+        <NFormItem label="Nama Belakang" path="lastName">
+          <NInput v-model:value="form.lastName" placeholder="Nama belakang" />
+        </NFormItem>
       </div>
 
-      <FormField label="Username" required>
-        <NInput v-model:value="form.username" placeholder="Choose a username" />
-      </FormField>
+      <NFormItem label="Username" path="username">
+        <NInput v-model:value="form.username" placeholder="Pilih username" />
+      </NFormItem>
 
-      <FormField label="Email" required>
-        <NInput v-model:value="form.email" type="text" placeholder="Enter your email" />
-      </FormField>
+      <NFormItem label="Email" path="email">
+        <NInput v-model:value="form.email" placeholder="Masukkan email Anda" />
+      </NFormItem>
 
-      <FormField label="Password" required>
+      <NFormItem label="Password" path="password">
         <NInput
           v-model:value="form.password"
           type="password"
           show-password-on="click"
-          placeholder="Min 8 characters"
+          placeholder="Minimal 8 karakter"
         />
-      </FormField>
+      </NFormItem>
 
-      <FormField label="Confirm Password" required>
+      <NFormItem label="Konfirmasi Password" path="confirmPassword">
         <NInput
           v-model:value="form.confirmPassword"
           type="password"
           show-password-on="click"
-          placeholder="Confirm your password"
+          placeholder="Konfirmasi password Anda"
         />
-      </FormField>
+      </NFormItem>
 
       <NButton
         type="primary"
@@ -90,14 +125,14 @@ async function handleRegister() {
         <template #icon>
           <NIcon><UserAvatar /></NIcon>
         </template>
-        Create Account
+        Buat Akun
       </NButton>
-    </form>
+    </NForm>
 
     <p class="mt-4 text-center text-sm text-gray-600">
-      Already have an account?
+      Sudah punya akun?
       <RouterLink to="/login" class="text-indigo-600 hover:text-indigo-500 font-medium">
-        Sign in
+        Masuk
       </RouterLink>
     </p>
   </AuthForm>

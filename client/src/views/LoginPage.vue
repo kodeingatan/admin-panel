@@ -1,25 +1,44 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { NInput, NButton, NAlert, NIcon } from 'naive-ui'
+import {
+  NInput, NButton, NAlert, NIcon, NForm, NFormItem,
+  type FormInst, type FormRules,
+} from 'naive-ui'
 import { Login } from '@vicons/carbon'
 import AuthForm from '@/components/common/AuthForm/AuthForm.vue'
-import FormField from '@/components/common/FormField/FormField.vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { getErrorMessage } from '@/utils/error'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const formRef = ref<FormInst | null>(null)
 
-const email = ref('')
-const password = ref('')
+const form = ref({
+  email: '',
+  password: '',
+})
+
+const rules: FormRules = {
+  email: [
+    { required: true, message: 'Email wajib diisi', trigger: 'blur' },
+    { type: 'email', message: 'Format email tidak valid', trigger: 'blur' },
+  ],
+  password: { required: true, message: 'Password wajib diisi', trigger: 'blur' },
+}
+
 const error = ref('')
 
 async function handleLogin() {
   error.value = ''
+  try {
+    await formRef.value?.validate()
+  } catch {
+    return
+  }
 
   try {
-    await authStore.login({ email: email.value, password: password.value })
+    await authStore.login({ email: form.value.email, password: form.value.password })
     router.push('/dashboard')
   } catch (e: any) {
     error.value = getErrorMessage(e, 'Login gagal')
@@ -28,32 +47,37 @@ async function handleLogin() {
 </script>
 
 <template>
-  <AuthForm title="Welcome Back" subtitle="Sign in to your account">
+  <AuthForm title="Selamat Datang" subtitle="Masuk ke akun Anda">
     <NAlert v-if="error" type="error" class="mb-4">
       {{ error }}
     </NAlert>
 
-    <form @submit.prevent="handleLogin">
-      <FormField label="Email" required>
-        <NInput class="px-none" v-model:value="email" type="text" placeholder="Enter your email" />
-      </FormField>
+    <NForm ref="formRef" :model="form" :rules="rules" label-placement="top" @submit.prevent="handleLogin">
+      <NFormItem label="Email" path="email">
+        <NInput v-model:value="form.email" placeholder="Masukkan email Anda" />
+      </NFormItem>
 
-      <FormField label="Password" required>
-        <NInput v-model:value="password" type="password" show-password-on="click" placeholder="Enter your password" />
-      </FormField>
+      <NFormItem label="Password" path="password">
+        <NInput
+          v-model:value="form.password"
+          type="password"
+          show-password-on="click"
+          placeholder="Masukkan password Anda"
+        />
+      </NFormItem>
 
       <NButton type="primary" block :loading="authStore.loading" attr-type="submit" class="mt-2">
         <template #icon>
           <NIcon><Login /></NIcon>
         </template>
-        Sign In
+        Masuk
       </NButton>
-    </form>
+    </NForm>
 
     <p class="mt-4 text-center text-sm text-gray-600">
-      Don't have an account?
+      Belum punya akun?
       <RouterLink to="/register" class="text-indigo-600 hover:text-indigo-500 font-medium">
-        Register
+        Daftar
       </RouterLink>
     </p>
   </AuthForm>
