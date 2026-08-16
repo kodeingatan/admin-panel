@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginPage from '@/views/LoginPage.vue'
 import RegisterPage from '@/views/RegisterPage.vue'
 import DashboardPage from '@/views/DashboardPage.vue'
+import ProfilePage from '@/views/ProfilePage.vue'
 import UsersPage from '@/views/UsersPage.vue'
 import RolesPage from '@/views/RolesPage.vue'
 import PermissionsPage from '@/views/PermissionsPage.vue'
@@ -26,6 +27,12 @@ const routes = [
     path: '/dashboard',
     name: 'Dashboard',
     component: DashboardPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/dashboard/profile',
+    name: 'Profile',
+    component: ProfilePage,
     meta: { requiresAuth: true },
   },
   {

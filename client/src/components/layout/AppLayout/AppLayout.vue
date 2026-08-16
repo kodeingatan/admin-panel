@@ -176,7 +176,9 @@ const dropdownOptions = [
 ]
 
 function handleDropdownSelect(key: string) {
-  if (key === 'logout') {
+  if (key === 'profile') {
+    router.push('/dashboard/profile')
+  } else if (key === 'logout') {
     logout()
   }
 }

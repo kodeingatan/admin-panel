@@ -762,3 +762,52 @@ meta: {
 | 403 | Show access denied alert | "Access denied" NAlert |
 | 404 | Show not found page | "Resource not found" |
 | 500 | Show error alert | "Server error" NAlert |
+
+---
+
+## Profile Page
+
+### Endpoint
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| PATCH | `/api/auth/profile` | Bearer | Update profil sendiri (firstName, lastName, email, username) |
+| PATCH | `/api/auth/password` | Bearer | Ganti password (currentPassword, newPassword, confirmPassword) |
+
+### Layout
+
+```
+AppLayout
+├── NCard "Profile Information"
+│   ├── NForm (firstName, lastName, email, username)
+│   └── NButton "Save Changes"
+│
+└── NCard "Change Password"
+    ├── NForm (currentPassword, newPassword, confirmPassword)
+    └── NButton "Change Password"
+```
+
+### Form Fields
+
+**Profile Information**:
+
+| Field | Component | Validation | Pre-filled |
+|-------|-----------|------------|------------|
+| First Name | NInput | required, max 100 | Yes |
+| Last Name | NInput | required, max 100 | Yes |
+| Email | NInput (email) | valid email, unique | Yes |
+| Username | NInput | min 3, max 30, alphanumeric + underscore, unique | Yes |
+
+**Change Password**:
+
+| Field | Component | Validation |
+|-------|-----------|------------|
+| Current Password | NInput (password) | required |
+| New Password | NInput (password) | min 8, uppercase + lowercase + number |
+| Confirm Password | NInput (password) | must match new password |
+
+### Access
+
+- Dari dropdown header: klik "Profile" → navigasi ke `/dashboard/profile`
+- Tidak perlu `@Roles` atau `@Permissions` — semua user yang login bisa akses
+- Self-service: user hanya bisa edit data sendiri

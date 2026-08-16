@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Patch,
   Body,
   Get,
   UseGuards,
@@ -9,6 +10,8 @@ import {
 import { AuthService } from '@/modules/auth/services/auth.service';
 import { RegisterDto } from '@/modules/auth/dto/register.dto';
 import { LoginDto } from '@/modules/auth/dto/login.dto';
+import { UpdateProfileDto } from '@/modules/auth/dto/update-profile.dto';
+import { ChangePasswordDto } from '@/modules/auth/dto/change-password.dto';
 import { Public } from '@/common/decorators/public.decorator';
 
 @Controller('auth')
@@ -30,5 +33,15 @@ export class AuthController {
   @Get('profile')
   getProfile(@Request() req) {
     return this.authService.getProfile(req.user.sub);
+  }
+
+  @Patch('profile')
+  updateProfile(@Request() req, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(req.user.sub, dto, req);
+  }
+
+  @Patch('password')
+  changePassword(@Request() req, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(req.user.sub, dto, req);
   }
 }

@@ -18,3 +18,16 @@ export interface AuthResponse {
   accessToken: string
   user: User
 }
+
+export interface UpdateProfile {
+  firstName?: string
+  lastName?: string
+  email?: string
+  username?: string
+}
+
+export interface ChangePassword {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}

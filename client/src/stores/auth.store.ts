@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/api'
+import { authService } from '@/services/auth.service'
 import type { User } from '@/types/user'
-import type { LoginPayload, RegisterPayload, AuthResponse } from '@/types/auth'
+import type { LoginPayload, RegisterPayload, AuthResponse, UpdateProfile, ChangePassword } from '@/types/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('accessToken'))
@@ -82,5 +83,27 @@ export const useAuthStore = defineStore('auth', () => {
     saveUserToStorage(null)
   }
 
-  return { token, user, loading, isAuthenticated, fullName, login, register, fetchProfile, logout }
+  async function updateProfile(payload: UpdateProfile) {
+    loading.value = true
+    try {
+      const { data } = await authService.updateProfile(payload)
+      user.value = data
+      saveUserToStorage(data)
+      return data
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function changePassword(payload: ChangePassword) {
+    loading.value = true
+    try {
+      const { data } = await authService.changePassword(payload)
+      return data
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return { token, user, loading, isAuthenticated, fullName, login, register, fetchProfile, logout, updateProfile, changePassword }
 })

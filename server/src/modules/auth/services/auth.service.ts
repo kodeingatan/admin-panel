@@ -1,6 +1,7 @@
 import {
   Injectable,
   ConflictException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,6 +11,8 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '@/modules/users/entities/user.entity';
 import { RegisterDto } from '@/modules/auth/dto/register.dto';
 import { LoginDto } from '@/modules/auth/dto/login.dto';
+import { UpdateProfileDto } from '@/modules/auth/dto/update-profile.dto';
+import { ChangePasswordDto } from '@/modules/auth/dto/change-password.dto';
 import { ActivityLogsService } from '@/modules/activity-logs/services/activity-logs.service';
 
 @Injectable()
@@ -125,5 +128,74 @@ export class AuthService {
 
     const { password, ...result } = user as any;
     return result;
+  }
+
+  async updateProfile(userId: number, dto: UpdateProfileDto, req?: any) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (dto.email && dto.email !== user.email) {
+      const existing = await this.usersRepository.findOne({
+        where: { email: dto.email },
+      });
+      if (existing) throw new ConflictException('Email already registered');
+    }
+
+    if (dto.username && dto.username !== user.username) {
+      const existing = await this.usersRepository.findOne({
+        where: { username: dto.username },
+      });
+      if (existing) throw new ConflictException('Username already taken');
+    }
+
+    Object.assign(user, dto);
+    await this.usersRepository.save(user);
+
+    await this.activityLogsService.log({
+      userId,
+      action: 'UPDATE',
+      entity: 'Auth',
+      entityId: user.id,
+      description: `Profile updated: ${user.username}`,
+      metadata: { username: user.username, email: user.email },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
+    const { password, ...result } = user as any;
+    return result;
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto, req?: any) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (dto.newPassword !== dto.confirmPassword) {
+      throw new ConflictException('Passwords do not match');
+    }
+
+    const isCurrentValid = await bcrypt.compare(
+      dto.currentPassword,
+      user.password,
+    );
+    if (!isCurrentValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    user.password = await bcrypt.hash(dto.newPassword, 10);
+    await this.usersRepository.save(user);
+
+    await this.activityLogsService.log({
+      userId,
+      action: 'UPDATE',
+      entity: 'Auth',
+      entityId: user.id,
+      description: `Password changed: ${user.username}`,
+      metadata: { username: user.username },
+      ipAddress: req?.ip,
+      userAgent: req?.headers?.['user-agent'],
+    });
+
+    return { message: 'Password changed successfully' };
   }
 }
