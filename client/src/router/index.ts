@@ -106,6 +106,32 @@ const routes = [
     },
   },
   {
+    path: '/dashboard/system-creators',
+    name: 'SystemCreators',
+    component: () => import('@/views/SystemCreatorsPage.vue'),
+    meta: {
+      requiresAuth: true,
+      requiredRoles: ['Super Admin'],
+    },
+  },
+  {
+    path: '/dashboard/system-creators/create',
+    name: 'SystemCreatorCreate',
+    component: () => import('@/views/SystemCreatorWizardPage.vue'),
+    meta: {
+      requiresAuth: true,
+      requiredRoles: ['Super Admin'],
+    },
+  },
+  {
+    path: '/dashboard/sc/:moduleName',
+    name: 'DynamicCrud',
+    component: () => import('@/views/DynamicCrudPage.vue'),
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
     path: '/',
     redirect: '/login',
   },

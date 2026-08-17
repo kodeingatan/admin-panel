@@ -6,3 +6,4 @@ export type { Guard, GuardUrl, CreateGuard, UpdateGuard, QueryGuard } from '@/ty
 export type { LoginPayload, RegisterPayload, AuthResponse } from '@/types/auth'
 export type { ActivityLog, QueryActivityLog, ActivityLogStats } from '@/types/activity-log'
 export type { LogEntry, SystemLogFile, QuerySystemLog, SystemLogStats } from '@/types/system-log'
+export type { ScModule, CreateScModule, UpdateScModule, QueryScModule, ScFieldConfig, ScRelationConfig, ScFieldType, ScAccessLevel } from '@/types/system-creator'

@@ -35,23 +35,34 @@ client/
 │   ├── components/
 │   │   ├── base/           # Base components (Button)
 │   │   ├── common/         # Common components (AuthForm, FormField, DataTable)
-│   │   │   └── DataTable/  # Reusable table browse component
+│   │   │   ├── DataTable/  # Reusable table browse component
+│   │   │   ├── DynamicFormRenderer.vue  # Renders form fields from config
+│   │   │   └── DynamicTableRenderer.vue # Renders table columns from config
 │   │   └── layout/         # Layout components (AppLayout)
-│   ├── composables/        # Vue composables (useAuth, useDataTable)
+│   ├── composables/        # Vue composables (useAuth, useDataTable, useDynamicModules)
 │   ├── constants/          # Constants & enums
 │   ├── directives/         # Custom Vue directives
 │   ├── features/           # Feature-based modules
 │   │   ├── auth/
 │   │   ├── dashboard/
-│   │   └── users/
+│   │   ├── users/
+│   │   └── system-creators/ # System Creators feature (CRUD generator)
 │   ├── layouts/            # Layout components
 │   ├── plugins/            # Vue plugins
 │   ├── router/             # Vue Router (index.ts)
 │   ├── services/           # API services
+│   │   ├── system-creators.service.ts  # System Creators API
+│   │   └── ...
 │   ├── stores/             # State management (Pinia)
-│   ├── types/              # TypeScript types (user.ts, auth.ts, index.ts)
+│   │   ├── system-creators.store.ts    # System Creators state
+│   │   └── ...
+│   ├── types/              # TypeScript types (user.ts, auth.ts, system-creator.ts, index.ts)
 │   ├── utils/              # Utility functions
-│   ├── views/              # Page components (LoginPage, RegisterPage, DashboardPage)
+│   ├── views/              # Page components
+│   │   ├── SystemCreatorsPage.vue       # List all generated modules
+│   │   ├── SystemCreatorWizardPage.vue  # Multi-step creation wizard
+│   │   ├── DynamicCrudPage.vue          # Dynamic CRUD renderer
+│   │   └── ...
 │   ├── assets/
 │   │   ├── images/
 │   │   ├── icons/
@@ -73,6 +84,7 @@ client/
 - Design System: `docs/design-system.md` — color palette, typography, spacing, component dimensions
 - Naive UI components use `GlobalThemeOverrides` for theming, wrap app with `NConfigProvider`
 - Table browse: Use `DataTable` component for all list/table pages (supports sort, search, column visibility, pagination)
+- Dynamic form/table: Use `DynamicFormRenderer` and `DynamicTableRenderer` for generated modules
 - Vite proxy: `/api` requests proxy to `http://localhost:3000` (see `vite.config.ts`)
 
 **DataTable Requirements** (ALL tables must have):
@@ -96,20 +108,28 @@ client/
 - `/dashboard/activity-logs` — ActivityLogsPage (requires auth)
 - `/dashboard/system-logs` — SystemLogsPage (requires auth)
 - `/dashboard/settings` — SettingsPage (requires auth)
+- `/dashboard/system-creators` — SystemCreatorsPage (requires Super Admin)
+- `/dashboard/system-creators/create` — SystemCreatorWizardPage (requires Super Admin)
+- `/dashboard/sc/:moduleName` — DynamicCrudPage (dynamic, requires auth)
 - JWT token stored in `localStorage` as `accessToken`
 
 **Sidebar Menu** (AppLayout.vue):
 ```
-Dashboard                    → /dashboard
+Dashboard                         → /dashboard
 User Management (group)
-    ├── User                 → /dashboard/users
-    ├── Guard                → /dashboard/guards
-    ├── Role                 → /dashboard/roles
-    └── Permissions          → /dashboard/permissions
+    ├── User                      → /dashboard/users
+    ├── Guard                     → /dashboard/guards
+    ├── Role                      → /dashboard/roles
+    └── Permissions               → /dashboard/permissions
 Sistem (group)
-    ├── Activity Logs        → /dashboard/activity-logs
-    ├── System Logs          → /dashboard/system-logs
-    └── Settings             → /dashboard/settings
+    ├── Activity Logs             → /dashboard/activity-logs
+    ├── System Logs               → /dashboard/system-logs
+    └── Settings                  → /dashboard/settings
+Admin (group, Super Admin only)
+    └── System Creators           → /dashboard/system-creators
+Generated Modules (group, dynamic, fetched from API)
+    ├── {Module Label 1}         → /dashboard/sc/{name1}
+    └── {Module Label 2}         → /dashboard/sc/{name2}
 ```
 
 ## Server (NestJS)
@@ -175,21 +195,44 @@ server/src/
 │   │   ├── dto/            # query-activity-log.dto.ts
 │   │   ├── entities/       # activity-log.entity.ts
 │   │   └── activity-logs.module.ts
-│   └── system-logs/
-│       ├── controllers/    # system-logs.controller.ts
-│       ├── services/       # system-logs.service.ts
-│       ├── dto/            # query-system-log.dto.ts
-│       └── system-logs.module.ts
-│   └── settings/
-│       ├── controllers/    # settings.controller.ts
-│       ├── services/       # settings.service.ts
-│       ├── dto/            # update-setting.dto.ts
-│       ├── entities/       # setting.entity.ts
-│       └── settings.module.ts
-│   └── storage/
-│       ├── controllers/    # storage.controller.ts
-│       ├── services/       # storage.service.ts
-│       └── storage.module.ts
+│   ├── system-logs/
+│   │   ├── controllers/    # system-logs.controller.ts
+│   │   ├── services/       # system-logs.service.ts
+│   │   ├── dto/            # query-system-log.dto.ts
+│   │   └── system-logs.module.ts
+│   ├── settings/
+│   │   ├── controllers/    # settings.controller.ts
+│   │   ├── services/       # settings.service.ts
+│   │   ├── dto/            # update-setting.dto.ts
+│   │   ├── entities/       # setting.entity.ts
+│   │   └── settings.module.ts
+│   ├── storage/
+│   │   ├── controllers/    # storage.controller.ts
+│   │   ├── services/       # storage.service.ts
+│   │   └── storage.module.ts
+│   ├── system-creators/     # System Creators module (CRUD generator)
+│   │   ├── controllers/
+│   │   │   └── system-creators.controller.ts
+│   │   ├── services/
+│   │   │   ├── sc-registry.service.ts
+│   │   │   ├── sc-generator.service.ts
+│   │   │   └── sc-loader.service.ts
+│   │   ├── dto/
+│   │   │   ├── create-sc-module.dto.ts
+│   │   │   ├── update-sc-module.dto.ts
+│   │   │   └── query-sc-module.dto.ts
+│   │   ├── entities/
+│   │   │   └── sc-module.entity.ts
+│   │   └── system-creators.module.ts
+│   └── generated/           # Auto-generated modules (created by System Creators)
+│       ├── index.ts         # Barrel + dynamic loader
+│       ├── _dynamic-loader.ts
+│       └── sc_{name}/       # Per-module (e.g., sc_product)
+│           ├── {name}.module.ts
+│           ├── entities/{name}.entity.ts
+│           ├── controllers/{name}.controller.ts
+│           ├── services/{name}.service.ts
+│           └── dto/...
 ├── shared/             # Shared business logic
 │   ├── cache/
 │   ├── mail/
@@ -211,6 +254,8 @@ server/src/
 - Shared: `src/common/`
 - Uploaded files: `server/storage/{subfolder}/` (gitignored) — subfolders: `settings`, `avatars`, `general`
 - File serving: `GET /api/storage/:subfolder/:filename` — public endpoint, serves binary with correct Content-Type
+- Generated modules: `src/modules/generated/sc_{name}/` — prefix `sc_` for System Creator modules
+- Generated modules compiled from .ts → .js at generation time, loaded via `require()` at startup
 
 **Auth API**:
 | Method | Endpoint             | Description    | Auth   |
@@ -232,6 +277,8 @@ server/src/
 | System Logs | `/api/system-logs` | (file-based) | System log viewer for log files |
 | Settings | `/api/settings` | Setting | Application settings (key-value store) |
 | Storage | `/api/storage` | (file-based) | File serving for uploaded images |
+| System Creators | `/api/system-creators` | ScModule | CRUD Generator — create/manage dynamic modules |
+| Generated | `/api/generated/{name}` | (dynamic) | Auto-created CRUD endpoints per generated module |
 
 **RBAC Guard Chain** (Global):
 | Guard | File | Purpose |
@@ -246,8 +293,16 @@ server/src/
 | `@Roles(...roles)` | `common/decorators/roles.decorator.ts` | Require specific roles |
 | `@Permissions(...perms)` | `common/decorators/permissions.decorator.ts` | Require specific permissions |
 
-**Database**: SQLite via TypeORM — 11 tables total (users, roles, permissions, guards, settings, + 6 junction tables)
+**Database**: SQLite via TypeORM — 13 tables total (users, roles, permissions, guards, settings, sc_modules, + 6 junction tables)
 - See `docs/database.md` for full schema and `docs/PRD.md` for authorization flow
+
+**System Creators** (CRUD Generator):
+- Only Super Admin can access
+- Generates TypeScript files in `server/src/modules/generated/sc_{name}/`
+- Compiles .ts → .js via `ts.transpileModule()`
+- Server auto-restarts after generation
+- Registry stored in `sc_modules` table + JSON backup
+- See `docs/PRD.md` section 3.7 for full specification
 
 ## Storybook MCP
 
@@ -266,3 +321,6 @@ Start Storybook first (`npm run storybook` in `client/`) before using MCP featur
 - AccessDeniedAlert uses CSS transition animation (slide-in from right) — uses `v-show` not `v-if` to avoid layout shift
 - To re-seed database: delete `server/db.sqlite` then restart server (`npm run start:dev`)
 - Uploaded files stored in `server/storage/` (gitignored) — create subdirectories `settings/`, `avatars/`, `general/` as needed
+- Generated module files in `server/src/modules/generated/` — prefixed with `sc_` for System Creator modules
+- After generating a module, server auto-restarts — expect ~2-3 second downtime
+- Dynamic routes (`/dashboard/sc/:moduleName`) — client fetches registry to build route map

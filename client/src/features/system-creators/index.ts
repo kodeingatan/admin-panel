@@ -1,0 +1,6 @@
+export { default as ScTable } from './components/ScTable.vue'
+export { default as ScWizardStep1Basic } from './components/ScWizardStep1Basic.vue'
+export { default as ScWizardStep2Fields } from './components/ScWizardStep2Fields.vue'
+export { default as ScWizardStep3Relations } from './components/ScWizardStep3Relations.vue'
+export { default as ScWizardStep4Access } from './components/ScWizardStep4Access.vue'
+export { default as ScWizardStep5Review } from './components/ScWizardStep5Review.vue'

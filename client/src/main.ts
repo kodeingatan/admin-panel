@@ -10,9 +10,9 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 
-const { useSettingsStore } = await import('@/stores/settings.store')
-const settingsStore = useSettingsStore()
-await settingsStore.fetchSettings()
-settingsStore.updateHtmlMeta()
-
 app.mount('#app')
+
+import('@/stores/settings.store').then(({ useSettingsStore }) => {
+  const settingsStore = useSettingsStore()
+  settingsStore.fetchSettings().then(() => settingsStore.updateHtmlMeta()).catch(() => {})
+})

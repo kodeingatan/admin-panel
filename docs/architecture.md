@@ -30,10 +30,12 @@ client/
 │   ├── components/
 │   │   ├── base/               # Base components (Button)
 │   │   ├── common/             # Common components (AuthForm, FormField, DataTable)
-│   │   │   └── DataTable/      # Reusable table browse component
+│   │   │   ├── DataTable/      # Reusable table browse component
+│   │   │   ├── DynamicFormRenderer.vue  # Renders form fields from config
+│   │   │   └── DynamicTableRenderer.vue # Renders table columns from config
 │   │   └── layout/             # Layout components (AppLayout)
 │   │
-│   ├── composables/            # Vue composables (useAuth, useApi, useCrudTable)
+│   ├── composables/            # Vue composables (useAuth, useApi, useDynamicModules)
 │   │
 │   ├── constants/              # Constants & enums
 │   │
@@ -42,14 +44,23 @@ client/
 │   ├── features/               # Feature-based modules
 │   │   ├── auth/               # Auth feature (login, register)
 │   │   ├── dashboard/          # Dashboard feature
-│   │   └── users/              # User management feature
-│   │       ├── components/     # Feature-specific components
-│   │       │   ├── UserTable.vue
-│   │       │   ├── UserFormModal.vue
-│   │       │   └── UserDetailDrawer.vue
-│   │       ├── composables/    # Feature composables
-│   │       │   └── useUsers.ts
-│   │       └── index.ts        # Barrel exports
+│   │   ├── users/              # User management feature
+│   │   │   ├── components/     # Feature-specific components
+│   │   │   │   ├── UserTable.vue
+│   │   │   │   ├── UserFormModal.vue
+│   │   │   │   └── UserDetailDrawer.vue
+│   │   │   ├── composables/    # Feature composables
+│   │   │   │   └── useUsers.ts
+│   │   │   └── index.ts        # Barrel exports
+│   │   └── system-creators/    # System Creators feature (CRUD generator)
+│   │       ├── components/
+│   │       │   ├── ScTable.vue
+│   │       │   ├── ScWizardStep1Basic.vue
+│   │       │   ├── ScWizardStep2Fields.vue
+│   │       │   ├── ScWizardStep3Relations.vue
+│   │       │   ├── ScWizardStep4Access.vue
+│   │       │   └── ScWizardStep5Review.vue
+│   │       └── index.ts
 │   │
 │   ├── layouts/                # Layout components
 │   │
@@ -62,14 +73,16 @@ client/
 │   │   ├── users.service.ts    # Users CRUD API
 │   │   ├── roles.service.ts    # Roles CRUD API
 │   │   ├── permissions.service.ts # Permissions CRUD API
-│   │   └── guards.service.ts   # Guards CRUD API
+│   │   ├── guards.service.ts   # Guards CRUD API
+│   │   └── system-creators.service.ts # System Creators API
 │   │
 │   ├── stores/                 # State management (Pinia)
 │   │   ├── auth.store.ts       # Auth state (token, user)
 │   │   ├── users.store.ts      # Users list & CRUD state
 │   │   ├── roles.store.ts      # Roles list & CRUD state
 │   │   ├── permissions.store.ts # Permissions list & CRUD state
-│   │   └── guards.store.ts     # Guards list & CRUD state
+│   │   ├── guards.store.ts     # Guards list & CRUD state
+│   │   └── system-creators.store.ts # System Creators state
 │   │
 │   ├── types/                  # TypeScript types & interfaces
 │   │   ├── user.ts             # User, CreateUser, UpdateUser, QueryUser
@@ -77,11 +90,26 @@ client/
 │   │   ├── permission.ts       # Permission, CreatePermission, UpdatePermission
 │   │   ├── guard.ts            # Guard, CreateGuard, UpdateGuard
 │   │   ├── api.ts              # PaginatedResponse, ApiResponse
+│   │   ├── system-creator.ts   # ScModule, ScField, ScRelation, etc.
 │   │   └── index.ts            # Barrel exports
 │   │
 │   ├── utils/                  # Utility functions
 │   │
 │   ├── views/                  # Page-level components
+│   │   ├── LoginPage.vue
+│   │   ├── RegisterPage.vue
+│   │   ├── DashboardPage.vue
+│   │   ├── ProfilePage.vue
+│   │   ├── UsersPage.vue
+│   │   ├── RolesPage.vue
+│   │   ├── PermissionsPage.vue
+│   │   ├── GuardsPage.vue
+│   │   ├── ActivityLogsPage.vue
+│   │   ├── SystemLogsPage.vue
+│   │   ├── SettingsPage.vue
+│   │   ├── SystemCreatorsPage.vue      # List all generated modules
+│   │   ├── SystemCreatorWizardPage.vue  # Multi-step creation wizard
+│   │   └── DynamicCrudPage.vue          # Dynamic CRUD renderer
 │   │
 │   ├── App.vue
 │   └── main.ts
@@ -200,16 +228,16 @@ server/
 │   │   │   ├── repositories/
 │   │   │   └── permissions.module.ts
 │   │   │
-│   │   └── guards/
-│   │       ├── controllers/
-│   │       ├── services/
-│   │       ├── dto/
-│   │       ├── entities/
-│   │       │   ├── guard.entity.ts
-│   │       │   └── guard-url.entity.ts
-│   │       ├── repositories/
-│   │       └── guards.module.ts
-│   │
+│   │   ├── guards/
+│   │   │   ├── controllers/
+│   │   │   ├── services/
+│   │   │   ├── dto/
+│   │   │   ├── entities/
+│   │   │   │   ├── guard.entity.ts
+│   │   │   │   └── guard-url.entity.ts
+│   │   │   ├── repositories/
+│   │   │   └── guards.module.ts
+│   │   │
 │   │   ├── activity-logs/
 │   │   │   ├── controllers/
 │   │   │   │   └── activity-logs.controller.ts
@@ -221,21 +249,63 @@ server/
 │   │   │   │   └── activity-log.entity.ts
 │   │   │   └── activity-logs.module.ts
 │   │   │
-│   │   └── system-logs/
-│   │       ├── controllers/
-│   │       │   └── system-logs.controller.ts
-│   │       ├── services/
-│   │       │   └── system-logs.service.ts
-│   │       ├── dto/
-│   │       │   └── query-system-log.dto.ts
-│   │       └── system-logs.module.ts
-│   │
-│   │   └── storage/
-│   │       ├── controllers/
-│   │       │   └── storage.controller.ts
-│   │       ├── services/
-│   │       │   └── storage.service.ts
-│   │       └── storage.module.ts
+│   │   ├── system-logs/
+│   │   │   ├── controllers/
+│   │   │   │   └── system-logs.controller.ts
+│   │   │   ├── services/
+│   │   │   │   └── system-logs.service.ts
+│   │   │   ├── dto/
+│   │   │   │   └── query-system-log.dto.ts
+│   │   │   └── system-logs.module.ts
+│   │   │
+│   │   ├── settings/
+│   │   │   ├── controllers/
+│   │   │   │   └── settings.controller.ts
+│   │   │   ├── services/
+│   │   │   │   └── settings.service.ts
+│   │   │   ├── dto/
+│   │   │   │   └── update-setting.dto.ts
+│   │   │   ├── entities/
+│   │   │   │   └── setting.entity.ts
+│   │   │   └── settings.module.ts
+│   │   │
+│   │   ├── storage/
+│   │   │   ├── controllers/
+│   │   │   │   └── storage.controller.ts
+│   │   │   ├── services/
+│   │   │   │   └── storage.service.ts
+│   │   │   └── storage.module.ts
+│   │   │
+│   │   ├── system-creators/         # System Creators module (CRUD generator)
+│   │   │   ├── controllers/
+│   │   │   │   └── system-creators.controller.ts
+│   │   │   ├── services/
+│   │   │   │   ├── sc-registry.service.ts
+│   │   │   │   ├── sc-generator.service.ts
+│   │   │   │   └── sc-loader.service.ts
+│   │   │   ├── dto/
+│   │   │   │   ├── create-sc-module.dto.ts
+│   │   │   │   ├── update-sc-module.dto.ts
+│   │   │   │   └── query-sc-module.dto.ts
+│   │   │   ├── entities/
+│   │   │   │   └── sc-module.entity.ts
+│   │   │   └── system-creators.module.ts
+│   │   │
+│   │   └── generated/               # Auto-generated modules (created by System Creators)
+│   │       ├── index.ts             # Barrel + dynamic loader
+│   │       ├── _dynamic-loader.ts   # Reads registry, loads compiled modules
+│   │       └── sc_{name}/           # Per-module (e.g., sc_product, sc_category)
+│   │           ├── {name}.module.ts
+│   │           ├── entities/
+│   │           │   └── {name}.entity.ts
+│   │           ├── controllers/
+│   │           │   └── {name}.controller.ts
+│   │           ├── services/
+│   │           │   └── {name}.service.ts
+│   │           └── dto/
+│   │               ├── create-{name}.dto.ts
+│   │               ├── update-{name}.dto.ts
+│   │               └── query-{name}.dto.ts
 │   │
 │   └── shared/                     # Shared business logic
 │       ├── cache/
@@ -251,7 +321,10 @@ server/
 ├── storage/                        # Uploaded files (gitignored)
 │   ├── settings/                   # Settings uploads (favicon, bg image)
 │   ├── avatars/                    # User avatar uploads
-│   └── general/                    # General file uploads
+│   ├── general/                    # General file uploads
+│   └── generated/                  # Generated module file uploads (per-module subfolders)
+│       └── {module_name}/          # e.g., product/, category/
+│
 ├── scripts/
 │
 ├── .env
@@ -283,6 +356,7 @@ server/
 - Stores: `src/stores/` (Pinia state management)
 - Types: `src/types/` (TypeScript interfaces)
 - Storybook: `stories/`
+- Dynamic modules: Generated CRUD pages rendered via `DynamicCrudPage.vue`
 
 ### Server
 - TypeORM with `better-sqlite3` driver
@@ -293,10 +367,14 @@ server/
 - Modules: `src/modules/{feature}/`
 - Shared: `src/common/`
 - RBAC: Use `@Roles()` and `@Permissions()` decorators on controller methods
+- Generated modules: `src/modules/generated/sc_{name}/` — prefix `sc_` for System Creator modules
+- Generated modules compiled from .ts → .js at generation time, loaded via `require()` at startup
 
 ---
 
 ## Routing
+
+### Static Routes
 
 | Path | Component | Auth | Description |
 |------|-----------|------|-------------|
@@ -310,20 +388,36 @@ server/
 | `/dashboard/activity-logs` | ActivityLogsPage | Required | Activity logs viewer |
 | `/dashboard/system-logs` | SystemLogsPage | Required | System logs viewer |
 | `/dashboard/settings` | SettingsPage | Required | Application settings |
+| `/dashboard/system-creators` | SystemCreatorsPage | Required (Super Admin) | System Creators list |
+| `/dashboard/system-creators/create` | SystemCreatorWizardPage | Required (Super Admin) | Create new module |
+
+### Dynamic Routes (Generated Modules)
+
+| Path Pattern | Component | Auth | Description |
+|-------------|-----------|------|-------------|
+| `/dashboard/sc/:moduleName` | DynamicCrudPage | Required (Admin+) | Dynamic CRUD for generated module |
+
+**Route resolution**: Client fetches `/api/system-creators/registry` on app load, builds route map from `routePath` field of each registered module.
 
 ### Sidebar Menu (AppLayout)
 
 ```
-Dashboard                    → /dashboard
+Dashboard                         → /dashboard
 User Management (group)
-    ├── User                 → /dashboard/users
-    ├── Guard                → /dashboard/guards
-    ├── Role                 → /dashboard/roles
-    └── Permissions          → /dashboard/permissions
+    ├── User                      → /dashboard/users
+    ├── Guard                     → /dashboard/guards
+    ├── Role                      → /dashboard/roles
+    └── Permissions               → /dashboard/permissions
 Sistem (group)
-    ├── Activity Logs        → /dashboard/activity-logs
-    ├── System Logs          → /dashboard/system-logs
-    └── Settings             → /dashboard/settings
+    ├── Activity Logs             → /dashboard/activity-logs
+    ├── System Logs               → /dashboard/system-logs
+    └── Settings                  → /dashboard/settings
+Admin (group, Super Admin only)
+    └── System Creators           → /dashboard/system-creators
+Generated Modules (group, dynamic)
+    ├── {Module Label 1}         → /dashboard/sc/{name1}
+    ├── {Module Label 2}         → /dashboard/sc/{name2}
+    └── ...                       → /dashboard/sc/{nameN}
 ```
 
 ---
@@ -367,34 +461,6 @@ Sistem (group)
 | PUT | `/api/users/:id` | Update user | Bearer |
 | DELETE | `/api/users/:id` | Delete user | Bearer |
 
-**Query Parameters** (GET `/api/users`):
-- `page` (number, default: 1)
-- `limit` (number, default: 20)
-- `search` (string) — global search across firstName, lastName, username, email
-- `searchField` (string) — search specific field only (e.g., `email`, `username`)
-- `sortBy` (string, default: 'id') — sort column (whitelisted: id, firstName, lastName, username, email, createdAt, updatedAt)
-- `sortOrder` (string, default: 'DESC') — sort direction: `ASC` or `DESC`
-
-**Response Format**:
-```json
-{
-  "data": [...],
-  "total": 42,
-  "page": 1,
-  "limit": 20,
-  "totalPages": 3
-}
-```
-
-**Create/Update DTO**:
-- `firstName` (string, required for create)
-- `lastName` (string, required for create)
-- `username` (string, required for create, unique)
-- `email` (string, email format, required for create, unique)
-- `password` (string, required for create)
-- `confirmPassword` (string, must match password)
-- `roleIds` (number[], optional) — assign roles to user
-
 ### Roles
 
 | Method | Endpoint | Description | Auth |
@@ -404,20 +470,6 @@ Sistem (group)
 | POST | `/api/roles` | Create role | Bearer |
 | PUT | `/api/roles/:id` | Update role | Bearer |
 | DELETE | `/api/roles/:id` | Delete role | Bearer |
-
-**Query Parameters** (GET `/api/roles`):
-- `page` (number, default: 1)
-- `limit` (number, default: 20)
-- `search` (string) — global search across roleName, description
-- `searchField` (string) — search specific field only (e.g., `roleName`)
-- `sortBy` (string, default: 'id') — sort column (whitelisted: id, roleName, description, createdAt, updatedAt)
-- `sortOrder` (string, default: 'DESC') — sort direction: `ASC` or `DESC`
-
-**Create/Update DTO**:
-- `roleName` (string, required for create, unique)
-- `description` (string, optional)
-- `guardIds` (number[], optional) — assign guards to role
-- `permissionIds` (number[], optional) — assign permissions to role
 
 ### Permissions
 
@@ -429,20 +481,6 @@ Sistem (group)
 | PUT | `/api/permissions/:id` | Update permission | Bearer |
 | DELETE | `/api/permissions/:id` | Delete permission | Bearer |
 
-**Query Parameters** (GET `/api/permissions`):
-- `page` (number, default: 1)
-- `limit` (number, default: 20)
-- `search` (string) — global search across permissionName, description
-- `searchField` (string) — search specific field only (e.g., `permissionName`)
-- `sortBy` (string, default: 'id') — sort column (whitelisted: id, permissionName, description, createdAt, updatedAt)
-- `sortOrder` (string, default: 'DESC') — sort direction: `ASC` or `DESC`
-
-**Create/Update DTO**:
-- `permissionName` (string, required for create, unique)
-- `description` (string, optional)
-- `methods` (string[], optional) — HTTP methods: GET, POST, PUT, DELETE, PATCH, OPTIONS, or * for all
-- `urls` (string[], optional) — URL patterns: `/api/users/*`, `/*`, etc.
-
 ### Guards
 
 | Method | Endpoint | Description | Auth |
@@ -453,20 +491,6 @@ Sistem (group)
 | PUT | `/api/guards/:id` | Update guard | Bearer |
 | DELETE | `/api/guards/:id` | Delete guard | Bearer |
 
-**Query Parameters** (GET `/api/guards`):
-- `page` (number, default: 1)
-- `limit` (number, default: 20)
-- `search` (string) — global search across guardName, description
-- `searchField` (string) — search specific field only (e.g., `guardName`)
-- `sortBy` (string, default: 'id') — sort column (whitelisted: id, guardName, description, createdAt, updatedAt)
-- `sortOrder` (string, default: 'DESC') — sort direction: `ASC` or `DESC`
-
-**Create/Update DTO**:
-- `guardName` (string, required for create, unique)
-- `description` (string, optional)
-- `allowUrls` (string[], optional) — allowed URL patterns
-- `denyUrls` (string[], optional) — denied URL patterns
-
 ### Activity Logs
 
 | Method | Endpoint | Description | Auth |
@@ -474,45 +498,6 @@ Sistem (group)
 | GET | `/api/activity-logs` | List activity logs (paginated, filterable) | Bearer |
 | GET | `/api/activity-logs/stats` | Get statistics (by action, entity, level) | Bearer |
 | GET | `/api/activity-logs/:id` | Get activity log detail | Bearer |
-
-**Query Parameters** (GET `/api/activity-logs`):
-- `page` (number, default: 1)
-- `limit` (number, default: 20)
-- `search` (string) — global search across description, user.username, user.firstName, user.lastName
-- `action` (string) — filter by action: CREATE, UPDATE, DELETE, LOGIN, LOGOUT
-- `entity` (string) — filter by entity: User, Role, Permission, Guard, Auth
-- `userId` (number) — filter by user ID
-- `level` (string) — filter by level: INFO, WARNING, ERROR
-- `startDate` (string, ISO date) — filter from date
-- `endDate` (string, ISO date) — filter to date
-- `sortBy` (string, default: 'createdAt') — sort column
-- `sortOrder` (string, default: 'DESC') — sort direction
-
-**Response Format**:
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "userId": 1,
-      "user": { "id": 1, "firstName": "Super", "lastName": "Admin", "username": "admin" },
-      "action": "CREATE",
-      "entity": "User",
-      "entityId": 5,
-      "description": "Created user john",
-      "metadata": "{\"username\":\"john\",\"email\":\"john@example.com\"}",
-      "ipAddress": "127.0.0.1",
-      "userAgent": "Mozilla/5.0...",
-      "level": "INFO",
-      "createdAt": "2026-08-15T10:30:00.000Z"
-    }
-  ],
-  "total": 42,
-  "page": 1,
-  "limit": 20,
-  "totalPages": 3
-}
-```
 
 ### System Logs
 
@@ -531,36 +516,36 @@ Sistem (group)
 | PUT | `/api/settings` | Update multiple settings | Bearer + Roles + Permissions |
 | POST | `/api/settings/upload` | Upload file (favicon, bg image) | Bearer + Roles + Permissions |
 
-**Upload Response**:
-```json
-{ "url": "/api/storage/settings/settings-1234567890-123456.png" }
-```
-
 ### Storage
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | GET | `/api/storage/:subfolder/:filename` | Serve uploaded file | Public |
 
-**Subfolder whitelist**: `settings`, `avatars`, `general`
+### System Creators (CRUD Generator)
 
-**Response**: Binary file with correct `Content-Type` header
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/system-creators/registry` | List all registered modules | Bearer (Super Admin) |
+| GET | `/api/system-creators/registry/:id` | Get module config by ID | Bearer (Super Admin) |
+| GET | `/api/system-creators/registry/by-name/:name` | Get module config by name | Bearer (Super Admin) |
+| POST | `/api/system-creators/generate` | Generate new module (write files + restart) | Bearer (Super Admin) |
+| PUT | `/api/system-creators/:id` | Update module config | Bearer (Super Admin) |
+| DELETE | `/api/system-creators/:id` | Delete module (mark inactive) | Bearer (Super Admin) |
+| POST | `/api/system-creators/:id/toggle` | Toggle module active/inactive | Bearer (Super Admin) |
 
-**Note**: Files are stored in `server/storage/{subfolder}/`. The directory is gitignored.
+### Generated Module Endpoints (Dynamic)
 
-**Query Parameters** (GET `/api/system-logs/files/:filename`):
-- `level` (string) — filter by log level: INFO, WARN, ERROR, DEBUG, TRACE
-- `search` (string) — search in message and context
-- `startDate` (string, ISO date) — filter from timestamp
-- `endDate` (string, ISO date) — filter to timestamp
-- `limit` (number, default: 100) — max entries to return
-- `offset` (number, default: 0) — offset for pagination
+Per generated module, REST endpoints are auto-created:
 
-**Log File Format** (`.log` files in `server/logs/`):
-```
-[2026-08-15T10:30:00.000Z] [INFO] [Auth] User logged in: admin
-[2026-08-15T10:31:00.000Z] [ERROR] [UsersService] Failed to create user
-```
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/generated/{name}` | List records (paginated, search, sort) | Bearer + RBAC |
+| GET | `/api/generated/{name}/:id` | Get record detail | Bearer + RBAC |
+| POST | `/api/generated/{name}` | Create record | Bearer + RBAC |
+| PUT | `/api/generated/{name}/:id` | Update record | Bearer + RBAC |
+| DELETE | `/api/generated/{name}/:id` | Delete record | Bearer + RBAC |
+| POST | `/api/generated/{name}/upload` | File upload (if module has file/image fields) | Bearer + RBAC |
 
 ---
 
@@ -581,58 +566,21 @@ Two global guards are registered in `app.module.ts`:
 | `@Roles(...roles)` | `common/decorators/roles.decorator.ts` | Require specific roles |
 | `@Permissions(...perms)` | `common/decorators/permissions.decorator.ts` | Require specific permissions |
 
-### RBAC Guard Logic (`common/guards/rbac.guard.ts`)
+### Generated Module RBAC
 
-1. Loads user with full relations (roles → guards.urls, roles → permissions.methods, permissions.urls)
-2. Checks `@Roles()` — if defined, user must have at least one matching role name
-3. Checks `@Permissions()` — if defined, user must have at least one matching permission name
-4. **Guard URL enforcement** — For each role's guards:
-   - Collect all `deny` URLs → if request URL matches any, deny access
-   - Collect all `allow` URLs → if request URL matches any, grant access
-5. **Permission method+URL enforcement** — For each role's permissions:
-   - Check if HTTP method matches permission's `methods` (or `*` wildcard)
-   - Check if request URL matches permission's `urls` patterns
+Generated modules support 3 access levels:
 
-### Access Control Flow
-
-```
-Request → JwtAuthGuard → RbacGuard
-  │
-  ├─ @Public()? → Allow (skip all checks)
-  │
-  ├─ @Roles() set? → Check user has matching role → Fail: 403
-  │
-  ├─ @Permissions() set? → Check user has matching permission → Fail: 403
-  │
-  ├─ Neither @Roles nor @Permissions? → Allow (any authenticated user)
-  │
-  └─ Guard-Based Enforcement:
-       For each role → For each permission:
-         Method matches? → URL matches permission urls?
-           → For each guard on role:
-             Deny URLs match? → DENY
-             Allow URLs match? → ALLOW
-       → Fail: 403 "Access denied"
-```
-
-### Client-Side Authorization
-
-The client implements complementary access control:
-
-1. **Route Guards** — Vue Router `beforeEach` checks `meta.requiresAuth` and `meta.guest`
-2. **Menu Visibility** — Sidebar menu items conditionally rendered based on user roles/permissions
-3. **API Error Handling** — Axios interceptor catches 401/403 responses:
-   - 401 → Clear token, redirect to `/login`
-   - 403 → Show NAlert "Access Denied" message
-4. **Composable `useAuthorization`** — Centralized role/permission checking:
-   - `hasRole(roleName)` — Check if user has specific role
-   - `hasPermission(permissionName)` — Check if user has specific permission
-   - `hasAnyRole(roles[])` — Check if user has any of the listed roles
-   - `hasAnyPermission(perms[])` — Check if user has any of the listed permissions
+| Level | Behavior |
+|-------|----------|
+| `public` | `@Public()` — no auth required |
+| `admin` | `@Roles('Admin', 'Super Admin')` — admin-only |
+| `granular` | Auto-create permission (e.g., "Product Management", "Full Access") + auto-create guard (e.g., "Product Access") + assign to selected roles |
 
 ---
 
 ## Entity Relationships
+
+### Built-in Entities
 
 ```
 users ──────< users_roles >────── roles
@@ -652,15 +600,22 @@ users ──────< users_roles >────── roles
   └─────────────< activity_logs
 ```
 
-| Relationship | Type | Description |
-|-------------|------|-------------|
-| User → Role | Many-to-Many | User can have multiple roles |
-| Role → Guard | Many-to-Many | Role can have multiple guards |
-| Role → Permission | Many-to-Many | Role can have multiple permissions |
-| Guard → GuardUrl | One-to-Many | Guard has many URL rules (allow/deny) |
-| Permission → PermissionMethod | One-to-Many | Permission has many method rules |
-| Permission → PermissionUrl | One-to-Many | Permission has many URL rules |
-| User → ActivityLog | One-to-Many | User has many activity logs (nullable FK) |
+### System Creators Entity
+
+```
+sc_modules ─── (fields stored as JSON in fieldsConfig column)
+               (relations stored as JSON in relationsConfig column)
+```
+
+### Generated Module Entities (dynamic)
+
+Each generated module has its own entity with columns defined by the user. Relationships between generated modules are defined via `relationsConfig`:
+
+| Relation Type | TypeORM Decorator | Junction Table |
+|--------------|-------------------|----------------|
+| ManyToOne | `@ManyToOne` + `@JoinColumn` | None (FK on child) |
+| ManyToMany | `@ManyToMany` + `@JoinTable` | Auto-created (`sc_{a}_sc_{b}`) |
+| OneToMany | `@OneToMany` | None (FK on child) |
 
 ---
 
@@ -683,6 +638,7 @@ users ──────< users_roles >────── roles
 - Passport + JWT
 - bcrypt
 - class-validator
+- TypeScript (for code generation at runtime via `ts.transpileModule`)
 
 ---
 
@@ -700,7 +656,7 @@ Lihat `docs/design-system.md` untuk dokumentasi lengkap design tokens, color pal
 
 ## Table Browse Component
 
-Reusable component untuk semua halaman tabel (Users, Roles, Permissions, Guards).
+Reusable component untuk semua halaman tabel (Users, Roles, Permissions, Guards, Generated Modules).
 
 ### Component: `DataTable.vue`
 
@@ -720,21 +676,7 @@ Reusable component untuk semua halaman tabel (Users, Roles, Permissions, Guards)
 | `searchPlaceholder` | `string` | Search input placeholder |
 | `searchableFields` | `{ label: string; value: string }[]` | Available search field options |
 
-**Emits**:
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `update:page` | `number` | Page changed |
-| `update:limit` | `number` | Page size changed |
-| `search` | `string` | Search text changed (debounced 300ms) |
-| `search-field-change` | `string` | Search field changed |
-| `sort-change` | `{ columnKey: string; order: 'ascend' \| 'descend' \| false }` | Sort changed |
-
-**Slots**:
-| Slot | Description |
-|------|-------------|
-| `toolbar` | Custom toolbar content (e.g., Add button) |
-
-### Features
+**Features**:
 1. **Column Visibility Toggle** — NPopover with checkboxes to show/hide columns
 2. **Server-Side Sorting** — Click column header to toggle ASC → DESC → none
 3. **Field-Specific Search** — NSelect to choose which field to search, or "All Fields"
@@ -744,8 +686,79 @@ Reusable component untuk semua halaman tabel (Users, Roles, Permissions, Guards)
 7. **Empty State** — NEmpty with message
 8. **Reset Filters** — Button to clear all filters
 
-### Composable: `useDataTable`
+---
 
-**Path**: `client/src/composables/useDataTable.ts`
+## Dynamic Form Renderer
 
-Manages table state (search, sort, column visibility). Used by DataTable component internally.
+**Path**: `client/src/components/common/DynamicFormRenderer.vue`
+
+Renders form fields dynamically based on field configuration from System Creators.
+
+### Supported Field Types
+
+| Field Type | Naive UI Component | Notes |
+|-----------|-------------------|-------|
+| `text` | `NInput` | Plain text input |
+| `textarea` | `NInput type="textarea"` | Multi-line text |
+| `rich-text` | Tiptap editor or `NInput type="textarea"` | Rich text editing |
+| `number` | `NInputNumber` | Numeric input |
+| `boolean` | `NSwitch` | Toggle switch |
+| `date` | `NDatePicker type="date"` | Date picker |
+| `datetime` | `NDatePicker type="datetime"` | Date + time picker |
+| `email` | `NInput` with email validation | Email input |
+| `phone` | `NInput` with phone validation | Phone input |
+| `url` | `NInput` with URL validation | URL input |
+| `password` | `NInput type="password"` | Password input |
+| `color` | `NColorPicker` | Color picker |
+| `select` | `NSelect` | Dropdown with configurable options |
+| `json` | `NInput type="textarea"` | JSON editor |
+| `file` | `NUpload` | File upload |
+| `image` | `NUpload` with image preview | Image upload with preview |
+
+### Field Configuration Schema
+
+```typescript
+interface ScFieldConfig {
+  name: string           // Column name (snake_case)
+  label: string          // Display label
+  type: ScFieldType      // One of the types above
+  required: boolean      // Required validation
+  unique: boolean        // Unique constraint
+  searchable: boolean    // Include in search
+  sortable: boolean      // Allow sorting
+  visible: boolean       // Show in table by default
+  defaultValue?: any     // Default value
+  maxLength?: number     // Max length for text fields
+  minLength?: number     // Min length for text fields
+  min?: number           // Min value for number
+  max?: number           // Max value for number
+  options?: { label: string; value: any }[]  // For select type
+  placeholder?: string   // Input placeholder
+  helpText?: string      // Help text below field
+}
+```
+
+---
+
+## Dynamic Table Renderer
+
+**Path**: `client/src/components/common/DynamicTableRenderer.vue`
+
+Renders table columns dynamically based on field configuration.
+
+### Column Rendering by Type
+
+| Field Type | Table Display |
+|-----------|---------------|
+| `text`, `email`, `phone`, `url` | Plain text |
+| `boolean` | NTag (Yes/No with color) |
+| `date` | Formatted date string |
+| `datetime` | Formatted datetime string |
+| `select` | NTag with color based on option |
+| `number` | Formatted number |
+| `password` | `****` (masked) |
+| `color` | Color swatch + hex code |
+| `json` | Truncated JSON preview |
+| `file` | File link/icon |
+| `image` | Thumbnail preview |
+| `rich-text` | Stripped HTML preview |

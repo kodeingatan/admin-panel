@@ -49,6 +49,24 @@
 │ updatedAt    │       └──────────────────┘          │method    │    │url            │
 └──────────────┘                                    │createdAt │    │createdAt      │
                                                     └──────────┘    └───────────────┘
+
+┌──────────────┐       ┌──────────────────┐
+│ sc_modules   │       │ (JSON backup)    │
+├──────────────┤       │ sc-modules-      │
+│ id (PK)      │       │ registry.json    │
+│ name         │       └──────────────────┘
+│ label        │
+│ routePath    │
+│ menuLabel    │
+│ accessLevel  │
+│ accessRoles  │  (JSON array)
+│ accessPerms  │  (JSON array)
+│ isActive     │
+│ fieldsConfig │  (JSON — field definitions)
+│ relationsConf│  (JSON — relation definitions)
+│ createdAt    │
+│ updatedAt    │
+└──────────────┘
 ```
 
 ---
@@ -70,11 +88,6 @@ Tabel utama untuk data user.
 | `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pembuatan |
 | `updatedAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu update terakhir |
 
-**Indexes**:
-- `PRIMARY KEY` on `id`
-- `UNIQUE` on `username`
-- `UNIQUE` on `email`
-
 ---
 
 ### 2. roles
@@ -88,10 +101,6 @@ Tabel untuk role/level akses.
 | `description` | TEXT | NULLABLE | Deskripsi role |
 | `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pembuatan |
 | `updatedAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu update terakhir |
-
-**Indexes**:
-- `PRIMARY KEY` on `id`
-- `UNIQUE` on `roleName`
 
 ---
 
@@ -107,10 +116,6 @@ Tabel untuk permission/izin akses.
 | `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pembuatan |
 | `updatedAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu update terakhir |
 
-**Indexes**:
-- `PRIMARY KEY` on `id`
-- `UNIQUE` on `permissionName`
-
 ---
 
 ### 4. guards
@@ -124,10 +129,6 @@ Tabel untuk guard/pengaman URL.
 | `description` | TEXT | NULLABLE | Deskripsi guard |
 | `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pembuatan |
 | `updatedAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu update terakhir |
-
-**Indexes**:
-- `PRIMARY KEY` on `id`
-- `UNIQUE` on `guardName`
 
 ---
 
@@ -187,16 +188,12 @@ Tabel untuk menyimpan URL patterns yang diizinkan/ditolak oleh guard.
 |--------|------|-----------|-------------|
 | `id` | INTEGER | PK, AUTO_INCREMENT | ID unik |
 | `guardId` | INTEGER | FK → guards.id | ID guard |
-| `url` | VARCHAR(500) | NOT NULL | URL pattern (contoh: `/api/users/*`) |
-| `type` | ENUM('allow', 'deny') | NOT NULL | Tipe URL (allow/deny) |
+| `url` | VARCHAR(500) | NOT NULL | URL pattern |
+| `type` | ENUM('allow', 'deny') | NOT NULL | Tipe URL |
 | `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pembuatan |
 
 **Constraints**:
 - `FOREIGN KEY (guardId) REFERENCES guards(id) ON DELETE CASCADE`
-
-**Indexes**:
-- `PRIMARY KEY` on `id`
-- `INDEX` on `guardId`
 
 ---
 
@@ -208,15 +205,11 @@ Tabel untuk menyimpan HTTP methods yang diizinkan oleh permission.
 |--------|------|-----------|-------------|
 | `id` | INTEGER | PK, AUTO_INCREMENT | ID unik |
 | `permissionId` | INTEGER | FK → permissions.id | ID permission |
-| `method` | VARCHAR(10) | NOT NULL | HTTP method (GET, POST, PUT, DELETE, PATCH, OPTIONS, *) |
+| `method` | VARCHAR(10) | NOT NULL | HTTP method |
 | `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pembuatan |
 
 **Constraints**:
 - `FOREIGN KEY (permissionId) REFERENCES permissions(id) ON DELETE CASCADE`
-
-**Indexes**:
-- `PRIMARY KEY` on `id`
-- `INDEX` on `permissionId`
 
 ---
 
@@ -228,15 +221,126 @@ Tabel untuk menyimpan URL patterns yang diizinkan oleh permission.
 |--------|------|-----------|-------------|
 | `id` | INTEGER | PK, AUTO_INCREMENT | ID unik |
 | `permissionId` | INTEGER | FK → permissions.id | ID permission |
-| `url` | VARCHAR(500) | NOT NULL | URL pattern (contoh: `/api/users/*`) |
+| `url` | VARCHAR(500) | NOT NULL | URL pattern |
 | `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pembuatan |
 
 **Constraints**:
 - `FOREIGN KEY (permissionId) REFERENCES permissions(id) ON DELETE CASCADE`
 
+---
+
+### 11. activity_logs
+
+Tabel untuk mencatat semua aktivitas user (audit trail).
+
+| Column | Type | Constraint | Description |
+|--------|------|-----------|-------------|
+| `id` | INTEGER | PK, AUTO_INCREMENT | ID unik log |
+| `userId` | INTEGER | NULLABLE, FK → users.id ON DELETE SET NULL | ID user |
+| `action` | VARCHAR | NOT NULL | Jenis aksi |
+| `entity` | VARCHAR | NOT NULL | Entity yang terpengaruh |
+| `entityId` | INTEGER | NULLABLE | ID entity |
+| `description` | TEXT | NULLABLE | Deskripsi aktivitas |
+| `metadata` | TEXT | NULLABLE | JSON data tambahan |
+| `ipAddress` | VARCHAR | NULLABLE | IP address |
+| `userAgent` | VARCHAR | NULLABLE | User agent |
+| `level` | VARCHAR(20) | DEFAULT 'INFO' | Level log |
+| `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pencatatan |
+
+---
+
+### 12. settings
+
+Tabel untuk menyimpan pengaturan aplikasi (key-value store).
+
+| Column | Type | Constraint | Description |
+|--------|------|-----------|-------------|
+| `id` | INTEGER | PK, AUTO_INCREMENT | ID unik setting |
+| `key` | VARCHAR(100) | NOT NULL, UNIQUE | Key unik |
+| `value` | TEXT | NOT NULL | Value setting |
+| `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pembuatan |
+| `updatedAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu update terakhir |
+
+---
+
+### 13. sc_modules (System Creators Registry)
+
+Tabel untuk menyimpan metadata module yang dibuat oleh System Creators.
+
+| Column | Type | Constraint | Description |
+|--------|------|-----------|-------------|
+| `id` | INTEGER | PK, AUTO_INCREMENT | ID unik module |
+| `name` | VARCHAR(100) | NOT NULL, UNIQUE | Module name (snake_case) |
+| `label` | VARCHAR(100) | NOT NULL | Display name (e.g., "Product") |
+| `routePath` | VARCHAR(255) | NOT NULL | Client route (e.g., "/dashboard/products") |
+| `menuLabel` | VARCHAR(100) | NOT NULL | Sidebar menu text (e.g., "Products") |
+| `accessLevel` | VARCHAR(20) | DEFAULT 'admin' | "public" / "admin" / "granular" |
+| `accessRoles` | TEXT | NULLABLE | JSON array of role names (for granular) |
+| `accessPermissions` | TEXT | NULLABLE | JSON array of permission names (for granular) |
+| `isActive` | BOOLEAN | DEFAULT 1 | Module active status |
+| `fieldsConfig` | TEXT | NOT NULL | JSON — full field definitions |
+| `relationsConfig` | TEXT | NULLABLE | JSON — relation definitions |
+| `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pembuatan |
+| `updatedAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu update terakhir |
+
 **Indexes**:
 - `PRIMARY KEY` on `id`
-- `INDEX` on `permissionId`
+- `UNIQUE` on `name`
+
+**JSON Schema — fieldsConfig**:
+```json
+[
+  {
+    "name": "title",
+    "label": "Title",
+    "type": "text",
+    "required": true,
+    "unique": false,
+    "searchable": true,
+    "sortable": true,
+    "visible": true,
+    "defaultValue": null,
+    "maxLength": 255,
+    "minLength": null,
+    "placeholder": "Enter product title",
+    "helpText": null,
+    "options": null
+  },
+  {
+    "name": "category",
+    "label": "Category",
+    "type": "select",
+    "required": true,
+    "unique": false,
+    "searchable": true,
+    "sortable": true,
+    "visible": true,
+    "defaultValue": null,
+    "options": [
+      { "label": "Electronics", "value": "electronics" },
+      { "label": "Clothing", "value": "clothing" }
+    ]
+  }
+]
+```
+
+**JSON Schema — relationsConfig**:
+```json
+[
+  {
+    "name": "category",
+    "type": "many-to-one",
+    "targetModule": "category",
+    "joinTable": null
+  },
+  {
+    "name": "tags",
+    "type": "many-to-many",
+    "targetModule": "tag",
+    "joinTable": "product_tags"
+  }
+]
+```
 
 ---
 
@@ -272,59 +376,6 @@ Tabel untuk menyimpan URL patterns yang diizinkan oleh permission.
 | 2 | Read Only | Hanya izinkan GET dan OPTIONS |
 | 3 | Read Write | Izinkan semua method CRUD |
 
-### Junction: users_roles
-
-| userId | roleId |
-|--------|--------|
-| 1 | 1 |
-
-### Junction: roles_guards
-
-| roleId | guardId |
-|--------|---------|
-| 1 | 1 |
-| 2 | 2 |
-| 3 | 3 |
-
-### Junction: roles_permissions
-
-| roleId | permissionId |
-|--------|-------------|
-| 1 | 1 |
-| 2 | 3 |
-| 3 | 2 |
-
-### Junction: guard_urls
-
-| guardId | url | type |
-|---------|-----|------|
-| 1 | /* | allow |
-| 2 | /api/* | allow |
-| 2 | /api/admin/* | deny |
-| 3 | /api/* | allow |
-
-### Junction: permission_methods
-
-| permissionId | method |
-|-------------|--------|
-| 1 | * |
-| 2 | GET |
-| 2 | OPTIONS |
-| 3 | GET |
-| 3 | POST |
-| 3 | PUT |
-| 3 | DELETE |
-| 3 | PATCH |
-| 3 | OPTIONS |
-
-### Junction: permission_urls
-
-| permissionId | url |
-|-------------|-----|
-| 1 | /* |
-| 2 | /* |
-| 3 | /* |
-
 ---
 
 ## Relationships Summary
@@ -343,6 +394,9 @@ users ──────< users_roles >────── roles
                     v               v
               guard_urls    permission_methods
                             permission_urls
+
+sc_modules ─── (fields stored as JSON in fieldsConfig)
+               (relations stored as JSON in relationsConfig)
 ```
 
 ### Cardinality
@@ -357,57 +411,32 @@ users ──────< users_roles >────── roles
 | Permission → PermissionUrl | One-to-Many | Permission punya banyak URL rules |
 | User → ActivityLog | One-to-Many | User bisa punya banyak activity log (nullable) |
 
----
+### Generated Module Relationships
 
-## Activity Logs Entity
-
-### 11. activity_logs
-
-Tabel untuk mencatat semua aktivitas user (audit trail).
-
-| Column | Type | Constraint | Description |
-|--------|------|-----------|-------------|
-| `id` | INTEGER | PK, AUTO_INCREMENT | ID unik log |
-| `userId` | INTEGER | NULLABLE, FK → users.id ON DELETE SET NULL | ID user yang melakukan aksi |
-| `action` | VARCHAR | NOT NULL | Jenis aksi (CREATE, UPDATE, DELETE, LOGIN, LOGOUT) |
-| `entity` | VARCHAR | NOT NULL | Entity yang terpengaruh (User, Role, Permission, Guard, Auth) |
-| `entityId` | INTEGER | NULLABLE | ID entity yang terpengaruh |
-| `description` | TEXT | NULLABLE | Deskripsi aktivitas |
-| `metadata` | TEXT | NULLABLE | JSON data tambahan (before/after snapshots) |
-| `ipAddress` | VARCHAR | NULLABLE | IP address user |
-| `userAgent` | VARCHAR | NULLABLE | User agent browser |
-| `level` | VARCHAR(20) | DEFAULT 'INFO' | Level log (INFO, WARNING, ERROR) |
-| `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pencatatan log |
-
-**Indexes**:
-- `PRIMARY KEY` on `id`
-- `INDEX` on `userId`
-- `INDEX` on `action`
-- `INDEX` on `entity`
-- `INDEX` on `createdAt`
+| Relationship | TypeORM | Junction Table |
+|-------------|---------|----------------|
+| ManyToOne | `@ManyToOne` + `@JoinColumn` | None (FK on child entity) |
+| ManyToMany | `@ManyToMany` + `@JoinTable` | Auto-created: `sc_{a}_sc_{b}` |
+| OneToMany | `@OneToMany` | None (FK on referenced entity) |
 
 ---
 
-### 12. settings
+## Database Total
 
-Tabel untuk menyimpan pengaturan aplikasi (key-value store).
+**13 tables** (12 built-in + 1 system creators registry):
 
-| Column | Type | Constraint | Description |
-|--------|------|-----------|-------------|
-| `id` | INTEGER | PK, AUTO_INCREMENT | ID unik setting |
-| `key` | VARCHAR(100) | NOT NULL, UNIQUE | Key unik setting |
-| `value` | TEXT | NOT NULL | Value setting |
-| `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pembuatan |
-| `updatedAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu update terakhir |
+1. `users`
+2. `roles`
+3. `permissions`
+4. `guards`
+5. `users_roles` (junction)
+6. `roles_guards` (junction)
+7. `roles_permissions` (junction)
+8. `guard_urls`
+9. `permission_methods`
+10. `permission_urls`
+11. `activity_logs`
+12. `settings`
+13. `sc_modules` (System Creators)
 
-**Indexes**:
-- `PRIMARY KEY` on `id`
-- `UNIQUE` on `key`
-
-**Seed Data**:
-
-| key | value | description |
-|-----|-------|-------------|
-| `app_name` | `MyApp` | Nama aplikasi |
-| `app_favicon` | `/favicon.svg` | Favicon URL |
-| `login_bg_gradient` | `#1e40af,#3b82f6,#6366f1` | Gradient colors untuk login background |
+**Note**: Generated modules create additional tables dynamically via TypeORM `synchronize: true`. Each generated module adds 1 entity table + optional junction tables for ManyToMany relations.

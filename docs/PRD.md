@@ -4,7 +4,7 @@
 
 **Nama Project**: Component Stories — Admin Panel User Management System
 
-**Tujuan**: Membangun admin panel untuk manajemen user dengan sistem role-based access control (RBAC) yang memungkinkan admin mengelola user, role, permission, dan guard secara terpusat.
+**Tujuan**: Membangun admin panel untuk manajemen user dengan sistem role-based access control (RBAC) yang memungkinkan admin mengelola user, role, permission, dan guard secara terpusat. **System Creators** memungkinkan Super Admin membuat module CRUD baru secara dinamis melalui UI wizard.
 
 **Tech Stack**:
 - Frontend: Vue 3 + TypeScript + Vite + Naive UI + Tailwind CSS v4
@@ -23,6 +23,7 @@ Admin panel untuk **User Management System** yang menyediakan:
 4. **Permission Management** — CRUD permission dengan method dan URL rules
 5. **Guard Management** — CRUD guard dengan URL allow/deny rules
 6. **Authorization System** — Sistem otorisasi berbasis JWT → User → Role → Permission → Guard
+7. **System Creators** — CRUD Generator untuk membuat module baru secara dinamis
 
 ---
 
@@ -41,6 +42,15 @@ User Management
     ├── Guard
     ├── Role
     └── Permissions
+Sistem
+    ├── Activity Logs
+    ├── System Logs
+    └── Settings
+Admin (Super Admin only)
+    └── System Creators
+Generated Modules (dynamic)
+    ├── {Module Label 1}
+    └── {Module Label 2}
 ```
 
 | Menu Item | Route | Deskripsi |
@@ -50,16 +60,8 @@ User Management
 | User Management > Guard | `/dashboard/guards` | Kelola guard |
 | User Management > Role | `/dashboard/roles` | Kelola role |
 | User Management > Permissions | `/dashboard/permissions` | Kelola permission |
-
-#### Widget
-
-| Widget | Deskripsi |
-|--------|-----------|
-| Total Users | Jumlah user terdaftar |
-| Total Roles | Jumlah role yang dibuat |
-| Total Permissions | Jumlah permission yang dibuat |
-| Total Guards | Jumlah guard yang dibuat |
-| Recent Users | 5 user terbaru |
+| Admin > System Creators | `/dashboard/system-creators` | CRUD Generator |
+| Generated > {Name} | `/dashboard/sc/{name}` | Dynamic CRUD page |
 
 ---
 
@@ -96,14 +98,6 @@ User Management
 - **Delete** — Hapus user (dengan konfirmasi)
 - **View** — Lihat detail user
 
-#### Default Seeder
-```
-Username: admin
-Email: admin@admin.com
-Password: P455w0rd!!!
-Roles: [Super Admin]
-```
-
 ---
 
 ### 3.3 Role Management
@@ -120,33 +114,6 @@ Roles: [Super Admin]
 | Permissions | Relation | Multiple select dari daftar permission |
 | Created At | Date | Timestamp otomatis |
 | Updated At | Date | Timestamp otomatis |
-
-#### Form Create/Edit Role
-- Role Name (text input, required, unique)
-- Description (textarea, optional)
-- Guard (multi-select dari daftar guard, optional)
-- Permission (multi-select dari daftar permission, optional)
-
-#### Aksi
-- **Create** — Tambah role baru
-- **Edit** — Ubah data role
-- **Delete** — Hapus role (dengan konfirmasi, cek apakah masih digunakan)
-- **View** — Lihat detail role beserta guard dan permission
-
-#### Default Seeder
-```
-1. Super Admin
-   - Guard: [Full Access]
-   - Permission: [Full Access]
-
-2. Admin
-   - Guard: [Web Access]
-   - Permission: [Read, Write]
-
-3. User
-   - Guard: [Web Access]
-   - Permission: [Read]
-```
 
 ---
 
@@ -165,38 +132,6 @@ Roles: [Super Admin]
 | Created At | Date | Timestamp otomatis |
 | Updated At | Date | Timestamp otomatis |
 
-#### Form Create/Edit Permission
-- Permission Name (text input, required, unique)
-- Description (textarea, optional)
-- Allow Methods (multi-select, options: GET, POST, PUT, DELETE, PATCH, OPTIONS)
-  - Pilihan `*` = izinkan semua method
-  - Bisa menambahkan custom method
-- Allow URLs (multi-select search berdasarkan list route URL server)
-  - Bisa menambahkan manual URL pattern
-  - Support wildcard: `/example/*` untuk sub-path
-  - Contoh: `/api/users/*`, `/api/auth/*`, `/api/dashboard`
-
-#### Aksi
-- **Create** — Tambah permission baru
-- **Edit** — Ubah data permission
-- **Delete** — Hapus permission (dengan konfirmasi, cek apakah masih digunakan)
-- **View** — Lihat detail permission
-
-#### Default Seeder
-```
-1. Full Access
-   - Allow Methods: [*]
-   - Allow URLs: [/*]
-
-2. Read Only
-   - Allow Methods: [GET, OPTIONS]
-   - Allow URLs: [/*]
-
-3. Read Write
-   - Allow Methods: [GET, POST, PUT, DELETE, PATCH, OPTIONS]
-   - Allow URLs: [/*]
-```
-
 ---
 
 ### 3.5 Guard Management
@@ -214,97 +149,148 @@ Roles: [Super Admin]
 | Created At | Date | Timestamp otomatis |
 | Updated At | Date | Timestamp otomatis |
 
-#### Form Create/Edit Guard
-- Guard Name (text input, required, unique)
-- Description (textarea, optional)
-- Allow URLs (multi-select search berdasarkan list route URL server)
-  - Bisa menambahkan manual URL pattern
-  - Support wildcard: `/example/*`
-  - Contoh: `/api/users/*`, `/api/roles/*`
-- Deny URLs (multi-select search berdasarkan list route URL server)
-  - Bisa menambahkan manual URL pattern
-  - Support wildcard: `/example/*`
-  - Contoh: `/api/auth/delete-all`
-
-#### Aksi
-- **Create** — Tambah guard baru
-- **Edit** — Ubah data guard
-- **Delete** — Hapus guard (dengan konfirmasi, cek apakah masih digunakan)
-- **View** — Lihat detail guard
-
-#### Default Seeder
-```
-1. Full Access
-   - Allow URLs: [/*]
-   - Deny URLs: []
-
-2. Web Access
-   - Allow URLs: [/api/*]
-   - Deny URLs: [/api/admin/*]
-
-3. API Only
-   - Allow URLs: [/api/*]
-   - Deny URLs: []
-```
-
 ---
 
 ### 3.6 Table Browse Features
 
-Semua halaman tabel (Users, Roles, Permissions, Guards) menggunakan komponen **DataTable** yang reusable dengan fitur:
+Semua halaman tabel menggunakan komponen **DataTable** yang reusable dengan fitur:
 
-#### Column Visibility Toggle
-- NDropdown dengan checkbox untuk show/hide kolom
-- User dapat memilih kolom mana yang ditampilkan
-- Default: semua kolom visible
-- State tersimpan di localStorage per halaman
+- **Column Visibility Toggle** — NDropdown dengan checkbox untuk show/hide kolom
+- **Server-Side Sorting** — Klik header kolom untuk sort (ASC → DESC → none)
+- **Global Search** — NInput dengan debounce 300ms
+- **Field-Specific Search** — NSelect untuk memilih field tertentu
+- **Pagination** — Server-side, page size: 10, 20, 50, 100
+- **Refresh/Reload** — Tombol refresh untuk fetch ulang data
 
-#### Server-Side Sorting
-- Klik header kolom untuk sort (ASC → DESC → none)
-- Hanya kolom yang ditandai `sortable` yang bisa di-sort
-- Sorting dilakukan di server (bukan client-side)
-- Default sort: `id DESC`
+---
 
-#### Search Features
-- **Global Search**: NInput dengan debounce 300ms, mencari di semua field
-- **Field-Specific Search**: NSelect untuk memilih field tertentu (e.g., search only in email)
-- **Search Field Options** per entity:
+### 3.7 System Creators (CRUD Generator)
 
-| Entity | Search Fields |
-|--------|---------------|
-| User | All, First Name, Last Name, Username, Email |
-| Role | All, Role Name, Description |
-| Permission | All, Permission Name, Description |
-| Guard | All, Guard Name, Description |
+**Fitur baru** yang memungkinkan Super Admin membuat module CRUD baru secara dinamis.
 
-#### Pagination
-- Server-side pagination
-- Page size options: 10, 20, 50, 100
-- "Showing X-Y of Z" text
-- Page change & size change via API params
+#### 3.7.1 System Creators List Page
 
-#### API Query Parameters
+**Halaman utama** yang menampilkan semua module yang sudah dibuat.
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | number | 1 | Page number |
-| `limit` | number | 20 | Items per page |
-| `search` | string | — | Global search text |
-| `searchField` | string | — | Search specific field only |
-| `sortBy` | string | 'id' | Sort column name |
-| `sortOrder` | string | 'DESC' | Sort direction (ASC/DESC) |
+**Route**: `/dashboard/system-creators`
+**Access**: Super Admin only
 
-#### Response Format
+#### Tabel Module
+| Kolom | Tipe | Keterangan |
+|-------|------|------------|
+| ID | Number | Auto-increment |
+| Name | String | Module name (snake_case, unique) |
+| Label | String | Display name |
+| Fields Count | Number | Jumlah field |
+| Access Level | Enum | public / admin / granular |
+| Status | Boolean | Active / Inactive |
+| Created At | Date | Timestamp otomatis |
+| Updated At | Date | Timestamp otomatis |
 
-```json
-{
-  "data": [...],
-  "total": 42,
-  "page": 1,
-  "limit": 20,
-  "totalPages": 3
-}
-```
+#### Aksi
+- **Create** — Buka wizard untuk buat module baru
+- **View** — Lihat detail konfigurasi module
+- **Toggle** — Aktifkan/nonaktifkan module
+- **Delete** — Hapus module (mark inactive, tidak hapus file)
+
+#### 3.7.2 Create Module Wizard
+
+Multi-step wizard untuk membuat module baru.
+
+**Route**: `/dashboard/system-creators/create`
+**Access**: Super Admin only
+
+##### Step 1: Basic Info
+| Field | Component | Validation | Description |
+|-------|-----------|------------|-------------|
+| Module Name | NInput | required, snake_case, unique | Nama module (e.g., `product`) |
+| Label | NInput | required | Display name (e.g., `Product`) |
+| Menu Label | NInput | required | Sidebar menu text (e.g., `Products`) |
+| Description | NInput textarea | optional | Deskripsi module |
+
+##### Step 2: Field Definitions
+| Field | Component | Description |
+|-------|-----------|-------------|
+| Field Name | NInput | Column name (snake_case) |
+| Field Label | NInput | Display label |
+| Field Type | NSelect | Type selection (see supported types) |
+| Required | NSwitch | Wajib diisi |
+| Unique | NSwitch | Unique constraint |
+| Searchable | NSwitch | Include in search |
+| Sortable | NSwitch | Allow sorting |
+| Visible in Table | NSwitch | Show in table by default |
+| Default Value | NInput | Optional default |
+| Max Length | NInputNumber | For text fields |
+| Min Length | NInputNumber | For text fields |
+| Min Value | NInputNumber | For number fields |
+| Max Value | NInputNumber | For number fields |
+| Options | Dynamic list | For select type (label + value pairs) |
+
+##### Step 3: Relationships (Optional)
+| Field | Component | Description |
+|-------|-----------|-------------|
+| Relation Type | NSelect | many-to-one, many-to-many, one-to-many |
+| Target Module | NSelect | Pilih module yang sudah ada |
+| Field Name | NInput | Nama field untuk relation |
+| Join Table | NInput | Nama junction table (untuk many-to-many) |
+
+##### Step 4: Access Control
+| Field | Component | Options |
+|-------|-----------|---------|
+| Access Level | NRadioGroup | public, admin, granular |
+| Roles | NSelect (if granular) | Assign ke role tertentu |
+| Auto-create Permission | NSwitch (if granular) | Buat permission otomatis |
+| Auto-create Guard | NSwitch (if granular) | Buat guard otomatis |
+
+##### Step 5: Review & Generate
+- Tampilkan ringkasan konfigurasi
+- Preview field table
+- Tombol "Generate Module"
+- Loading state saat server generate + restart
+
+#### 3.7.3 Dynamic CRUD Page
+
+Halaman CRUD yang di-render secara dinamis berdasarkan konfigurasi module.
+
+**Route**: `/dashboard/sc/:moduleName`
+**Access**: Based on access level config
+
+**Features**:
+- **Table View** — DataTable dengan kolom dari field config
+- **Create Form** — DynamicFormRenderer dengan field types yang sesuai
+- **Edit Form** — Form yang sama dengan pre-filled data
+- **Detail Drawer** — Detail view dengan field rendering yang sesuai
+- **Delete** — Konfirmasi + hapus
+- **File Upload** — Untuk field type file/image, upload ke `server/storage/generated/{module}/`
+
+#### 3.7.4 Field Types
+
+| Type | DB Column Type | Form Component | Table Display |
+|------|---------------|----------------|---------------|
+| `text` | VARCHAR(255) | NInput | Plain text |
+| `textarea` | TEXT | NInput textarea | Truncated text |
+| `rich-text` | TEXT | Tiptap/NInput textarea | Stripped HTML |
+| `number` | INTEGER | NInputNumber | Formatted number |
+| `boolean` | INTEGER (0/1) | NSwitch | NTag Yes/No |
+| `date` | DATE | NDatePicker | Formatted date |
+| `datetime` | DATETIME | NDatePicker datetime | Formatted datetime |
+| `email` | VARCHAR(255) | NInput email | Plain text |
+| `phone` | VARCHAR(50) | NInput | Plain text |
+| `url` | VARCHAR(500) | NInput | Clickable link |
+| `password` | VARCHAR(255) | NInput password | `****` masked |
+| `color` | VARCHAR(7) | NColorPicker | Color swatch |
+| `select` | VARCHAR(255) | NSelect | NTag with color |
+| `json` | TEXT | NInput textarea (JSON) | Truncated preview |
+| `file` | VARCHAR(500) | NUpload | File link |
+| `image` | VARCHAR(500) | NUpload image | Thumbnail |
+
+#### 3.7.5 Relationship Types
+
+| Type | TypeORM | Description |
+|------|---------|-------------|
+| `many-to-one` | `@ManyToOne` + `@JoinColumn` | FK pada entity ini → reference module |
+| `many-to-many` | `@ManyToMany` + `@JoinTable` | Junction table otomatis |
+| `one-to-many` | `@OneToMany` | FK pada entity lain → reference module |
 
 ---
 
@@ -334,25 +320,11 @@ Untuk setiap Role:
 Response dikirim
 ```
 
-### Detail Alur
-
-1. **Request** → Client mengirim request dengan header `Authorization: Bearer <token>`
-2. **JWT Validation** → Server validasi token JWT
-3. **User Lookup** → Ambil data user dari token (sub = user.id)
-4. **Role Resolution** → Ambil semua role yang dimiliki user
-5. **Permission Check** → Untuk setiap role, ambil permission-nya:
-   - Cek apakah HTTP method ada di `allow_methods`
-   - Cek apakah request URL match dengan `allow_urls` (support wildcard)
-6. **Guard Check** → Untuk setiap role, ambil guard-nya:
-   - Cek apakah request URL match dengan `allow_urls`
-   - Cek apakah request URL tidak match dengan `deny_urls`
-7. **Authorization Decision** → Jika semua check pass, izinkan akses. Jika tidak, return 403 Forbidden.
-
 ---
 
 ## 5. API Endpoints (Existing + Planned)
 
-### Auth API (Sudah Ada)
+### Auth API
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -360,7 +332,7 @@ Response dikirim
 | POST | `/api/auth/login` | Login user | Public |
 | GET | `/api/auth/profile` | Get profile user | Bearer |
 
-### User Management API (Planned)
+### User Management API
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -370,7 +342,7 @@ Response dikirim
 | PUT | `/api/users/:id` | Update user | Bearer + Permission |
 | DELETE | `/api/users/:id` | Hapus user | Bearer + Permission |
 
-### Role Management API (Planned)
+### Role Management API
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -380,7 +352,7 @@ Response dikirim
 | PUT | `/api/roles/:id` | Update role | Bearer + Permission |
 | DELETE | `/api/roles/:id` | Hapus role | Bearer + Permission |
 
-### Permission Management API (Planned)
+### Permission Management API
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -390,7 +362,7 @@ Response dikirim
 | PUT | `/api/permissions/:id` | Update permission | Bearer + Permission |
 | DELETE | `/api/permissions/:id` | Hapus permission | Bearer + Permission |
 
-### Guard Management API (Planned)
+### Guard Management API
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -416,9 +388,45 @@ Response dikirim
 | GET | `/api/system-logs/files/:filename` | Baca isi file log | Bearer + Permission |
 | GET | `/api/system-logs/stats/:filename` | Statistik file log | Bearer + Permission |
 
+### Settings API
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/settings` | Get all settings | Public |
+| GET | `/api/settings/:key` | Get setting by key | Public |
+| PUT | `/api/settings` | Update multiple settings | Bearer + Permission |
+| POST | `/api/settings/upload` | Upload file | Bearer + Permission |
+
+### System Creators API
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/system-creators/registry` | List semua registered modules | Bearer (Super Admin) |
+| GET | `/api/system-creators/registry/:id` | Detail module config | Bearer (Super Admin) |
+| GET | `/api/system-creators/registry/by-name/:name` | Get by name | Bearer (Super Admin) |
+| POST | `/api/system-creators/generate` | Generate module baru | Bearer (Super Admin) |
+| PUT | `/api/system-creators/:id` | Update module config | Bearer (Super Admin) |
+| DELETE | `/api/system-creators/:id` | Delete module | Bearer (Super Admin) |
+| POST | `/api/system-creators/:id/toggle` | Toggle active/inactive | Bearer (Super Admin) |
+
+### Generated Module API (Dynamic)
+
+Per generated module, endpoints auto-created:
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/generated/{name}` | List records (paginated) | Bearer + RBAC |
+| GET | `/api/generated/{name}/:id` | Get record detail | Bearer + RBAC |
+| POST | `/api/generated/{name}` | Create record | Bearer + RBAC |
+| PUT | `/api/generated/{name}/:id` | Update record | Bearer + RBAC |
+| DELETE | `/api/generated/{name}/:id` | Delete record | Bearer + RBAC |
+| POST | `/api/generated/{name}/upload` | File upload | Bearer + RBAC |
+
 ---
 
 ## 6. Client Routes
+
+### Static Routes
 
 | Path | Component | Auth | Description |
 |------|-----------|------|-------------|
@@ -429,19 +437,36 @@ Response dikirim
 | `/dashboard/roles` | RolesPage | Required | Manajemen role |
 | `/dashboard/permissions` | PermissionsPage | Required | Manajemen permission |
 | `/dashboard/guards` | GuardsPage | Required | Manajemen guard |
+| `/dashboard/activity-logs` | ActivityLogsPage | Required | Activity logs |
+| `/dashboard/system-logs` | SystemLogsPage | Required | System logs |
+| `/dashboard/settings` | SettingsPage | Required | Settings |
+| `/dashboard/system-creators` | SystemCreatorsPage | Required (Super Admin) | CRUD Generator list |
+| `/dashboard/system-creators/create` | SystemCreatorWizardPage | Required (Super Admin) | Create wizard |
+
+### Dynamic Routes
+
+| Path Pattern | Component | Auth | Description |
+|-------------|-----------|------|-------------|
+| `/dashboard/sc/:moduleName` | DynamicCrudPage | Required | Dynamic CRUD |
 
 ### Sidebar Menu Structure
 
 ```
-Dashboard                    → /dashboard
+Dashboard                         → /dashboard
 User Management (group)
-    ├── User                 → /dashboard/users
-    ├── Guard                → /dashboard/guards
-    ├── Role                 → /dashboard/roles
-    └── Permissions          → /dashboard/permissions
+    ├── User                      → /dashboard/users
+    ├── Guard                     → /dashboard/guards
+    ├── Role                      → /dashboard/roles
+    └── Permissions               → /dashboard/permissions
 Sistem (group)
-    ├── Activity Logs        → /dashboard/activity-logs
-    └── System Logs          → /dashboard/system-logs
+    ├── Activity Logs             → /dashboard/activity-logs
+    ├── System Logs               → /dashboard/system-logs
+    └── Settings                  → /dashboard/settings
+Admin (group, Super Admin only)
+    └── System Creators           → /dashboard/system-creators
+Generated Modules (group, dynamic)
+    ├── {Module Label 1}         → /dashboard/sc/{name1}
+    └── {Module Label 2}         → /dashboard/sc/{name2}
 ```
 
 ---
@@ -454,10 +479,13 @@ Sistem (group)
 - Endpoint sensitif memerlukan autentikasi + otorisasi
 - Input validation menggunakan class-validator
 - Whitelist DTO properties (tidak ada extra properties)
+- System Creators hanya bisa diakses Super Admin
+- Generated modules RBAC enforced via auto-created permissions/guards
 
 ### Performance
 - Database: SQLite (cocok untuk admin panel skala kecil)
 - Pagination pada list data (default: 20 item/halaman)
+- Server restart required after module generation (brief downtime ~2-3 seconds)
 
 ### UX
 - Responsive design (mobile-first)
@@ -465,7 +493,9 @@ Sistem (group)
 - Error handling dengan pesan yang jelas
 - Konfirmasi sebelum delete
 - Form validation real-time
-- Access denied alert dengan animasi slide-in dari kanan (CSS Transition)
+- Access denied alert dengan animasi slide-in dari kanan
+- Multi-step wizard dengan progress indicator untuk System Creators
+- Dynamic form rendering berdasarkan field type
 
 ---
 
@@ -488,28 +518,6 @@ Sistem (group)
 | Viewer | API Only | Read Only |
 | Manager | Web Access | Read Write |
 
-### Guards
-| Guard Name | Allow URLs | Deny URLs |
-|------------|-----------|-----------|
-| Full Access | /* | (none) |
-| Web Access | /api/* | /api/admin/* |
-| API Only | /api/* | (none) |
-| Admin Only | /api/admin/* | (none) |
-| Read Only | /api/* | /api/users, /api/roles |
-
-### Permissions
-| Permission Name | Allow Methods | Allow URLs |
-|-----------------|--------------|-----------|
-| Full Access | * | /* |
-| Read Only | GET, OPTIONS | /* |
-| Read Write | GET, POST, PUT, DELETE, PATCH, OPTIONS | /* |
-| User Management | GET, POST, PUT, DELETE | /api/users/* |
-| Role Management | GET, POST, PUT, DELETE | /api/roles/* |
-| Guard Management | GET, POST, PUT, DELETE | /api/guards/* |
-| Permission Management | GET, POST, PUT, DELETE | /api/permissions/* |
-| Activity Logs | GET | /api/activity-logs/* |
-| System Logs | GET | /api/system-logs/* |
-
 ---
 
 ## 9. Client-Side Authorization
@@ -522,29 +530,50 @@ When server returns 403 Forbidden:
 2. **Route Guard** — Checks user roles/permissions before rendering protected components
 3. **Menu Visibility** — Sidebar menu items hidden if user lacks required role/permission
 
-### Authorization Composable
-
-```typescript
-// client/src/composables/useAuthorization.ts
-export function useAuthorization() {
-  const authStore = useAuthStore()
-  
-  function hasRole(roleName: string): boolean
-  function hasAnyRole(roles: string[]): boolean
-  function hasPermission(permissionName: string): boolean
-  function hasAnyPermission(perms: string[]): boolean
-  function canAccessUrl(url: string, method: string): boolean
-  
-  return { hasRole, hasAnyRole, hasPermission, hasAnyPermission, canAccessUrl }
-}
-```
-
 ### Menu Visibility Rules
 
-| Menu Item | Required Role | Required Guard URL Match |
-|-----------|---------------|--------------------------|
-| Dashboard | Any authenticated | — |
-| User Management | Admin, Super Admin | /api/users/* |
-| Role Management | Admin, Super Admin | /api/roles/* |
-| Permission Management | Admin, Super Admin | /api/permissions/* |
-| Guard Management | Admin, Super Admin | /api/guards/* |
+| Menu Item | Required Role |
+|-----------|---------------|
+| Dashboard | Any authenticated |
+| User Management | Admin, Super Admin |
+| System Creators | Super Admin |
+| Generated Modules | Based on module accessLevel config |
+
+---
+
+## 10. System Creators — Technical Overview
+
+### Architecture
+
+```
+[Client Wizard] → [POST /api/system-creators/generate] → [Server writes .ts files]
+     ↓                                                         ↓
+[Server compiles TS→JS] → [Updates registry DB + JSON] → [Auto-restart server]
+     ↓
+[Client re-fetches registry] → [Dynamic route + menu] → [CRUD rendered]
+```
+
+### File Generation
+
+Server generates TypeScript files following NestJS conventions:
+
+```
+server/src/modules/generated/sc_{name}/
+├── entities/{name}.entity.ts
+├── controllers/{name}.controller.ts
+├── services/{name}.service.ts
+├── dto/create-{name}.dto.ts
+├── dto/update-{name}.dto.ts
+├── dto/query-{name}.dto.ts
+└── {name}.module.ts
+```
+
+### Registry
+
+Module metadata stored in:
+1. **Database** — `sc_modules` table (primary)
+2. **JSON backup** — `server/src/modules/generated/sc-modules-registry.json` (fallback)
+
+### Dynamic Loading
+
+At startup, server reads registry, compiles .ts → .js via `ts.transpileModule()`, and dynamically imports modules. TypeORM `synchronize: true` auto-creates tables from entity metadata.

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, ref, computed, watch } from 'vue'
+import { h, ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   NLayout,
@@ -26,17 +26,20 @@ import {
   Activity,
   Report,
   Settings,
+  Cube,
 } from '@vicons/carbon'
 
 import { useAuthStore } from '@/stores/auth.store'
 import { useAuthorization } from '@/composables/useAuthorization'
 import { useSettingsStore } from '@/stores/settings.store'
+import { useDynamicModules } from '@/composables/useDynamicModules'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const { hasAnyRole } = useAuthorization()
 const settingsStore = useSettingsStore()
+const { registeredModules, loadModules } = useDynamicModules()
 const collapsed = ref(false)
 
 interface User_ {
@@ -136,26 +139,59 @@ const menuOptions = computed<MenuOption[]>(() => {
     })
   }
 
+  if (hasAnyRole(['Super Admin'])) {
+    options.push({
+      label: 'Admin',
+      key: 'admin',
+      icon: renderIcon(Cube),
+      children: [
+        {
+          label: renderMenuLabel('System Creators', '/dashboard/system-creators'),
+          key: 'system-creators',
+        },
+      ],
+    })
+  }
+
+  if (registeredModules.value.length > 0) {
+    options.push({
+      label: 'Generated Modules',
+      key: 'generated-modules',
+      icon: renderIcon(Cube),
+      children: registeredModules.value.map((m) => ({
+        label: renderMenuLabel(m.menuLabel, m.routePath),
+        key: `sc-${m.name}`,
+      })),
+    })
+  }
+
   return options
 })
 
-const routeKeyMap: Record<string, string> = {
-  '/dashboard': 'dashboard',
-  '/dashboard/users': 'users',
-  '/dashboard/guards': 'guards',
-  '/dashboard/roles': 'roles',
-  '/dashboard/permissions': 'permissions',
-  '/dashboard/activity-logs': 'activity-logs',
-  '/dashboard/system-logs': 'system-logs',
-  '/dashboard/settings': 'settings',
-}
+const routeKeyMap = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {
+    '/dashboard': 'dashboard',
+    '/dashboard/users': 'users',
+    '/dashboard/guards': 'guards',
+    '/dashboard/roles': 'roles',
+    '/dashboard/permissions': 'permissions',
+    '/dashboard/activity-logs': 'activity-logs',
+    '/dashboard/system-logs': 'system-logs',
+    '/dashboard/settings': 'settings',
+    '/dashboard/system-creators': 'system-creators',
+  }
+  for (const m of registeredModules.value) {
+    map[m.routePath] = `sc-${m.name}`
+  }
+  return map
+})
 
 const activeKey = ref('dashboard')
 
 watch(
   () => route.path,
   (path) => {
-    activeKey.value = routeKeyMap[path] || 'dashboard'
+    activeKey.value = routeKeyMap.value[path] || 'dashboard'
   },
   { immediate: true },
 )
@@ -163,6 +199,10 @@ watch(
 function handleMenuUpdate(key: string) {
   activeKey.value = key
 }
+
+onMounted(async () => {
+  await loadModules()
+})
 
 const avatarLabel = computed(() => `${props.user.firstName.charAt(0)}${props.user.lastName.charAt(0)}`)
 
