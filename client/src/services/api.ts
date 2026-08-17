@@ -18,7 +18,11 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('accessToken')
-      window.location.href = '/login'
+      localStorage.removeItem('user')
+      const path = window.location.pathname
+      if (!path.startsWith('/login') && !path.startsWith('/register')) {
+        window.location.href = '/login'
+      }
     }
     if (error.response?.status === 403) {
       window.dispatchEvent(

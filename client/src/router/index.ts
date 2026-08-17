@@ -124,7 +124,9 @@ router.beforeEach((to, _from, next) => {
   }
 
   if (to.meta.guest && token) {
-    return next('/dashboard')
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('user')
+    return next()
   }
 
   if (to.meta.requiredRoles && token) {

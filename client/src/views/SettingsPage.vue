@@ -43,6 +43,8 @@ async function handleUploadFavicon(options: UploadCustomRequestOptions) {
     const url = await settingsStore.uploadFile(file)
     if (url) {
       appFavicon.value = url
+      settingsStore.appFavicon = url
+      settingsStore.updateHtmlMeta()
       message.success('Favicon berhasil diupload')
     } else {
       message.error('Gagal upload favicon')
@@ -60,6 +62,7 @@ async function handleUploadBgImage(options: UploadCustomRequestOptions) {
     const url = await settingsStore.uploadFile(file)
     if (url) {
       loginBgImage.value = url
+      settingsStore.loginBgImage = url
       message.success('Background image berhasil diupload')
     } else {
       message.error('Gagal upload background image')

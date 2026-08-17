@@ -54,7 +54,8 @@ export const useSettingsStore = defineStore('settings', () => {
       const { data } = await api.post<{ url: string }>('/settings/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
-      return data.url
+      const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api').replace(/\/api\/?$/, '')
+      return `${base}${data.url}`
     } catch {
       return null
     }
