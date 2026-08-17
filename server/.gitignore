@@ -2,6 +2,12 @@
 /dist
 /node_modules
 /build
+/uploads
+/storage/*
+!/storage/.gitkeep
+!/storage/settings/.gitkeep
+!/storage/avatars/.gitkeep
+!/storage/general/.gitkeep
 
 # Logs
 logs

@@ -230,6 +230,13 @@ server/
 │   │       │   └── query-system-log.dto.ts
 │   │       └── system-logs.module.ts
 │   │
+│   │   └── storage/
+│   │       ├── controllers/
+│   │       │   └── storage.controller.ts
+│   │       ├── services/
+│   │       │   └── storage.service.ts
+│   │       └── storage.module.ts
+│   │
 │   └── shared/                     # Shared business logic
 │       ├── cache/
 │       ├── mail/
@@ -241,7 +248,10 @@ server/
 │   ├── integration/
 │   └── e2e/
 │
-├── uploads/
+├── storage/                        # Uploaded files (gitignored)
+│   ├── settings/                   # Settings uploads (favicon, bg image)
+│   ├── avatars/                    # User avatar uploads
+│   └── general/                    # General file uploads
 ├── scripts/
 │
 ├── .env
@@ -516,9 +526,27 @@ Sistem (group)
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/settings` | Get all settings | Bearer |
-| GET | `/api/settings/:key` | Get setting by key | Bearer |
-| PUT | `/api/settings` | Update multiple settings | Bearer + Roles |
+| GET | `/api/settings` | Get all settings | Public |
+| GET | `/api/settings/:key` | Get setting by key | Public |
+| PUT | `/api/settings` | Update multiple settings | Bearer + Roles + Permissions |
+| POST | `/api/settings/upload` | Upload file (favicon, bg image) | Bearer + Roles + Permissions |
+
+**Upload Response**:
+```json
+{ "url": "/api/storage/settings/settings-1234567890-123456.png" }
+```
+
+### Storage
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/storage/:subfolder/:filename` | Serve uploaded file | Public |
+
+**Subfolder whitelist**: `settings`, `avatars`, `general`
+
+**Response**: Binary file with correct `Content-Type` header
+
+**Note**: Files are stored in `server/storage/{subfolder}/`. The directory is gitignored.
 
 **Query Parameters** (GET `/api/system-logs/files/:filename`):
 - `level` (string) — filter by log level: INFO, WARN, ERROR, DEBUG, TRACE

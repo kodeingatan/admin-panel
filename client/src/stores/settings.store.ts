@@ -54,17 +54,33 @@ export const useSettingsStore = defineStore('settings', () => {
       const { data } = await api.post<{ url: string }>('/settings/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
-      const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api').replace(/\/api\/?$/, '')
-      return `${base}${data.url}`
+      return data.url
     } catch {
       return null
     }
   }
 
+  function getMimeType(url: string): string {
+    const ext = url.split('.').pop()?.split('?')[0]?.toLowerCase() ?? ''
+    const mimeMap: Record<string, string> = {
+      svg: 'image/svg+xml',
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      gif: 'image/gif',
+      webp: 'image/webp',
+      ico: 'image/x-icon',
+    }
+    return mimeMap[ext] ?? 'image/svg+xml'
+  }
+
   function updateHtmlMeta() {
     document.title = appName.value
     const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement
-    if (link) link.href = appFavicon.value
+    if (link) {
+      link.href = appFavicon.value
+      link.type = getMimeType(appFavicon.value)
+    }
   }
 
   function getGradientColors(): string[] {

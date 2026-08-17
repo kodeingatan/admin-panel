@@ -20,6 +20,14 @@ const viteConfig = defineConfig({
       "@": srcDir,
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
+  },
 });
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon

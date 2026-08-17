@@ -73,6 +73,7 @@ client/
 - Design System: `docs/design-system.md` — color palette, typography, spacing, component dimensions
 - Naive UI components use `GlobalThemeOverrides` for theming, wrap app with `NConfigProvider`
 - Table browse: Use `DataTable` component for all list/table pages (supports sort, search, column visibility, pagination)
+- Vite proxy: `/api` requests proxy to `http://localhost:3000` (see `vite.config.ts`)
 
 **DataTable Requirements** (ALL tables must have):
 - Global search input (min-width: `320px`, clearable, debounced 300ms)
@@ -185,6 +186,10 @@ server/src/
 │       ├── dto/            # update-setting.dto.ts
 │       ├── entities/       # setting.entity.ts
 │       └── settings.module.ts
+│   └── storage/
+│       ├── controllers/    # storage.controller.ts
+│       ├── services/       # storage.service.ts
+│       └── storage.module.ts
 ├── shared/             # Shared business logic
 │   ├── cache/
 │   ├── mail/
@@ -204,6 +209,8 @@ server/src/
 - Import alias: `@/` → `src/` (e.g., `import { AuthService } from '@/modules/auth/services/auth.service'`)
 - Modules: `src/modules/{feature}/`
 - Shared: `src/common/`
+- Uploaded files: `server/storage/{subfolder}/` (gitignored) — subfolders: `settings`, `avatars`, `general`
+- File serving: `GET /api/storage/:subfolder/:filename` — public endpoint, serves binary with correct Content-Type
 
 **Auth API**:
 | Method | Endpoint             | Description    | Auth   |
@@ -224,6 +231,7 @@ server/src/
 | Activity Logs | `/api/activity-logs` | ActivityLog | Audit trail for all user activities |
 | System Logs | `/api/system-logs` | (file-based) | System log viewer for log files |
 | Settings | `/api/settings` | Setting | Application settings (key-value store) |
+| Storage | `/api/storage` | (file-based) | File serving for uploaded images |
 
 **RBAC Guard Chain** (Global):
 | Guard | File | Purpose |
@@ -257,3 +265,4 @@ Start Storybook first (`npm run storybook` in `client/`) before using MCP featur
 - JWT secret defaults to `default-secret-change-me` — set `JWT_SECRET` env var for production
 - AccessDeniedAlert uses CSS transition animation (slide-in from right) — uses `v-show` not `v-if` to avoid layout shift
 - To re-seed database: delete `server/db.sqlite` then restart server (`npm run start:dev`)
+- Uploaded files stored in `server/storage/` (gitignored) — create subdirectories `settings/`, `avatars/`, `general/` as needed
