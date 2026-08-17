@@ -590,6 +590,7 @@ export class SeederService implements OnModuleInit {
       { key: 'app_name', value: 'MyApp' },
       { key: 'app_favicon', value: '/favicon.svg' },
       { key: 'login_bg_gradient', value: '#1e40af,#3b82f6,#6366f1' },
+      { key: 'app_description', value: 'Sistem manajemen bisnis digital' },
     ];
 
     for (const { key, value } of defaultSettings) {

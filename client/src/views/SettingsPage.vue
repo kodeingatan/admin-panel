@@ -5,7 +5,7 @@ import {
   useMessage,
 } from 'naive-ui'
 import type { UploadCustomRequestOptions } from 'naive-ui'
-import { Save, Upload, Close, Image } from '@vicons/carbon'
+import { Save, Upload, Close, Image, Document } from '@vicons/carbon'
 import AppLayout from '@/components/layout/AppLayout/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { useSettingsStore } from '@/stores/settings.store'
@@ -18,6 +18,7 @@ const appName = ref('')
 const appFavicon = ref('')
 const loginBgGradient = ref(['#1e40af', '#3b82f6', '#6366f1'])
 const loginBgImage = ref('')
+const appDescription = ref('')
 const saving = ref(false)
 const loaded = ref(false)
 const uploadingFavicon = ref(false)
@@ -31,6 +32,7 @@ onMounted(async () => {
     appFavicon.value = settingsStore.appFavicon
     loginBgGradient.value = settingsStore.getGradientColors()
     loginBgImage.value = settingsStore.loginBgImage
+    appDescription.value = settingsStore.appDescription
   }
   loaded.value = true
 })
@@ -84,6 +86,7 @@ async function handleSave() {
       { key: 'app_favicon', value: appFavicon.value },
       { key: 'login_bg_gradient', value: loginBgGradient.value.join(',') },
       { key: 'login_bg_image', value: loginBgImage.value },
+      { key: 'app_description', value: appDescription.value },
     ])
     message.success('Settings berhasil disimpan')
   } catch {
@@ -114,6 +117,18 @@ async function handleSave() {
             </template>
             <NInput v-model:value="appName" placeholder="Masukkan nama aplikasi" size="large" />
             <p class="settings-hint">Nama yang tampil di sidebar, browser tab, dan login page</p>
+          </NCard>
+
+          <!-- App Description -->
+          <NCard class="settings-card">
+            <template #header>
+              <div class="card-header">
+                <NIcon :size="20" class="text-indigo-500"><Document /></NIcon>
+                <span>Deskripsi Aplikasi</span>
+              </div>
+            </template>
+            <NInput v-model:value="appDescription" type="textarea" placeholder="Masukkan deskripsi aplikasi" :rows="3" />
+            <p class="settings-hint">Deskripsi yang tampil di halaman login & register</p>
           </NCard>
 
           <!-- Favicon -->

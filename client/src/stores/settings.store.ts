@@ -13,6 +13,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const appFavicon = ref('/favicon.svg')
   const loginBgGradient = ref('#1e40af,#3b82f6,#6366f1')
   const loginBgImage = ref('')
+  const appDescription = ref('Sistem manajemen bisnis digital')
   const loading = ref(false)
 
   function applySettings(data: Setting[]) {
@@ -21,6 +22,7 @@ export const useSettingsStore = defineStore('settings', () => {
     if (map['app_favicon']) appFavicon.value = map['app_favicon']
     if (map['login_bg_gradient']) loginBgGradient.value = map['login_bg_gradient']
     if (map['login_bg_image']) loginBgImage.value = map['login_bg_image']
+    if (map['app_description']) appDescription.value = map['app_description']
   }
 
   async function fetchSettings() {
@@ -92,6 +94,7 @@ export const useSettingsStore = defineStore('settings', () => {
     appFavicon,
     loginBgGradient,
     loginBgImage,
+    appDescription,
     loading,
     fetchSettings,
     updateSettings,

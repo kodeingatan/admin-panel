@@ -41,7 +41,7 @@ const imageStyle = computed(() => {
             <circle cx="60" cy="60" r="20" fill="currentColor" opacity="0.8"/>
           </svg>
           <h2 class="auth-image__title">{{ settingsStore.appName }}</h2>
-          <p class="auth-image__subtitle">Sistem manajemen bisnis digital</p>
+          <p class="auth-image__subtitle">{{ settingsStore.appDescription }}</p>
         </div>
       </div>
       <div class="auth-image__pattern"></div>
