@@ -30,11 +30,13 @@ import {
 
 import { useAuthStore } from '@/stores/auth.store'
 import { useAuthorization } from '@/composables/useAuthorization'
+import { useSettingsStore } from '@/stores/settings.store'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const { hasAnyRole } = useAuthorization()
+const settingsStore = useSettingsStore()
 const collapsed = ref(false)
 
 interface User_ {
@@ -125,6 +127,11 @@ const menuOptions = computed<MenuOption[]>(() => {
           key: 'system-logs',
           icon: renderIcon(Report),
         },
+        {
+          label: renderMenuLabel('Settings', '/dashboard/settings'),
+          key: 'settings',
+          icon: renderIcon(Settings),
+        },
       ],
     })
   }
@@ -140,6 +147,7 @@ const routeKeyMap: Record<string, string> = {
   '/dashboard/permissions': 'permissions',
   '/dashboard/activity-logs': 'activity-logs',
   '/dashboard/system-logs': 'system-logs',
+  '/dashboard/settings': 'settings',
 }
 
 const activeKey = ref('dashboard')
@@ -197,8 +205,8 @@ function handleDropdownSelect(key: string) {
       @expand="collapsed = false"
     >
       <div class="flex items-center justify-center h-14 font-bold text-lg text-indigo-500">
-        <span v-if="!collapsed">MyApp</span>
-        <span v-else>M</span>
+        <span v-if="!collapsed">{{ settingsStore.appName }}</span>
+        <span v-else>{{ settingsStore.appName?.charAt(0) }}</span>
       </div>
       <n-menu
         :collapsed="collapsed"
@@ -235,7 +243,7 @@ function handleDropdownSelect(key: string) {
         <slot />
       </n-layout-content>
       <n-layout-footer bordered class="h-12 flex items-center justify-center text-xs text-gray-400">
-        &copy; 2026 MyApp. All rights reserved.
+        &copy; 2026 {{ settingsStore.appName }}. All rights reserved.
       </n-layout-footer>
     </n-layout>
   </n-layout>

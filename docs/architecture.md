@@ -299,6 +299,7 @@ server/
 | `/dashboard/guards` | GuardsPage | Required | Guard management |
 | `/dashboard/activity-logs` | ActivityLogsPage | Required | Activity logs viewer |
 | `/dashboard/system-logs` | SystemLogsPage | Required | System logs viewer |
+| `/dashboard/settings` | SettingsPage | Required | Application settings |
 
 ### Sidebar Menu (AppLayout)
 
@@ -311,7 +312,8 @@ User Management (group)
     └── Permissions          → /dashboard/permissions
 Sistem (group)
     ├── Activity Logs        → /dashboard/activity-logs
-    └── System Logs          → /dashboard/system-logs
+    ├── System Logs          → /dashboard/system-logs
+    └── Settings             → /dashboard/settings
 ```
 
 ---
@@ -509,6 +511,14 @@ Sistem (group)
 | GET | `/api/system-logs/files` | List available log files | Bearer |
 | GET | `/api/system-logs/files/:filename` | Read log file content | Bearer |
 | GET | `/api/system-logs/stats/:filename` | Get log file statistics | Bearer |
+
+### Settings
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/settings` | Get all settings | Bearer |
+| GET | `/api/settings/:key` | Get setting by key | Bearer |
+| PUT | `/api/settings` | Update multiple settings | Bearer + Roles |
 
 **Query Parameters** (GET `/api/system-logs/files/:filename`):
 - `level` (string) — filter by log level: INFO, WARN, ERROR, DEBUG, TRACE

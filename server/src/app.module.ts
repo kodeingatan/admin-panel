@@ -8,6 +8,7 @@ import { PermissionsModule } from '@/modules/permissions/permissions.module';
 import { GuardsModule } from '@/modules/guards/guards.module';
 import { ActivityLogsModule } from '@/modules/activity-logs/activity-logs.module';
 import { SystemLogsModule } from '@/modules/system-logs/system-logs.module';
+import { SettingsModule } from '@/modules/settings/settings.module';
 import { User } from '@/modules/users/entities/user.entity';
 import { Role } from '@/modules/roles/entities/role.entity';
 import { Permission } from '@/modules/permissions/entities/permission.entity';
@@ -16,6 +17,7 @@ import { PermissionUrl } from '@/modules/permissions/entities/permission-url.ent
 import { Guard } from '@/modules/guards/entities/guard.entity';
 import { GuardUrl } from '@/modules/guards/entities/guard-url.entity';
 import { ActivityLog } from '@/modules/activity-logs/entities/activity-log.entity';
+import { Setting } from '@/modules/settings/entities/setting.entity';
 import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 import { SeederService } from '@/common/services/seeder.service';
@@ -36,6 +38,7 @@ import { RbacGuard } from '@/common/guards/rbac.guard';
         Guard,
         GuardUrl,
         ActivityLog,
+        Setting,
       ],
       synchronize: true,
     }),
@@ -47,6 +50,7 @@ import { RbacGuard } from '@/common/guards/rbac.guard';
       PermissionUrl,
       Guard,
       GuardUrl,
+      Setting,
     ]),
     AuthModule,
     UsersModule,
@@ -55,6 +59,7 @@ import { RbacGuard } from '@/common/guards/rbac.guard';
     GuardsModule,
     ActivityLogsModule,
     SystemLogsModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [

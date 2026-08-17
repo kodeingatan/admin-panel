@@ -94,6 +94,7 @@ client/
 - `/dashboard/guards` — GuardsPage (requires auth)
 - `/dashboard/activity-logs` — ActivityLogsPage (requires auth)
 - `/dashboard/system-logs` — SystemLogsPage (requires auth)
+- `/dashboard/settings` — SettingsPage (requires auth)
 - JWT token stored in `localStorage` as `accessToken`
 
 **Sidebar Menu** (AppLayout.vue):
@@ -106,7 +107,8 @@ User Management (group)
     └── Permissions          → /dashboard/permissions
 Sistem (group)
     ├── Activity Logs        → /dashboard/activity-logs
-    └── System Logs          → /dashboard/system-logs
+    ├── System Logs          → /dashboard/system-logs
+    └── Settings             → /dashboard/settings
 ```
 
 ## Server (NestJS)
@@ -177,6 +179,12 @@ server/src/
 │       ├── services/       # system-logs.service.ts
 │       ├── dto/            # query-system-log.dto.ts
 │       └── system-logs.module.ts
+│   └── settings/
+│       ├── controllers/    # settings.controller.ts
+│       ├── services/       # settings.service.ts
+│       ├── dto/            # update-setting.dto.ts
+│       ├── entities/       # setting.entity.ts
+│       └── settings.module.ts
 ├── shared/             # Shared business logic
 │   ├── cache/
 │   ├── mail/
@@ -215,6 +223,7 @@ server/src/
 | Guards | `/api/guards` | Guard, GuardUrl | Guard management with URL allow/deny rules |
 | Activity Logs | `/api/activity-logs` | ActivityLog | Audit trail for all user activities |
 | System Logs | `/api/system-logs` | (file-based) | System log viewer for log files |
+| Settings | `/api/settings` | Setting | Application settings (key-value store) |
 
 **RBAC Guard Chain** (Global):
 | Guard | File | Purpose |
@@ -229,7 +238,7 @@ server/src/
 | `@Roles(...roles)` | `common/decorators/roles.decorator.ts` | Require specific roles |
 | `@Permissions(...perms)` | `common/decorators/permissions.decorator.ts` | Require specific permissions |
 
-**Database**: SQLite via TypeORM — 10 tables total (users, roles, permissions, guards, + 6 junction tables)
+**Database**: SQLite via TypeORM — 11 tables total (users, roles, permissions, guards, settings, + 6 junction tables)
 - See `docs/database.md` for full schema and `docs/PRD.md` for authorization flow
 
 ## Storybook MCP

@@ -385,3 +385,29 @@ Tabel untuk mencatat semua aktivitas user (audit trail).
 - `INDEX` on `action`
 - `INDEX` on `entity`
 - `INDEX` on `createdAt`
+
+---
+
+### 12. settings
+
+Tabel untuk menyimpan pengaturan aplikasi (key-value store).
+
+| Column | Type | Constraint | Description |
+|--------|------|-----------|-------------|
+| `id` | INTEGER | PK, AUTO_INCREMENT | ID unik setting |
+| `key` | VARCHAR(100) | NOT NULL, UNIQUE | Key unik setting |
+| `value` | TEXT | NOT NULL | Value setting |
+| `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pembuatan |
+| `updatedAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu update terakhir |
+
+**Indexes**:
+- `PRIMARY KEY` on `id`
+- `UNIQUE` on `key`
+
+**Seed Data**:
+
+| key | value | description |
+|-----|-------|-------------|
+| `app_name` | `MyApp` | Nama aplikasi |
+| `app_favicon` | `/favicon.svg` | Favicon URL |
+| `login_bg_gradient` | `#1e40af,#3b82f6,#6366f1` | Gradient colors untuk login background |

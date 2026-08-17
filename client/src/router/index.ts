@@ -9,6 +9,7 @@ import PermissionsPage from '@/views/PermissionsPage.vue'
 import GuardsPage from '@/views/GuardsPage.vue'
 import ActivityLogsPage from '@/views/ActivityLogsPage.vue'
 import SystemLogsPage from '@/views/SystemLogsPage.vue'
+import SettingsPage from '@/views/SettingsPage.vue'
 
 const routes = [
   {
@@ -93,6 +94,15 @@ const routes = [
       requiresAuth: true,
       requiredRoles: ['Admin', 'Super Admin'],
       requiredPermission: 'System Logs',
+    },
+  },
+  {
+    path: '/dashboard/settings',
+    name: 'Settings',
+    component: SettingsPage,
+    meta: {
+      requiresAuth: true,
+      requiredRoles: ['Admin', 'Super Admin'],
     },
   },
   {

@@ -9,6 +9,7 @@ import { PermissionMethod } from '@/modules/permissions/entities/permission-meth
 import { PermissionUrl } from '@/modules/permissions/entities/permission-url.entity';
 import { Guard } from '@/modules/guards/entities/guard.entity';
 import { GuardUrl } from '@/modules/guards/entities/guard-url.entity';
+import { Setting } from '@/modules/settings/entities/setting.entity';
 
 @Injectable()
 export class SeederService implements OnModuleInit {
@@ -25,6 +26,7 @@ export class SeederService implements OnModuleInit {
     private permissionUrlsRepo: Repository<PermissionUrl>,
     @InjectRepository(Guard) private guardsRepo: Repository<Guard>,
     @InjectRepository(GuardUrl) private guardUrlsRepo: Repository<GuardUrl>,
+    @InjectRepository(Setting) private settingsRepo: Repository<Setting>,
   ) {}
 
   async onModuleInit() {
@@ -44,6 +46,7 @@ export class SeederService implements OnModuleInit {
     const permissions = await this.seedPermissions();
     const roles = await this.seedRoles(guards, permissions);
     await this.seedUsers(roles);
+    await this.seedSettings();
 
     this.logger.log('Database seeded successfully');
   }
@@ -580,5 +583,20 @@ export class SeederService implements OnModuleInit {
       roles: [roles[6]],
     });
     await this.usersRepo.save(guest);
+  }
+
+  private async seedSettings() {
+    const defaultSettings = [
+      { key: 'app_name', value: 'MyApp' },
+      { key: 'app_favicon', value: '/favicon.svg' },
+      { key: 'login_bg_gradient', value: '#1e40af,#3b82f6,#6366f1' },
+    ];
+
+    for (const { key, value } of defaultSettings) {
+      const exists = await this.settingsRepo.findOne({ where: { key } });
+      if (!exists) {
+        await this.settingsRepo.save(this.settingsRepo.create({ key, value }));
+      }
+    }
   }
 }

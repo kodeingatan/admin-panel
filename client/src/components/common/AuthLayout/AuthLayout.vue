@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useSettingsStore } from '@/stores/settings.store'
 
 interface Props {
   title: string
@@ -11,13 +12,27 @@ const props = withDefaults(defineProps<Props>(), {
   imagePosition: 'right',
 })
 
+const settingsStore = useSettingsStore()
+
 const isReversed = computed(() => props.imagePosition === 'left')
+
+const imageStyle = computed(() => {
+  if (settingsStore.loginBgImage) {
+    return {
+      backgroundImage: `url(${settingsStore.loginBgImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    }
+  }
+  const colors = settingsStore.getGradientColors()
+  return { background: `linear-gradient(135deg, ${colors[0]} 0%, ${colors[1]} 50%, ${colors[2]} 100%)` }
+})
 </script>
 
 <template>
   <div class="auth-layout" :class="{ 'auth-layout--reversed': isReversed }">
     <!-- Image Panel -->
-    <div class="auth-image">
+    <div class="auth-image" :style="imageStyle">
       <div class="auth-image__overlay">
         <div class="auth-image__content">
           <svg class="auth-image__icon" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -25,7 +40,7 @@ const isReversed = computed(() => props.imagePosition === 'left')
             <circle cx="60" cy="60" r="40" stroke="currentColor" stroke-width="2" opacity="0.5"/>
             <circle cx="60" cy="60" r="20" fill="currentColor" opacity="0.8"/>
           </svg>
-          <h2 class="auth-image__title">Admin Panel</h2>
+          <h2 class="auth-image__title">{{ settingsStore.appName }}</h2>
           <p class="auth-image__subtitle">Sistem manajemen bisnis digital</p>
         </div>
       </div>
@@ -59,7 +74,6 @@ const isReversed = computed(() => props.imagePosition === 'left')
 .auth-image {
   flex: 1;
   position: relative;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #6366f1 100%);
   display: flex;
   align-items: center;
   justify-content: center;
