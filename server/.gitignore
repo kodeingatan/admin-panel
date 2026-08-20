@@ -9,6 +9,9 @@
 !/storage/avatars/.gitkeep
 !/storage/general/.gitkeep
 
+# generated modules (created by System Creators)
+/src/modules/generated/sc_*
+
 # Logs
 logs
 *.log
