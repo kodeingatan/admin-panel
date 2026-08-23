@@ -67,7 +67,7 @@ function renderCellValue(field: ScFieldConfig, row: any) {
       return h(NButton, { size: 'small', text: true, tag: 'a', href: val, target: '_blank' }, () => 'Download')
     case 'image': {
       if (!val) return h(NText, { depth: 3 }, () => '-')
-      const src = val.startsWith('http') ? val : `/api/storage/general/${val}`
+      const src = val.startsWith('http') || val.startsWith('/api/') ? val : `/api/storage/general/${val}`
       return h('img', { src, style: 'width:32px;height:32px;border-radius:4px;object-fit:cover;', onError: (e: Event) => { (e.target as HTMLImageElement).style.display = 'none' } })
     }
     default:

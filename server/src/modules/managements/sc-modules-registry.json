@@ -35,5 +35,19 @@
     "relationsConfig": "[{\"name\":\"category\",\"type\":\"many-to-one\",\"targetModule\":\"category\"},{\"name\":\"tags\",\"type\":\"many-to-many\",\"targetModule\":\"tag\"}]",
     "createdAt": "2026-08-23T04:21:45.673Z",
     "updatedAt": "2026-08-23T04:21:45.673Z"
+  },
+  {
+    "id": 5,
+    "name": "posts",
+    "label": "Post",
+    "routePath": "/dashboard/sc/posts",
+    "menuLabel": "Content_Post",
+    "accessLevel": "granular",
+    "isActive": true,
+    "fieldsConfig": "[{\"name\":\"title\",\"label\":\"Title\",\"type\":\"text\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"options\":[]},{\"name\":\"thumbnail\",\"label\":\"Thumbnail\",\"type\":\"image\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"options\":[]},{\"name\":\"content\",\"label\":\"Content\",\"type\":\"rich-text\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"options\":[]},{\"name\":\"category\",\"label\":\"category\",\"type\":\"select-relation\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"options\":[],\"targetModule\":\"category\",\"relationLabel\":\"Category\"},{\"name\":\"tags\",\"label\":\"Tags\",\"type\":\"multiple-select-relation\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"options\":[],\"targetModule\":\"tag\",\"relationLabel\":\"Tags\"}]",
+    "relationsConfig": "[]",
+    "layoutConfig": "{\"create\":{\"layout\":\"grid\",\"sections\":[{\"label\":\"General\",\"fields\":[{\"name\":\"title\",\"width\":\"full\"},{\"name\":\"thumbnail\",\"width\":\"full\"},{\"name\":\"content\",\"width\":\"full\"},{\"name\":\"category\",\"width\":\"full\"},{\"name\":\"tags\",\"width\":\"full\"}]}]},\"update\":{\"layout\":\"grid\",\"sections\":[{\"label\":\"General\",\"fields\":[{\"name\":\"title\",\"width\":\"full\"},{\"name\":\"thumbnail\",\"width\":\"full\"},{\"name\":\"content\",\"width\":\"full\"},{\"name\":\"category\",\"width\":\"full\"},{\"name\":\"tags\",\"width\":\"full\"}]}]}}",
+    "createdAt": "2026-08-23T05:39:32.865Z",
+    "updatedAt": "2026-08-23T05:39:32.865Z"
   }
 ]

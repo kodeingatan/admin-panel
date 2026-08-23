@@ -22,7 +22,7 @@ export class StorageService {
 
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = extname(file.originalname);
-    const filename = `settings-${uniqueSuffix}${ext}`;
+    const filename = `upload-${uniqueSuffix}${ext}`;
     const filePath = join(STORAGE_ROOT, subfolder, filename);
 
     writeFileSync(filePath, file.buffer);

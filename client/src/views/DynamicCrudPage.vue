@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { NText, NResult, NSpin } from 'naive-ui'
+import { NResult } from 'naive-ui'
 import { useAuthStore } from '@/stores/auth.store'
 import AppLayout from '@/components/layout/AppLayout/AppLayout.vue'
 import DynamicTableRenderer from '@/components/common/DynamicTableRenderer.vue'
 import DynamicFormRenderer from '@/components/common/DynamicFormRenderer.vue'
+import DynamicDetailDrawer from '@/components/common/DynamicDetailDrawer.vue'
 import { useDynamicModules } from '@/composables/useDynamicModules'
 import { systemCreatorsService } from '@/services/system-creators.service'
 import api from '@/services/api'
@@ -127,62 +128,45 @@ watch(moduleName, async () => {
 
 <template>
   <AppLayout v-if="authStore.user" :user="authStore.user">
-    <NSpin :show="loading">
-      <div v-if="error" class="py-12">
-        <NResult status="404" :title="error" />
-      </div>
+    <div v-if="error" class="py-12">
+      <NResult status="404" :title="error" />
+    </div>
 
-      <template v-else-if="moduleConfig">
-        <DynamicTableRenderer
-          :module="moduleConfig"
-          :data="data"
-          :loading="tableLoading"
-          :page="page"
-          :limit="limit"
-          :total="total"
-          :sort-by="sortBy"
-          :sort-order="sortOrder"
-          @create="handleCreate"
-          @edit="handleEdit"
-          @detail="handleDetail"
-          @delete="handleDelete"
-          @update:page="handlePageChange"
-          @update:limit="handleLimitChange"
-          @sort-change="handleSortChange"
-          @search="handleSearch"
-          @search-field-change="handleSearchField"
-        />
+    <template v-else-if="moduleConfig && !loading">
+      <DynamicTableRenderer
+        :module="moduleConfig"
+        :data="data"
+        :loading="tableLoading"
+        :page="page"
+        :limit="limit"
+        :total="total"
+        :sort-by="sortBy"
+        :sort-order="sortOrder"
+        @create="handleCreate"
+        @edit="handleEdit"
+        @detail="handleDetail"
+        @delete="handleDelete"
+        @update:page="handlePageChange"
+        @update:limit="handleLimitChange"
+        @sort-change="handleSortChange"
+        @search="handleSearch"
+        @search-field-change="handleSearchField"
+      />
 
-        <DynamicFormRenderer
-          v-model:visible="showForm"
-          :module="moduleConfig"
-          :mode="formMode"
-          :item="selectedItem"
-          @success="handleFormSuccess"
-        />
+      <DynamicFormRenderer
+        v-model:visible="showForm"
+        :module="moduleConfig"
+        :mode="formMode"
+        :item="selectedItem"
+        @success="handleFormSuccess"
+      />
 
-        <div v-if="showDetail && selectedItem" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" @click.self="showDetail = false">
-          <div class="bg-white rounded-lg p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto">
-            <NText strong class="text-lg block mb-4">{{ moduleConfig.label }} Detail</NText>
-            <div v-for="field in moduleConfig.fieldsConfig" :key="field.name" class="mb-3">
-              <NText depth="3" class="text-xs block">{{ field.label }}</NText>
-              <template v-if="field.type === 'select-relation' && selectedItem[field.name]">
-                <NText>{{ selectedItem[field.name][field.relationLabel || 'name'] ?? '-' }}</NText>
-              </template>
-              <template v-else-if="field.type === 'multiple-select-relation' && selectedItem[field.name]?.length">
-                <NText>{{ selectedItem[field.name].map((item: any) => item[field.relationLabel || 'name']).join(', ') }}</NText>
-              </template>
-              <template v-else-if="field.type === 'image' && selectedItem[field.name]">
-                <img :src="selectedItem[field.name].startsWith('http') ? selectedItem[field.name] : `/api/storage/general/${selectedItem[field.name]}`" style="max-width:128px;max-height:128px;border-radius:4px;object-fit:cover;" />
-              </template>
-              <template v-else>
-                <NText>{{ selectedItem[field.name] ?? '-' }}</NText>
-              </template>
-            </div>
-            <NButton class="mt-4" @click="showDetail = false">Close</NButton>
-          </div>
-        </div>
-      </template>
-    </NSpin>
+      <DynamicDetailDrawer
+        v-model:visible="showDetail"
+        :entity-id="selectedItem?.id ?? null"
+        :module="moduleConfig"
+        @edit="handleEdit"
+      />
+    </template>
   </AppLayout>
 </template>

@@ -2,6 +2,7 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, Request, ParseIntPipe, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { StorageService } from '@/modules/storage/services/storage.service';
 import { ProductService } from '../services/product.service';
 import { CreateProductDto } from '../dto/create-product.dto';
 import { UpdateProductDto } from '../dto/update-product.dto';
@@ -11,7 +12,7 @@ import { Roles } from '@/common/decorators/roles.decorator';
 
 @Controller('generated/product')
 export class ProductController {
-  constructor(private readonly service: ProductService) {}
+  constructor(private readonly service: ProductService, private readonly storageService: StorageService) {}
 
   @Get()
   @Permissions('Products Management', 'Full Access')
@@ -52,7 +53,7 @@ export class ProductController {
   @Roles('Admin', 'Super Admin')
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }))
   uploadFile(@UploadedFile() file: Express.Multer.File) {
-    // Save to server/storage/generated/product/
-    // Return { url: '/api/storage/generated/product/' + file.originalname }
+    const url = this.storageService.uploadFile(file, 'general');
+    return { url };
   }
 }

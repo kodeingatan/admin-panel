@@ -5,12 +5,13 @@ import { Product } from './entities/product.entity';
 import { ProductController } from './controllers/product.controller';
 import { ProductService } from './services/product.service';
 import { ActivityLogsModule } from '@/modules/activity-logs/activity-logs.module';
+import { StorageModule } from '@/modules/storage/storage.module';
 
 import { Category } from '@/modules/managements/sc_category/entities/category.entity';
 import { Tag } from '@/modules/managements/sc_tag/entities/tag.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Product, Tag, Category]), ActivityLogsModule],
+  imports: [TypeOrmModule.forFeature([Product, Tag, Category]), ActivityLogsModule, StorageModule],
   controllers: [ProductController],
   providers: [ProductService],
   exports: [ProductService],
