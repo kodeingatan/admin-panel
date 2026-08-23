@@ -22,12 +22,18 @@ const emit = defineEmits<{
 const message = useMessage()
 const form = ref<Record<string, any>>({})
 const submitting = ref(false)
+const relationOptions = ref<Record<string, any[]>>({})
+const relationLoading = ref<Record<string, boolean>>({})
 
 function buildEmptyForm() {
   const f: Record<string, any> = {}
   for (const field of props.module.fieldsConfig || []) {
-    if (props.mode === 'edit' && props.item?.[field.name] !== undefined) {
-      f[field.name] = props.item[field.name]
+    if (props.mode === 'edit' && props.item) {
+      if (field.type === 'select-relation') {
+        f[field.name] = props.item[`${field.name}_id`] ?? null
+      } else {
+        f[field.name] = props.item[field.name] ?? null
+      }
     } else {
       f[field.name] = field.defaultValue ?? (field.type === 'boolean' ? false : null)
     }
@@ -38,9 +44,33 @@ function buildEmptyForm() {
 watch(
   () => props.visible,
   (v) => {
-    if (v) form.value = buildEmptyForm()
+    if (v) {
+      form.value = buildEmptyForm()
+      loadRelationFields()
+    }
   },
 )
+
+async function loadRelationFields() {
+  const relationFields = (props.module.fieldsConfig || []).filter(
+    (f) => f.type === 'select-relation' || f.type === 'multiple-select-relation'
+  )
+  for (const field of relationFields) {
+    if (!field.targetModule) continue
+    relationLoading.value[field.name] = true
+    try {
+      const { data } = await api.get(`/generated/${field.targetModule}`, { params: { limit: 100 } })
+      relationOptions.value[field.name] = data.data.map((item: any) => ({
+        label: item[field.relationLabel || 'name'] || item.label || `#${item.id}`,
+        value: item.id,
+      }))
+    } catch {
+      relationOptions.value[field.name] = []
+    } finally {
+      relationLoading.value[field.name] = false
+    }
+  }
+}
 
 function handleUploadFinish(fieldName: string, { event }: { event: ProgressEvent }) {
   const resp = JSON.parse((event.target as XMLHttpRequest).response)
@@ -50,11 +80,20 @@ function handleUploadFinish(fieldName: string, { event }: { event: ProgressEvent
 async function handleSubmit() {
   submitting.value = true
   try {
+    const payload: Record<string, any> = {}
+    for (const field of props.module.fieldsConfig || []) {
+      const value = form.value[field.name]
+      if (field.type === 'select-relation') {
+        payload[`${field.name}_id`] = value
+      } else {
+        payload[field.name] = value
+      }
+    }
     const url = `/generated/${props.module.name}`
     if (props.mode === 'create') {
-      await api.post(url, form.value)
+      await api.post(url, payload)
     } else {
-      await api.put(`${url}/${props.item.id}`, form.value)
+      await api.put(`${url}/${props.item.id}`, payload)
     }
     message.success(props.mode === 'create' ? 'Created successfully' : 'Updated successfully')
     emit('update:visible', false)
@@ -94,6 +133,12 @@ function renderField(field: ScFieldConfig) {
   }
   if (type === 'select') {
     return { component: NSelect, props: { value: form.value[field.name], options: field.options?.map((o) => ({ label: o.label, value: o.value })), onUpdateValue: (v: any) => { form.value[field.name] = v } } }
+  }
+  if (type === 'select-relation') {
+    return { component: NSelect, props: { value: form.value[field.name], options: relationOptions.value[field.name] || [], loading: relationLoading.value[field.name], filterable: true, clearable: true, placeholder: field.placeholder || `Select ${field.label}`, onUpdateValue: (v: any) => { form.value[field.name] = v } } }
+  }
+  if (type === 'multiple-select-relation') {
+    return { component: NSelect, props: { value: form.value[field.name], options: relationOptions.value[field.name] || [], loading: relationLoading.value[field.name], multiple: true, filterable: true, clearable: true, placeholder: field.placeholder || `Select ${field.label}`, onUpdateValue: (v: any) => { form.value[field.name] = v } } }
   }
   if (type === 'json') {
     return { component: NInput, props: { value: form.value[field.name], type: 'textarea', rows: 5, placeholder: 'JSON', onUpdateValue: (v: string) => { form.value[field.name] = v } } }
