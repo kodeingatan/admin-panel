@@ -1,31 +1,38 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as ts from 'typescript';
-import { ScModule } from '@/modules/system-creators/entities/sc-module.entity';
-import { CreateScModuleDto, ScFieldConfigDto, ScRelationConfigDto } from '@/modules/system-creators/dto/create-sc-module.dto';
+import {
+  CreateScModuleDto,
+  ScFieldConfigDto,
+} from '@/modules/system-creators/dto/create-sc-module.dto';
 
-const GENERATED_DIR = path.join(process.cwd(), 'src', 'modules', 'generated');
+const MANAGMENTS_DIR = path.join(
+  process.cwd(),
+  'src',
+  'modules',
+  'managements',
+);
 
 const COLUMN_MAP: Record<string, (f: ScFieldConfigDto) => string> = {
-  text: (f) => `{ type: 'varchar', length: ${f.maxLength || 255} }`,
-  textarea: () => `{ type: 'text' }`,
-  'rich-text': () => `{ type: 'text' }`,
-  number: () => `{ type: 'integer' }`,
-  boolean: () => `{ type: 'boolean', default: false }`,
-  date: () => `{ type: 'date' }`,
-  datetime: () => `{ type: 'datetime' }`,
-  email: () => `{ type: 'varchar', length: 255 }`,
-  phone: () => `{ type: 'varchar', length: 50 }`,
-  url: () => `{ type: 'varchar', length: 500 }`,
-  password: () => `{ type: 'varchar', length: 255 }`,
-  color: () => `{ type: 'varchar', length: 7 }`,
-  select: () => `{ type: 'varchar', length: 255 }`,
-  json: () => `{ type: 'text' }`,
-  file: () => `{ type: 'varchar', length: 500 }`,
-  image: () => `{ type: 'varchar', length: 500 }`,
+  text: (f) => `type: 'varchar', length: ${f.maxLength || 255}`,
+  textarea: () => `type: 'text'`,
+  'rich-text': () => `type: 'text'`,
+  number: () => `type: 'integer'`,
+  boolean: () => `type: 'boolean'`,
+  date: () => `type: 'date'`,
+  datetime: () => `type: 'datetime'`,
+  email: () => `type: 'varchar', length: 255`,
+  phone: () => `type: 'varchar', length: 50`,
+  url: () => `type: 'varchar', length: 500`,
+  password: () => `type: 'varchar', length: 255`,
+  color: () => `type: 'varchar', length: 7`,
+  select: () => `type: 'varchar', length: 255`,
+  json: () => `type: 'text'`,
+  file: () => `type: 'varchar', length: 500`,
+  image: () => `type: 'varchar', length: 500`,
+  'select-relation': () => `type: 'integer', nullable: true`,
+  'multiple-select-relation': () => `type: 'text'`,
 };
 
 const TS_TYPE_MAP: Record<string, string> = {
@@ -45,6 +52,8 @@ const TS_TYPE_MAP: Record<string, string> = {
   json: 'string',
   file: 'string',
   image: 'string',
+  'select-relation': 'number',
+  'multiple-select-relation': 'number[]',
 };
 
 const VALIDATOR_MAP: Record<string, (f: ScFieldConfigDto) => string[]> = {
@@ -89,6 +98,8 @@ const VALIDATOR_MAP: Record<string, (f: ScFieldConfigDto) => string[]> = {
   json: () => ['@IsOptional()', '@IsObject()'],
   file: () => ['@IsString()'],
   image: () => ['@IsString()'],
+  'select-relation': () => ['@IsOptional()', '@IsNumber()'],
+  'multiple-select-relation': () => ['@IsOptional()', '@IsArray()'],
 };
 
 function pascalCase(name: string): string {
@@ -102,14 +113,13 @@ function toTsType(field: ScFieldConfigDto): string {
   return TS_TYPE_MAP[field.type] || 'string';
 }
 
+function dtoFieldName(field: ScFieldConfigDto): string {
+  return field.type === 'select-relation' ? `${field.name}_id` : field.name;
+}
+
 @Injectable()
 export class ScGeneratorService {
   private readonly logger = new Logger(ScGeneratorService.name);
-
-  constructor(
-    @InjectRepository(ScModule)
-    private readonly scModuleRepository: Repository<ScModule>,
-  ) {}
 
   async generate(config: CreateScModuleDto & { id: number }): Promise<{
     files: string[];
@@ -117,14 +127,16 @@ export class ScGeneratorService {
   }> {
     const name = config.name;
     const Pascal = pascalCase(name);
-    const moduleDir = path.join(GENERATED_DIR, `sc_${name}`);
+    const moduleDir = path.join(MANAGMENTS_DIR, `sc_${name}`);
 
     const files: string[] = [];
 
-    // Write each template
     const templates: [string, string][] = [
       [`entities/${name}.entity.ts`, this.genEntity(name, Pascal, config)],
-      [`controllers/${name}.controller.ts`, this.genController(name, Pascal, config)],
+      [
+        `controllers/${name}.controller.ts`,
+        this.genController(name, Pascal, config),
+      ],
       [`services/${name}.service.ts`, this.genService(name, Pascal, config)],
       [`dto/create-${name}.dto.ts`, this.genCreateDto(name, Pascal, config)],
       [`dto/update-${name}.dto.ts`, this.genUpdateDto(name, Pascal, config)],
@@ -141,14 +153,11 @@ export class ScGeneratorService {
       this.logger.log(`Generated: ${relPath}`);
     }
 
-    // Compile .ts → .js
     for (const filePath of files) {
       this.compileTsFile(filePath);
     }
 
-    // Auto-restart
-    this.logger.log('Generation complete — restarting server in 500ms...');
-    setTimeout(() => process.exit(0), 500);
+    this.logger.log('Generation complete.');
 
     return { files, modulePath: moduleDir };
   }
@@ -169,15 +178,52 @@ export class ScGeneratorService {
     fs.writeFileSync(jsPath, result.outputText);
   }
 
-  private genEntity(name: string, Pascal: string, config: CreateScModuleDto): string {
-    const imports = new Set<string>(['Entity', 'PrimaryGeneratedColumn', 'Column', 'CreateDateColumn', 'UpdateDateColumn']);
+  private genEntity(
+    name: string,
+    Pascal: string,
+    config: CreateScModuleDto,
+  ): string {
+    const imports = new Set<string>([
+      'Entity',
+      'PrimaryGeneratedColumn',
+      'Column',
+      'CreateDateColumn',
+      'UpdateDateColumn',
+    ]);
     const columns: string[] = [];
     const relations: string[] = [];
 
+    // Collect relation names to skip duplicate columns
+    const relationNames = new Set(
+      config.relations?.map((r) => r.name) || [],
+    );
+    // Also collect _id suffix fields that are join columns for relations
+    const joinColumnFields = new Set(
+      config.relations?.filter(r => r.type === 'many-to-one').map(r => `${r.name}_id`) || [],
+    );
+
     for (const f of config.fields) {
-      const colConfig = COLUMN_MAP[f.type]?.(f) || `{ type: 'varchar', length: 255 }`;
+      // Skip generating a column if there's a relation with the same name
+      if (relationNames.has(f.name)) {
+        // For select-relation, create a {name}_id column for the join column
+        if (f.type === 'select-relation') {
+          const nullable = f.required ? '' : ', nullable: true';
+          columns.push(
+            `  @Column({ type: 'integer'${nullable} })\n  ${f.name}_id: number;`,
+          );
+        }
+        continue;
+      }
+      // Skip generating a column if it's a join column for a many-to-one relation
+      if (joinColumnFields.has(f.name)) continue;
+
+      const colConfig =
+        COLUMN_MAP[f.type]?.(f) || `type: 'varchar', length: 255`;
       const nullable = f.required ? '' : ', nullable: true';
-      const def = f.defaultValue !== undefined ? `, default: ${JSON.stringify(f.defaultValue)}` : '';
+      const def =
+        f.defaultValue !== undefined
+          ? `, default: ${JSON.stringify(f.defaultValue)}`
+          : '';
       const tsType = toTsType(f);
 
       columns.push(
@@ -188,7 +234,6 @@ export class ScGeneratorService {
     if (config.relations) {
       for (const r of config.relations) {
         const targetPascal = pascalCase(r.targetModule);
-        const targetFile = `./${r.targetModule}.entity`;
 
         imports.add('ManyToOne');
         imports.add('JoinColumn');
@@ -201,8 +246,10 @@ export class ScGeneratorService {
         }
 
         if (r.type === 'many-to-one') {
+          const joinColumnName = `${r.name}_id`;
+          // Remove inverse side reference to avoid errors when target entity doesn't have the relation
           relations.push(
-            `  @ManyToOne(() => ${targetPascal}, (${targetPascal.toLowerCase()}) => ${targetPascal.toLowerCase()}.${name}s)\n  @JoinColumn({ name: '${r.name}Id' })\n  ${r.name}: ${targetPascal};`,
+            `  @ManyToOne(() => ${targetPascal})\n  @JoinColumn({ name: '${joinColumnName}' })\n  ${r.name}: ${targetPascal};`,
           );
         } else if (r.type === 'many-to-many') {
           relations.push(
@@ -217,17 +264,23 @@ export class ScGeneratorService {
     }
 
     const importList = Array.from(imports).sort().join(', ');
-    const relationImports = config.relations?.length
-      ? `import { ${Array.from(imports).filter((i) => ['ManyToOne', 'ManyToMany', 'OneToMany', 'JoinColumn', 'JoinTable'].includes(i)).sort().join(', ')} } from 'typeorm';`
-      : '';
-
     const entityImports = `import { ${importList} } from 'typeorm';`;
+
+    // Add imports for target entities in relations
+    const targetEntityImports = config.relations
+      ? config.relations
+          .map((r) => {
+            const targetPascal = pascalCase(r.targetModule);
+            return `import { ${targetPascal} } from '@/modules/managements/sc_${r.targetModule}/entities/${r.targetModule}.entity';`;
+          })
+          .join('\n')
+      : '';
 
     const allColumns = [...columns, ...relations].join('\n\n');
 
     return `// Auto-generated by System Creators — do not edit manually
 ${entityImports}
-${relationImports ? '\n' + relationImports : ''}
+${targetEntityImports ? '\n' + targetEntityImports : ''}
 
 @Entity('${name}')
 export class ${Pascal} {
@@ -245,8 +298,14 @@ ${allColumns}
 `;
   }
 
-  private genController(name: string, Pascal: string, config: CreateScModuleDto): string {
-    const hasFileFields = config.fields.some((f) => f.type === 'file' || f.type === 'image');
+  private genController(
+    name: string,
+    Pascal: string,
+    config: CreateScModuleDto,
+  ): string {
+    const hasFileFields = config.fields.some(
+      (f) => f.type === 'file' || f.type === 'image',
+    );
 
     const uploadImport = hasFileFields
       ? `\nimport { FileInterceptor } from '@nestjs/platform-express';\nimport { memoryStorage } from 'multer';`
@@ -263,7 +322,9 @@ ${allColumns}
   }`
       : '';
 
-    const useInterceptorsImport = hasFileFields ? ', UseInterceptors, UploadedFile' : '';
+    const useInterceptorsImport = hasFileFields
+      ? ', UseInterceptors, UploadedFile'
+      : '';
 
     return `// Auto-generated by System Creators — do not edit manually
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, Request, ParseIntPipe${useInterceptorsImport} } from '@nestjs/common';${uploadImport}
@@ -316,48 +377,101 @@ export class ${Pascal}Controller {
 `;
   }
 
-  private genService(name: string, Pascal: string, config: CreateScModuleDto): string {
-    const searchableFields = config.fields.filter((f) => f.searchable).map((f) => f.name);
-    const sortableFields = config.fields.filter((f) => f.sortable).map((f) => f.name);
+  private genService(
+    name: string,
+    Pascal: string,
+    config: CreateScModuleDto,
+  ): string {
+    const searchableFields = config.fields
+      .filter((f) => f.searchable)
+      .map((f) => f.name);
+    const sortableFields = config.fields
+      .filter((f) => f.sortable)
+      .map((f) => f.name);
     const allSortable = ['id', ...sortableFields, 'createdAt', 'updatedAt'];
 
-    const relationFields = config.relations?.filter((r) => r.type === 'many-to-many' || r.type === 'one-to-many') || [];
-    const joinLeftSelects = relationFields.map((r) => `.leftJoinAndSelect('${name}.${r.name}', '${r.name}')`).join('\n      ');
+    const relationFields =
+      config.relations?.filter(
+        (r) => r.type === 'many-to-many' || r.type === 'one-to-many',
+      ) || [];
+    const joinLeftSelects = relationFields
+      .map((r) => `.leftJoinAndSelect('${name}.${r.name}', '${r.name}')`)
+      .join('\n      ');
+
+    const relationFieldDefs = config.fields.filter(f => f.type === 'multiple-select-relation');
 
     const createFields = config.fields
       .filter((f) => f.type !== 'file' && f.type !== 'image')
       .map((f) => {
-        if (f.type === 'json') return `      ${f.name}: dto.${f.name} ? JSON.stringify(dto.${f.name}) : undefined,`;
-        return `      ${f.name}: dto.${f.name},`;
+        const fn = dtoFieldName(f);
+        if (f.type === 'json')
+          return `      ${fn}: dto.${fn} ? JSON.stringify(dto.${fn}) : undefined,`;
+        if (f.type === 'multiple-select-relation')
+          return `      ${f.name}: null,`;
+        return `      ${fn}: dto.${fn},`;
       })
       .join('\n');
+
+    const createRelationSets = relationFieldDefs
+      .filter(f => f.targetModule)
+      .map((f) => {
+        const targetPascal = pascalCase(f.targetModule!);
+        return `    if (dto.${f.name} && dto.${f.name}.length > 0) {
+      const ${f.name}Entities = await this.${f.targetModule}Repo.findBy({ id: In(dto.${f.name}) });
+      saved.${f.name} = ${f.name}Entities;
+      await this.repo.save(saved);
+    }`;
+      })
+      .join('\n\n');
 
     const updateFields = config.fields
       .filter((f) => f.type !== 'file' && f.type !== 'image')
       .map((f) => {
+        const fn = dtoFieldName(f);
         if (f.type === 'json') {
-          return `    if (dto.${f.name} !== undefined) mod.${f.name} = dto.${f.name} ? JSON.stringify(dto.${f.name}) : undefined;`;
+          return `    if (dto.${fn} !== undefined) mod.${fn} = dto.${fn} ? JSON.stringify(dto.${fn}) : undefined;`;
         }
-        return `    if (dto.${f.name}) mod.${f.name} = dto.${f.name};`;
+        if (f.type === 'multiple-select-relation') {
+          return `    if (dto.${fn} !== undefined) { const entities = await this.${f.targetModule}Repo.findBy({ id: In(dto.${fn}) }); mod.${f.name} = entities; }`;
+        }
+        if (f.type === 'select-relation') {
+          return `    if (dto.${fn} !== undefined) (mod as any).${fn} = dto.${fn};`;
+        }
+        return `    if (dto.${fn}) mod.${fn} = dto.${fn};`;
       })
       .join('\n');
+
+    const targetEntityImports = relationFieldDefs.length > 0
+      ? relationFieldDefs.filter(f => f.targetModule).map(f => {
+          const targetPascal = pascalCase(f.targetModule!);
+          return `import { ${targetPascal} } from '@/modules/managements/sc_${f.targetModule}/entities/${f.targetModule}.entity';`;
+        }).join('\n')
+      : '';
+
+    const targetRepos = relationFieldDefs.length > 0
+      ? relationFieldDefs.filter(f => f.targetModule).map(f => {
+          const targetPascal = pascalCase(f.targetModule!);
+          return `    @InjectRepository(${targetPascal})\n    private readonly ${f.targetModule}Repo: Repository<${targetPascal}>,`;
+        }).join('\n')
+      : '';
 
     return `// Auto-generated by System Creators — do not edit manually
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { ${Pascal} } from '../entities/${name}.entity';
 import { Create${Pascal}Dto } from '../dto/create-${name}.dto';
 import { Update${Pascal}Dto } from '../dto/update-${name}.dto';
 import { Query${Pascal}Dto } from '../dto/query-${name}.dto';
 import { ActivityLogsService } from '@/modules/activity-logs/services/activity-logs.service';
+${targetEntityImports ? '\n' + targetEntityImports : ''}
 
 @Injectable()
 export class ${Pascal}Service {
   constructor(
     @InjectRepository(${Pascal})
     private readonly repo: Repository<${Pascal}>,
-    private readonly activityLogsService: ActivityLogsService,
+${targetRepos ? targetRepos + '\n' : ''}    private readonly activityLogsService: ActivityLogsService,
   ) {}
 
   async findAll(query: Query${Pascal}Dto) {
@@ -398,7 +512,7 @@ export class ${Pascal}Service {
   }
 
   async findOne(id: number) {
-    const mod = await this.repo.findOne({ where: { id } });
+    const mod = await this.repo.findOne({ where: { id }${relationFieldDefs.length > 0 ? `, relations: { ${relationFieldDefs.map(f => `${f.name}: true`).join(', ')} }` : ''} });
     if (!mod) throw new NotFoundException('${Pascal} not found');
     return mod;
   }
@@ -406,8 +520,10 @@ export class ${Pascal}Service {
   async create(dto: Create${Pascal}Dto, req?: any) {
     const mod = this.repo.create({
 ${createFields}
-    });
-    const saved = await this.repo.save(mod);
+    } as any);
+    const saved = await this.repo.save(mod) as unknown as ${Pascal};
+
+${createRelationSets}
 
     await this.activityLogsService.log({
       userId: req?.user?.sub,
@@ -466,7 +582,11 @@ ${updateFields}
 `;
   }
 
-  private genCreateDto(name: string, Pascal: string, config: CreateScModuleDto): string {
+  private genCreateDto(
+    name: string,
+    Pascal: string,
+    config: CreateScModuleDto,
+  ): string {
     const imports = new Set<string>(['IsString', 'IsOptional']);
     const fields: string[] = [];
 
@@ -475,6 +595,7 @@ ${updateFields}
       const tsType = toTsType(f);
       const optional = f.required ? '' : '@IsOptional()\n  ';
       const nullable = f.required ? '' : '?';
+      const fieldName = dtoFieldName(f);
 
       for (const v of validators) {
         const match = v.match(/@(\w+)/);
@@ -482,7 +603,7 @@ ${updateFields}
       }
 
       fields.push(
-        `  ${optional}${validators.join('\n  ')}\n  ${f.name}${nullable}: ${tsType};`,
+        `  ${optional}${validators.join('\n  ')}\n  ${fieldName}${nullable}: ${tsType};`,
       );
     }
 
@@ -497,7 +618,11 @@ ${fields.join('\n\n')}
 `;
   }
 
-  private genUpdateDto(name: string, Pascal: string, config: CreateScModuleDto): string {
+  private genUpdateDto(
+    name: string,
+    Pascal: string,
+    config: CreateScModuleDto,
+  ): string {
     return `// Auto-generated by System Creators — do not edit manually
 import { PartialType } from '@nestjs/mapped-types';
 import { Create${Pascal}Dto } from './create-${name}.dto';
@@ -506,21 +631,65 @@ export class Update${Pascal}Dto extends PartialType(Create${Pascal}Dto) {}
 `;
   }
 
-  private genQueryDto(name: string, Pascal: string, config: CreateScModuleDto): string {
-    const sortableFields = ['id', ...config.fields.filter((f) => f.sortable).map((f) => f.name), 'createdAt', 'updatedAt'];
-    const searchableFields = config.fields.filter((f) => f.searchable).map((f) => f.name);
+  private genQueryDto(
+    name: string,
+    Pascal: string,
+    config: CreateScModuleDto,
+  ): string {
+    const sortableFields = [
+      'id',
+      ...config.fields.filter((f) => f.sortable).map((f) => f.name),
+      'createdAt',
+      'updatedAt',
+    ];
+    const searchableFields = config.fields
+      .filter((f) => f.searchable)
+      .map((f) => f.name);
 
     return `// Auto-generated by System Creators — do not edit manually
 import { QueryDto } from '@/common/dto/query.dto';
 
 export class Query${Pascal}Dto extends QueryDto {
-  static readonly sortableFields = [${sortableFields.map((f) => `'${f}'`).join(', ')}];
-  static readonly searchableFields = [${searchableFields.map((f) => `'${f}'`).join(', ')}];
+  static readonly sortableFields: string[] = [${sortableFields.map((f) => `'${f}'`).join(', ')}];
+  static readonly searchableFields: string[] = [${searchableFields.map((f) => `'${f}'`).join(', ')}];
 }
 `;
   }
 
-  private genModule(name: string, Pascal: string, config: CreateScModuleDto): string {
+  private genModule(
+    name: string,
+    Pascal: string,
+    config: CreateScModuleDto,
+  ): string {
+    const allEntities = [Pascal];
+    if (config.fields) {
+      for (const f of config.fields) {
+        if (f.type === 'multiple-select-relation' && f.targetModule) {
+          allEntities.push(pascalCase(f.targetModule));
+        }
+      }
+    }
+    if (config.relations) {
+      for (const r of config.relations) {
+        const targetPascal = pascalCase(r.targetModule);
+        if (!allEntities.includes(targetPascal)) {
+          allEntities.push(targetPascal);
+        }
+      }
+    }
+
+    const targetEntityImports = [...new Set(
+      (config.fields || []).filter(f => f.targetModule).map(f => {
+        const targetPascal = pascalCase(f.targetModule!);
+        return `import { ${targetPascal} } from '@/modules/managements/sc_${f.targetModule}/entities/${f.targetModule}.entity';`;
+      }).concat(
+        (config.relations || []).map(r => {
+          const targetPascal = pascalCase(r.targetModule);
+          return `import { ${targetPascal} } from '@/modules/managements/sc_${r.targetModule}/entities/${r.targetModule}.entity';`;
+        })
+      )
+    )].join('\n');
+
     return `// Auto-generated by System Creators — do not edit manually
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -528,9 +697,10 @@ import { ${Pascal} } from './entities/${name}.entity';
 import { ${Pascal}Controller } from './controllers/${name}.controller';
 import { ${Pascal}Service } from './services/${name}.service';
 import { ActivityLogsModule } from '@/modules/activity-logs/activity-logs.module';
+${targetEntityImports ? '\n' + targetEntityImports : ''}
 
 @Module({
-  imports: [TypeOrmModule.forFeature([${Pascal}]), ActivityLogsModule],
+  imports: [TypeOrmModule.forFeature([${allEntities.join(', ')}]), ActivityLogsModule],
   controllers: [${Pascal}Controller],
   providers: [${Pascal}Service],
   exports: [${Pascal}Service],
