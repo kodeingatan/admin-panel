@@ -281,8 +281,7 @@ server/
 │   │   │   │   └── system-creators.controller.ts
 │   │   │   ├── services/
 │   │   │   │   ├── sc-registry.service.ts
-│   │   │   │   ├── sc-generator.service.ts
-│   │   │   │   └── sc-loader.service.ts
+│   │   │   │   └── sc-generator.service.ts
 │   │   │   ├── dto/
 │   │   │   │   ├── create-sc-module.dto.ts
 │   │   │   │   ├── update-sc-module.dto.ts
@@ -291,7 +290,7 @@ server/
 │   │   │   │   └── sc-module.entity.ts
 │   │   │   └── system-creators.module.ts
 │   │   │
-│   │   └── generated/               # Auto-generated modules (created by System Creators)
+│   │   └── managements/             # Auto-generated modules (created by System Creators)
 │   │       ├── index.ts             # Barrel + dynamic loader
 │   │       ├── _dynamic-loader.ts   # Reads registry, loads compiled modules
 │   │       └── sc_{name}/           # Per-module (e.g., sc_product, sc_category)
@@ -367,7 +366,7 @@ server/
 - Modules: `src/modules/{feature}/`
 - Shared: `src/common/`
 - RBAC: Use `@Roles()` and `@Permissions()` decorators on controller methods
-- Generated modules: `src/modules/generated/sc_{name}/` — prefix `sc_` for System Creator modules
+- Generated modules: `src/modules/managements/sc_{name}/` — prefix `sc_` for System Creator modules
 - Generated modules compiled from .ts → .js at generation time, loaded via `require()` at startup
 
 ---
@@ -414,11 +413,14 @@ Sistem (group)
     └── Settings                  → /dashboard/settings
 Admin (group, Super Admin only)
     └── System Creators           → /dashboard/system-creators
-Generated Modules (group, dynamic)
-    ├── {Module Label 1}         → /dashboard/sc/{name1}
-    ├── {Module Label 2}         → /dashboard/sc/{name2}
-    └── ...                       → /dashboard/sc/{nameN}
+{Dynamic generated modules}       → Based on menuLabel format
+    ├── {Module without group}    → /dashboard/sc/{name} (top-level)
+    └── {Group} (group)           → Nested group from menuLabel
+        └── {Module in group}     → /dashboard/sc/{name}
 ```
+
+**Menu Label Rules**: `{name}` = top-level, `{group}_{name}` = in group, `{g1}_{g2}_{name}` = nested groups.
+See `docs/system-creators/architecture.md` for full details.
 
 ---
 
@@ -524,11 +526,13 @@ Generated Modules (group, dynamic)
 
 ### System Creators (CRUD Generator)
 
+See `docs/system-creators/architecture.md` for full specification.
+
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | GET | `/api/system-creators/registry` | List all registered modules | Bearer (Super Admin) |
 | GET | `/api/system-creators/registry/:id` | Get module config by ID | Bearer (Super Admin) |
-| GET | `/api/system-creators/registry/by-name/:name` | Get module config by name | Bearer (Super Admin) |
+| GET | `/api/system-creators/registry/by-name/:name` | Get module config by name | Bearer (authenticated) |
 | POST | `/api/system-creators/generate` | Generate new module (write files + restart) | Bearer (Super Admin) |
 | PUT | `/api/system-creators/:id` | Update module config | Bearer (Super Admin) |
 | DELETE | `/api/system-creators/:id` | Delete module (mark inactive) | Bearer (Super Admin) |
@@ -603,8 +607,8 @@ users ──────< users_roles >────── roles
 ### System Creators Entity
 
 ```
-sc_modules ─── (fields stored as JSON in fieldsConfig column)
-               (relations stored as JSON in relationsConfig column)
+Registry stored in JSON file only (no database table):
+managements/sc-modules-registry.json
 ```
 
 ### Generated Module Entities (dynamic)
@@ -616,6 +620,18 @@ Each generated module has its own entity with columns defined by the user. Relat
 | ManyToOne | `@ManyToOne` + `@JoinColumn` | None (FK on child) |
 | ManyToMany | `@ManyToMany` + `@JoinTable` | Auto-created (`sc_{a}_sc_{b}`) |
 | OneToMany | `@OneToMany` | None (FK on child) |
+
+### New Field Types (v2)
+
+| Type | DB Column | Form Component | Description |
+|------|-----------|----------------|-------------|
+| `select-relation` | INTEGER (FK) | NSelect (async) | Pick one from related module |
+| `multiple-select-relation` | TEXT (JSON) | NSelect multiple | Pick multiple from related module |
+
+### Layout Configuration (v2)
+
+New `layoutConfig` field in registry for configuring browse/create/update layouts.
+See `docs/system-creators/architecture.md` for full schema.
 
 ---
 

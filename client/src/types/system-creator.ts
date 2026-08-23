@@ -2,6 +2,7 @@ export type ScFieldType =
   | 'text' | 'textarea' | 'rich-text' | 'number' | 'boolean'
   | 'date' | 'datetime' | 'email' | 'phone' | 'url'
   | 'password' | 'color' | 'select' | 'json' | 'file' | 'image'
+  | 'select-relation' | 'multiple-select-relation'
 
 export type ScAccessLevel = 'public' | 'admin' | 'granular'
 
@@ -29,6 +30,8 @@ export interface ScFieldConfig {
   options?: ScFieldOption[]
   placeholder?: string
   helpText?: string
+  targetModule?: string
+  relationLabel?: string
 }
 
 export interface ScRelationConfig {
@@ -36,6 +39,34 @@ export interface ScRelationConfig {
   type: ScRelationType
   targetModule: string
   joinTable?: string
+}
+
+export interface ScLayoutField {
+  name: string
+  width?: string
+  placeholder?: string
+}
+
+export interface ScLayoutSection {
+  label: string
+  fields: ScLayoutField[]
+}
+
+export interface ScFormLayout {
+  layout: 'flex' | 'grid'
+  columns?: string
+  sections: ScLayoutSection[]
+}
+
+export interface ScBrowseLayout {
+  columnOrder: string[]
+  columnWidths?: Record<string, string>
+}
+
+export interface ScLayoutConfig {
+  browse?: ScBrowseLayout
+  create?: ScFormLayout
+  update?: ScFormLayout
 }
 
 export interface ScModule {
@@ -50,6 +81,7 @@ export interface ScModule {
   isActive: boolean
   fieldsConfig: ScFieldConfig[]
   relationsConfig: ScRelationConfig[] | null
+  layoutConfig?: ScLayoutConfig | null
   createdAt: string
   updatedAt: string
 }
@@ -64,6 +96,7 @@ export interface CreateScModule {
   accessLevel: ScAccessLevel
   accessRoles?: string[]
   accessPermissions?: string[]
+  layoutConfig?: ScLayoutConfig
 }
 
 export interface UpdateScModule {
@@ -74,6 +107,7 @@ export interface UpdateScModule {
   accessLevel?: ScAccessLevel
   accessRoles?: string[]
   accessPermissions?: string[]
+  layoutConfig?: ScLayoutConfig
 }
 
 export interface QueryScModule {

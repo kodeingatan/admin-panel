@@ -17,6 +17,7 @@ import { UpdateScModuleDto } from '@/modules/system-creators/dto/update-sc-modul
 import { QueryScModuleDto } from '@/modules/system-creators/dto/query-sc-module.dto';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { Permissions } from '@/common/decorators/permissions.decorator';
+import { Public } from '@/common/decorators/public.decorator';
 
 @Controller('system-creators')
 export class SystemCreatorsController {
@@ -33,8 +34,7 @@ export class SystemCreatorsController {
   }
 
   @Get('registry/by-name/:name')
-  @Permissions('System Creators', 'Full Access')
-  @Roles('Super Admin')
+  @Public()
   findByName(@Param('name') name: string) {
     return this.registryService.findByName(name);
   }

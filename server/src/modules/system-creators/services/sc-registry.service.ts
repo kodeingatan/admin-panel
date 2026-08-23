@@ -3,55 +3,123 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ScModule } from '@/modules/system-creators/entities/sc-module.entity';
 import { CreateScModuleDto } from '@/modules/system-creators/dto/create-sc-module.dto';
 import { UpdateScModuleDto } from '@/modules/system-creators/dto/update-sc-module.dto';
 import { QueryScModuleDto } from '@/modules/system-creators/dto/query-sc-module.dto';
 import { ActivityLogsService } from '@/modules/activity-logs/services/activity-logs.service';
 
-const GENERATED_DIR = path.join(process.cwd(), 'src', 'modules', 'generated');
-const REGISTRY_JSON_PATH = path.join(GENERATED_DIR, 'sc-modules-registry.json');
+const REGISTRY_DIR = path.join(process.cwd(), 'src', 'modules', 'managements');
+const REGISTRY_JSON_PATH = path.join(REGISTRY_DIR, 'sc-modules-registry.json');
 
 @Injectable()
 export class ScRegistryService {
-  constructor(
-    @InjectRepository(ScModule)
-    private readonly scModuleRepository: Repository<ScModule>,
-    private readonly activityLogsService: ActivityLogsService,
-  ) {}
+  constructor(private readonly activityLogsService: ActivityLogsService) {}
+
+  private readRegistry(): any[] {
+    try {
+      if (!fs.existsSync(REGISTRY_JSON_PATH)) return [];
+      const raw = fs.readFileSync(REGISTRY_JSON_PATH, 'utf-8');
+      return JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+
+  private writeRegistry(data: any[]): void {
+    const dir = path.dirname(REGISTRY_JSON_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(REGISTRY_JSON_PATH, JSON.stringify(data, null, 2));
+
+    const distDir = path.join(process.cwd(), 'dist', 'modules', 'managements');
+    if (!fs.existsSync(distDir)) {
+      fs.mkdirSync(distDir, { recursive: true });
+    }
+    fs.writeFileSync(
+      path.join(distDir, 'sc-modules-registry.json'),
+      JSON.stringify(data, null, 2),
+    );
+  }
+
+  private toResponse(mod: any) {
+    return {
+      ...mod,
+      accessRoles:
+        typeof mod.accessRoles === 'string'
+          ? JSON.parse(mod.accessRoles)
+          : mod.accessRoles,
+      accessPermissions:
+        typeof mod.accessPermissions === 'string'
+          ? JSON.parse(mod.accessPermissions)
+          : mod.accessPermissions,
+      fieldsConfig:
+        typeof mod.fieldsConfig === 'string'
+          ? JSON.parse(mod.fieldsConfig)
+          : mod.fieldsConfig,
+      relationsConfig: mod.relationsConfig
+        ? typeof mod.relationsConfig === 'string'
+          ? JSON.parse(mod.relationsConfig)
+          : mod.relationsConfig
+        : null,
+      layoutConfig: mod.layoutConfig
+        ? typeof mod.layoutConfig === 'string'
+          ? JSON.parse(mod.layoutConfig)
+          : mod.layoutConfig
+        : null,
+    };
+  }
 
   async findAll(query: QueryScModuleDto) {
-    const { page = 1, limit = 20, search, searchField, sortBy, sortOrder } = query;
-    const qb = this.scModuleRepository.createQueryBuilder('sc');
+    const {
+      page = 1,
+      limit = 20,
+      search,
+      searchField,
+      sortBy,
+      sortOrder,
+    } = query;
+    let modules = this.readRegistry();
 
     if (search && searchField) {
       const allowed = QueryScModuleDto.searchableFields;
       if (allowed.includes(searchField)) {
-        qb.where(`sc.${searchField} LIKE :search`, { search: `%${search}%` });
+        modules = modules.filter((m) =>
+          String(m[searchField] || '')
+            .toLowerCase()
+            .includes(search.toLowerCase()),
+        );
       }
     } else if (search) {
-      const conditions = QueryScModuleDto.searchableFields.map(
-        (f) => `sc.${f} LIKE :search`,
+      const fields = QueryScModuleDto.searchableFields;
+      modules = modules.filter((m) =>
+        fields.some((f) =>
+          String(m[f] || '')
+            .toLowerCase()
+            .includes(search.toLowerCase()),
+        ),
       );
-      qb.where(`(${conditions.join(' OR ')})`, { search: `%${search}%` });
     }
 
     const sortable = QueryScModuleDto.sortableFields;
-    const field = sortBy && sortable.includes(sortBy) ? `sc.${sortBy}` : 'sc.id';
-    const order = sortOrder === 'ASC' ? 'ASC' : 'DESC';
+    const field = sortBy && sortable.includes(sortBy) ? sortBy : 'id';
+    const order = sortOrder === 'ASC' ? 1 : -1;
+    modules.sort((a, b) => {
+      const aVal = a[field] ?? '';
+      const bVal = b[field] ?? '';
+      if (typeof aVal === 'number' && typeof bVal === 'number')
+        return (aVal - bVal) * order;
+      return String(aVal).localeCompare(String(bVal)) * order;
+    });
 
-    const [modules, total] = await qb
-      .skip((page - 1) * limit)
-      .take(limit)
-      .orderBy(field, order)
-      .getManyAndCount();
+    const total = modules.length;
+    const start = (page - 1) * limit;
+    const paged = modules.slice(start, start + limit);
 
     return {
-      data: modules.map((m) => this.toResponse(m)),
+      data: paged.map((m) => this.toResponse(m)),
       total,
       page,
       limit,
@@ -59,107 +127,138 @@ export class ScRegistryService {
     };
   }
 
-  async findAllActive(): Promise<ScModule[]> {
-    return this.scModuleRepository.find({ where: { isActive: true } });
+  async findAllActive() {
+    return this.readRegistry().filter((m) => m.isActive);
   }
 
-  async findOne(id: number): Promise<ScModule> {
-    const mod = await this.scModuleRepository.findOne({ where: { id } });
+  async findOne(id: number) {
+    const mod = this.readRegistry().find((m) => m.id === id);
     if (!mod) throw new NotFoundException('Module not found');
     return this.toResponse(mod);
   }
 
-  async findByName(name: string): Promise<ScModule> {
-    const mod = await this.scModuleRepository.findOne({ where: { name } });
+  async findByName(name: string) {
+    const mod = this.readRegistry().find((m) => m.name === name);
     if (!mod) throw new NotFoundException(`Module "${name}" not found`);
     return this.toResponse(mod);
   }
 
-  async create(dto: CreateScModuleDto, req?: any): Promise<ScModule> {
-    const existing = await this.scModuleRepository.findOne({
-      where: { name: dto.name },
-    });
+  async create(dto: CreateScModuleDto, req?: any) {
+    const modules = this.readRegistry();
+    const existing = modules.find((m) => m.name === dto.name);
     if (existing) {
       throw new ConflictException(`Module "${dto.name}" already exists`);
     }
 
-    const routePath = `/dashboard/${dto.name}s`;
+    const maxId = modules.reduce((max, m) => Math.max(max, m.id || 0), 0);
+    const now = new Date().toISOString();
+    const routePath = `/dashboard/sc/${dto.name}`;
 
-    const mod: ScModule = this.scModuleRepository.create({
+    const mod = {
+      id: maxId + 1,
       name: dto.name,
       label: dto.label,
       routePath,
       menuLabel: dto.menuLabel,
       accessLevel: dto.accessLevel,
-      accessRoles: dto.accessRoles ? JSON.stringify(dto.accessRoles) : undefined,
-      accessPermissions: dto.accessPermissions ? JSON.stringify(dto.accessPermissions) : undefined,
+      accessRoles: dto.accessRoles
+        ? JSON.stringify(dto.accessRoles)
+        : undefined,
+      accessPermissions: dto.accessPermissions
+        ? JSON.stringify(dto.accessPermissions)
+        : undefined,
       isActive: true,
       fieldsConfig: JSON.stringify(dto.fields),
-      relationsConfig: dto.relations ? JSON.stringify(dto.relations) : undefined,
-    }) as ScModule;
+      relationsConfig: dto.relations
+        ? JSON.stringify(dto.relations)
+        : undefined,
+      layoutConfig: dto.layoutConfig
+        ? JSON.stringify(dto.layoutConfig)
+        : undefined,
+      createdAt: now,
+      updatedAt: now,
+    };
 
-    const saved = await this.scModuleRepository.save(mod);
-
-    await this.syncJsonBackup();
+    modules.push(mod);
+    this.writeRegistry(modules);
 
     await this.activityLogsService.log({
       userId: req?.user?.sub,
       action: 'CREATE',
       entity: 'ScModule',
-      entityId: saved.id,
+      entityId: mod.id,
       description: `Created system creator module "${dto.name}"`,
       metadata: { name: dto.name, label: dto.label },
       ipAddress: req?.ip,
       userAgent: req?.headers?.['user-agent'],
     });
 
-    return this.toResponse(saved);
+    return this.toResponse(mod);
   }
 
-  async update(id: number, dto: UpdateScModuleDto, req?: any): Promise<ScModule> {
-    const mod = await this.scModuleRepository.findOne({ where: { id } });
-    if (!mod) throw new NotFoundException('Module not found');
+  async update(id: number, dto: UpdateScModuleDto, req?: any) {
+    const modules = this.readRegistry();
+    const index = modules.findIndex((m) => m.id === id);
+    if (index === -1) throw new NotFoundException('Module not found');
 
+    const mod = { ...modules[index] };
     if (dto.label) mod.label = dto.label;
     if (dto.menuLabel) mod.menuLabel = dto.menuLabel;
     if (dto.accessLevel) mod.accessLevel = dto.accessLevel;
     if (dto.accessRoles !== undefined) {
-      mod.accessRoles = dto.accessRoles ? JSON.stringify(dto.accessRoles) : undefined;
+      mod.accessRoles = dto.accessRoles
+        ? JSON.stringify(dto.accessRoles)
+        : undefined;
     }
     if (dto.accessPermissions !== undefined) {
-      mod.accessPermissions = dto.accessPermissions ? JSON.stringify(dto.accessPermissions) : undefined;
+      mod.accessPermissions = dto.accessPermissions
+        ? JSON.stringify(dto.accessPermissions)
+        : undefined;
     }
     if (dto.fields) {
       mod.fieldsConfig = JSON.stringify(dto.fields);
     }
     if (dto.relations !== undefined) {
-      mod.relationsConfig = dto.relations ? JSON.stringify(dto.relations) : undefined;
+      mod.relationsConfig = dto.relations
+        ? JSON.stringify(dto.relations)
+        : undefined;
     }
+    if (dto.layoutConfig !== undefined) {
+      mod.layoutConfig = dto.layoutConfig
+        ? JSON.stringify(dto.layoutConfig)
+        : undefined;
+    }
+    mod.updatedAt = new Date().toISOString();
 
-    const saved = await this.scModuleRepository.save(mod);
-    await this.syncJsonBackup();
+    modules[index] = mod;
+    this.writeRegistry(modules);
 
     await this.activityLogsService.log({
       userId: req?.user?.sub,
       action: 'UPDATE',
       entity: 'ScModule',
-      entityId: saved.id,
+      entityId: mod.id,
       description: `Updated system creator module "${mod.name}"`,
       metadata: { name: mod.name },
       ipAddress: req?.ip,
       userAgent: req?.headers?.['user-agent'],
     });
 
-    return this.toResponse(saved);
+    return this.toResponse(mod);
   }
 
-  async remove(id: number, req?: any): Promise<void> {
-    const mod = await this.scModuleRepository.findOne({ where: { id } });
-    if (!mod) throw new NotFoundException('Module not found');
+  async remove(id: number, req?: any) {
+    const modules = this.readRegistry();
+    const index = modules.findIndex((m) => m.id === id);
+    if (index === -1) throw new NotFoundException('Module not found');
 
-    mod.isActive = false;
-    await this.scModuleRepository.save(mod);
-    await this.syncJsonBackup();
+    const mod = {
+      ...modules[index],
+      isActive: false,
+      updatedAt: new Date().toISOString(),
+    };
+    modules[index] = mod;
+    this.writeRegistry(modules);
 
     await this.activityLogsService.log({
       userId: req?.user?.sub,
@@ -173,58 +272,30 @@ export class ScRegistryService {
     });
   }
 
-  async toggleActive(id: number, req?: any): Promise<ScModule> {
-    const mod = await this.scModuleRepository.findOne({ where: { id } });
-    if (!mod) throw new NotFoundException('Module not found');
+  async toggleActive(id: number, req?: any) {
+    const modules = this.readRegistry();
+    const index = modules.findIndex((m) => m.id === id);
+    if (index === -1) throw new NotFoundException('Module not found');
 
-    mod.isActive = !mod.isActive;
-    const saved = await this.scModuleRepository.save(mod);
-    await this.syncJsonBackup();
+    const mod = {
+      ...modules[index],
+      isActive: !modules[index].isActive,
+      updatedAt: new Date().toISOString(),
+    };
+    modules[index] = mod;
+    this.writeRegistry(modules);
 
     await this.activityLogsService.log({
       userId: req?.user?.sub,
       action: 'UPDATE',
       entity: 'ScModule',
-      entityId: saved.id,
+      entityId: mod.id,
       description: `${mod.isActive ? 'Activated' : 'Deactivated'} system creator module "${mod.name}"`,
       metadata: { name: mod.name, isActive: mod.isActive },
       ipAddress: req?.ip,
       userAgent: req?.headers?.['user-agent'],
     });
 
-    return this.toResponse(saved);
-  }
-
-  async syncJsonBackup(): Promise<void> {
-    try {
-      const modules = await this.scModuleRepository.find();
-      const dir = path.dirname(REGISTRY_JSON_PATH);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      fs.writeFileSync(REGISTRY_JSON_PATH, JSON.stringify(modules, null, 2));
-    } catch {
-      // Silent fail — JSON backup is non-critical
-    }
-  }
-
-  async loadFromJsonBackup(): Promise<ScModule[]> {
-    try {
-      if (!fs.existsSync(REGISTRY_JSON_PATH)) return [];
-      const raw = fs.readFileSync(REGISTRY_JSON_PATH, 'utf-8');
-      return JSON.parse(raw);
-    } catch {
-      return [];
-    }
-  }
-
-  private toResponse(mod: ScModule) {
-    return {
-      ...mod,
-      accessRoles: mod.accessRoles ? JSON.parse(mod.accessRoles) : null,
-      accessPermissions: mod.accessPermissions ? JSON.parse(mod.accessPermissions) : null,
-      fieldsConfig: JSON.parse(mod.fieldsConfig),
-      relationsConfig: mod.relationsConfig ? JSON.parse(mod.relationsConfig) : null,
-    };
+    return this.toResponse(mod);
   }
 }

@@ -4,3 +4,4 @@ export { default as ScWizardStep2Fields } from './components/ScWizardStep2Fields
 export { default as ScWizardStep3Relations } from './components/ScWizardStep3Relations.vue'
 export { default as ScWizardStep4Access } from './components/ScWizardStep4Access.vue'
 export { default as ScWizardStep5Review } from './components/ScWizardStep5Review.vue'
+export { default as ScWizardStep6Layout } from './components/ScWizardStep6Layout.vue'

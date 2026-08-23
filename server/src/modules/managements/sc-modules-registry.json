@@ -1,0 +1,39 @@
+[
+  {
+    "id": 2,
+    "name": "category",
+    "label": "Category",
+    "routePath": "/dashboard/sc/category",
+    "menuLabel": "Categories",
+    "accessLevel": "admin",
+    "isActive": true,
+    "fieldsConfig": "[{\"name\":\"name\",\"label\":\"Name\",\"type\":\"text\",\"required\":true,\"unique\":false,\"searchable\":true,\"sortable\":true,\"visible\":true},{\"name\":\"description\",\"label\":\"Description\",\"type\":\"textarea\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true}]",
+    "createdAt": "2026-08-23T01:53:43.467Z",
+    "updatedAt": "2026-08-23T01:53:43.467Z"
+  },
+  {
+    "id": 3,
+    "name": "tag",
+    "label": "Tag",
+    "routePath": "/dashboard/sc/tag",
+    "menuLabel": "Tags",
+    "accessLevel": "admin",
+    "isActive": true,
+    "fieldsConfig": "[{\"name\":\"name\",\"label\":\"Name\",\"type\":\"text\",\"required\":true,\"unique\":false,\"searchable\":true,\"sortable\":true,\"visible\":true},{\"name\":\"color\",\"label\":\"Color\",\"type\":\"color\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true}]",
+    "createdAt": "2026-08-23T01:53:50.774Z",
+    "updatedAt": "2026-08-23T01:53:50.774Z"
+  },
+  {
+    "id": 4,
+    "name": "product",
+    "label": "Products",
+    "routePath": "/dashboard/sc/product",
+    "menuLabel": "Products",
+    "accessLevel": "admin",
+    "isActive": true,
+    "fieldsConfig": "[{\"name\":\"title\",\"label\":\"Title\",\"type\":\"text\",\"required\":true,\"unique\":false,\"searchable\":true,\"sortable\":true,\"visible\":true,\"maxLength\":\"255\"},{\"name\":\"description\",\"label\":\"Description\",\"type\":\"textarea\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true},{\"name\":\"price\",\"label\":\"Price\",\"type\":\"number\",\"required\":true,\"unique\":false,\"searchable\":false,\"sortable\":true,\"visible\":true,\"min\":\"0\"},{\"name\":\"stock\",\"label\":\"Stock\",\"type\":\"number\",\"required\":true,\"unique\":false,\"searchable\":false,\"sortable\":true,\"visible\":true,\"min\":\"0\"},{\"name\":\"category\",\"label\":\"Category\",\"type\":\"select-relation\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"targetModule\":\"category\",\"relationLabel\":\"name\"},{\"name\":\"tags\",\"label\":\"Tags\",\"type\":\"multiple-select-relation\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"targetModule\":\"tag\",\"relationLabel\":\"name\"},{\"name\":\"image\",\"label\":\"Image\",\"type\":\"image\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true},{\"name\":\"is_active\",\"label\":\"Active\",\"type\":\"boolean\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"defaultValue\":true}]",
+    "relationsConfig": "[{\"name\":\"category\",\"type\":\"many-to-one\",\"targetModule\":\"category\"},{\"name\":\"tags\",\"type\":\"many-to-many\",\"targetModule\":\"tag\"}]",
+    "createdAt": "2026-08-23T04:21:45.673Z",
+    "updatedAt": "2026-08-23T04:21:45.673Z"
+  }
+]

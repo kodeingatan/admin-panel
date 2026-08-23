@@ -166,131 +166,16 @@ Semua halaman tabel menggunakan komponen **DataTable** yang reusable dengan fitu
 
 ### 3.7 System Creators (CRUD Generator)
 
-**Fitur baru** yang memungkinkan Super Admin membuat module CRUD baru secara dinamis.
+See `docs/system-creators/PRD.md` for full specification.
 
-#### 3.7.1 System Creators List Page
+**Summary**: Fitur yang memungkinkan Super Admin membuat module CRUD baru secara dinamis melalui 6-step wizard. Module yang di-generate membuat REST API, TypeORM entities, dan dynamic CRUD pages.
 
-**Halaman utama** yang menampilkan semua module yang sudah dibuat.
-
-**Route**: `/dashboard/system-creators`
-**Access**: Super Admin only
-
-#### Tabel Module
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| ID | Number | Auto-increment |
-| Name | String | Module name (snake_case, unique) |
-| Label | String | Display name |
-| Fields Count | Number | Jumlah field |
-| Access Level | Enum | public / admin / granular |
-| Status | Boolean | Active / Inactive |
-| Created At | Date | Timestamp otomatis |
-| Updated At | Date | Timestamp otomatis |
-
-#### Aksi
-- **Create** — Buka wizard untuk buat module baru
-- **View** — Lihat detail konfigurasi module
-- **Toggle** — Aktifkan/nonaktifkan module
-- **Delete** — Hapus module (mark inactive, tidak hapus file)
-
-#### 3.7.2 Create Module Wizard
-
-Multi-step wizard untuk membuat module baru.
-
-**Route**: `/dashboard/system-creators/create`
-**Access**: Super Admin only
-
-##### Step 1: Basic Info
-| Field | Component | Validation | Description |
-|-------|-----------|------------|-------------|
-| Module Name | NInput | required, snake_case, unique | Nama module (e.g., `product`) |
-| Label | NInput | required | Display name (e.g., `Product`) |
-| Menu Label | NInput | required | Sidebar menu text (e.g., `Products`) |
-| Description | NInput textarea | optional | Deskripsi module |
-
-##### Step 2: Field Definitions
-| Field | Component | Description |
-|-------|-----------|-------------|
-| Field Name | NInput | Column name (snake_case) |
-| Field Label | NInput | Display label |
-| Field Type | NSelect | Type selection (see supported types) |
-| Required | NSwitch | Wajib diisi |
-| Unique | NSwitch | Unique constraint |
-| Searchable | NSwitch | Include in search |
-| Sortable | NSwitch | Allow sorting |
-| Visible in Table | NSwitch | Show in table by default |
-| Default Value | NInput | Optional default |
-| Max Length | NInputNumber | For text fields |
-| Min Length | NInputNumber | For text fields |
-| Min Value | NInputNumber | For number fields |
-| Max Value | NInputNumber | For number fields |
-| Options | Dynamic list | For select type (label + value pairs) |
-
-##### Step 3: Relationships (Optional)
-| Field | Component | Description |
-|-------|-----------|-------------|
-| Relation Type | NSelect | many-to-one, many-to-many, one-to-many |
-| Target Module | NSelect | Pilih module yang sudah ada |
-| Field Name | NInput | Nama field untuk relation |
-| Join Table | NInput | Nama junction table (untuk many-to-many) |
-
-##### Step 4: Access Control
-| Field | Component | Options |
-|-------|-----------|---------|
-| Access Level | NRadioGroup | public, admin, granular |
-| Roles | NSelect (if granular) | Assign ke role tertentu |
-| Auto-create Permission | NSwitch (if granular) | Buat permission otomatis |
-| Auto-create Guard | NSwitch (if granular) | Buat guard otomatis |
-
-##### Step 5: Review & Generate
-- Tampilkan ringkasan konfigurasi
-- Preview field table
-- Tombol "Generate Module"
-- Loading state saat server generate + restart
-
-#### 3.7.3 Dynamic CRUD Page
-
-Halaman CRUD yang di-render secara dinamis berdasarkan konfigurasi module.
-
-**Route**: `/dashboard/sc/:moduleName`
-**Access**: Based on access level config
-
-**Features**:
-- **Table View** — DataTable dengan kolom dari field config
-- **Create Form** — DynamicFormRenderer dengan field types yang sesuai
-- **Edit Form** — Form yang sama dengan pre-filled data
-- **Detail Drawer** — Detail view dengan field rendering yang sesuai
-- **Delete** — Konfirmasi + hapus
-- **File Upload** — Untuk field type file/image, upload ke `server/storage/generated/{module}/`
-
-#### 3.7.4 Field Types
-
-| Type | DB Column Type | Form Component | Table Display |
-|------|---------------|----------------|---------------|
-| `text` | VARCHAR(255) | NInput | Plain text |
-| `textarea` | TEXT | NInput textarea | Truncated text |
-| `rich-text` | TEXT | Tiptap/NInput textarea | Stripped HTML |
-| `number` | INTEGER | NInputNumber | Formatted number |
-| `boolean` | INTEGER (0/1) | NSwitch | NTag Yes/No |
-| `date` | DATE | NDatePicker | Formatted date |
-| `datetime` | DATETIME | NDatePicker datetime | Formatted datetime |
-| `email` | VARCHAR(255) | NInput email | Plain text |
-| `phone` | VARCHAR(50) | NInput | Plain text |
-| `url` | VARCHAR(500) | NInput | Clickable link |
-| `password` | VARCHAR(255) | NInput password | `****` masked |
-| `color` | VARCHAR(7) | NColorPicker | Color swatch |
-| `select` | VARCHAR(255) | NSelect | NTag with color |
-| `json` | TEXT | NInput textarea (JSON) | Truncated preview |
-| `file` | VARCHAR(500) | NUpload | File link |
-| `image` | VARCHAR(500) | NUpload image | Thumbnail |
-
-#### 3.7.5 Relationship Types
-
-| Type | TypeORM | Description |
-|------|---------|-------------|
-| `many-to-one` | `@ManyToOne` + `@JoinColumn` | FK pada entity ini → reference module |
-| `many-to-many` | `@ManyToMany` + `@JoinTable` | Junction table otomatis |
-| `one-to-many` | `@OneToMany` | FK pada entity lain → reference module |
+**Key Changes (v2)**:
+- SC modules stored in JSON only (no database)
+- Menu label format determines sidebar grouping (`{group}_{name}`)
+- New field types: `select-relation`, `multiple-select-relation`
+- New wizard step: Layout Configuration (browse, create, update)
+- Generated folder renamed: `generated` → `managements`
 
 ---
 
@@ -399,11 +284,13 @@ Response dikirim
 
 ### System Creators API
 
+See `docs/system-creators/PRD.md` for full specification.
+
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | GET | `/api/system-creators/registry` | List semua registered modules | Bearer (Super Admin) |
 | GET | `/api/system-creators/registry/:id` | Detail module config | Bearer (Super Admin) |
-| GET | `/api/system-creators/registry/by-name/:name` | Get by name | Bearer (Super Admin) |
+| GET | `/api/system-creators/registry/by-name/:name` | Get by name | Bearer (authenticated) |
 | POST | `/api/system-creators/generate` | Generate module baru | Bearer (Super Admin) |
 | PUT | `/api/system-creators/:id` | Update module config | Bearer (Super Admin) |
 | DELETE | `/api/system-creators/:id` | Delete module | Bearer (Super Admin) |
@@ -464,10 +351,13 @@ Sistem (group)
     └── Settings                  → /dashboard/settings
 Admin (group, Super Admin only)
     └── System Creators           → /dashboard/system-creators
-Generated Modules (group, dynamic)
-    ├── {Module Label 1}         → /dashboard/sc/{name1}
-    └── {Module Label 2}         → /dashboard/sc/{name2}
+{Dynamic generated modules}       → Based on menuLabel format
+    ├── {Module without group}    → /dashboard/sc/{name} (top-level)
+    └── {Group} (group)           → Nested group from menuLabel
+        └── {Module in group}     → /dashboard/sc/{name}
 ```
+
+**Menu Label Rules**: `{name}` = top-level, `{group}_{name}` = in group, `{g1}_{g2}_{name}` = nested groups.
 
 ---
 
@@ -543,37 +433,21 @@ When server returns 403 Forbidden:
 
 ## 10. System Creators — Technical Overview
 
-### Architecture
+See `docs/system-creators/architecture.md` for full technical details.
+
+### Architecture (Summary)
 
 ```
 [Client Wizard] → [POST /api/system-creators/generate] → [Server writes .ts files]
      ↓                                                         ↓
-[Server compiles TS→JS] → [Updates registry DB + JSON] → [Auto-restart server]
+[Server compiles TS→JS] → [Updates JSON registry] → [Auto-restart server]
      ↓
 [Client re-fetches registry] → [Dynamic route + menu] → [CRUD rendered]
 ```
 
-### File Generation
-
-Server generates TypeScript files following NestJS conventions:
-
-```
-server/src/modules/generated/sc_{name}/
-├── entities/{name}.entity.ts
-├── controllers/{name}.controller.ts
-├── services/{name}.service.ts
-├── dto/create-{name}.dto.ts
-├── dto/update-{name}.dto.ts
-├── dto/query-{name}.dto.ts
-└── {name}.module.ts
-```
-
-### Registry
-
-Module metadata stored in:
-1. **Database** — `sc_modules` table (primary)
-2. **JSON backup** — `server/src/modules/generated/sc-modules-registry.json` (fallback)
-
-### Dynamic Loading
-
-At startup, server reads registry, compiles .ts → .js via `ts.transpileModule()`, and dynamically imports modules. TypeORM `synchronize: true` auto-creates tables from entity metadata.
+### Key Changes (v2)
+- Registry stored in JSON only (no database table)
+- Generated folder: `managements/` (renamed from `generated/`)
+- Menu label format determines sidebar grouping
+- New field types: `select-relation`, `multiple-select-relation`
+- New wizard step: Layout Configuration

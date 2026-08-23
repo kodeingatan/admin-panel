@@ -6,12 +6,14 @@ import { useAuthStore } from '@/stores/auth.store'
 import AppLayout from '@/components/layout/AppLayout/AppLayout.vue'
 import DynamicTableRenderer from '@/components/common/DynamicTableRenderer.vue'
 import DynamicFormRenderer from '@/components/common/DynamicFormRenderer.vue'
+import { useDynamicModules } from '@/composables/useDynamicModules'
 import { systemCreatorsService } from '@/services/system-creators.service'
 import api from '@/services/api'
 import type { ScModule } from '@/types/system-creator'
 
 const route = useRoute()
 const authStore = useAuthStore()
+const { getModuleByName } = useDynamicModules()
 
 const moduleName = computed(() => route.params.moduleName as string)
 const moduleConfig = ref<ScModule | null>(null)
@@ -34,6 +36,11 @@ const selectedItem = ref<any | null>(null)
 const showDetail = ref(false)
 
 async function fetchConfig() {
+  const cached = getModuleByName(moduleName.value)
+  if (cached) {
+    moduleConfig.value = cached
+    return
+  }
   try {
     const { data: config } = await systemCreatorsService.getByName(moduleName.value)
     moduleConfig.value = config
@@ -159,7 +166,18 @@ watch(moduleName, async () => {
             <NText strong class="text-lg block mb-4">{{ moduleConfig.label }} Detail</NText>
             <div v-for="field in moduleConfig.fieldsConfig" :key="field.name" class="mb-3">
               <NText depth="3" class="text-xs block">{{ field.label }}</NText>
-              <NText>{{ selectedItem[field.name] ?? '-' }}</NText>
+              <template v-if="field.type === 'select-relation' && selectedItem[field.name]">
+                <NText>{{ selectedItem[field.name][field.relationLabel || 'name'] ?? '-' }}</NText>
+              </template>
+              <template v-else-if="field.type === 'multiple-select-relation' && selectedItem[field.name]?.length">
+                <NText>{{ selectedItem[field.name].map((item: any) => item[field.relationLabel || 'name']).join(', ') }}</NText>
+              </template>
+              <template v-else-if="field.type === 'image' && selectedItem[field.name]">
+                <img :src="selectedItem[field.name].startsWith('http') ? selectedItem[field.name] : `/api/storage/general/${selectedItem[field.name]}`" style="max-width:128px;max-height:128px;border-radius:4px;object-fit:cover;" />
+              </template>
+              <template v-else>
+                <NText>{{ selectedItem[field.name] ?? '-' }}</NText>
+              </template>
             </div>
             <NButton class="mt-4" @click="showDetail = false">Close</NButton>
           </div>

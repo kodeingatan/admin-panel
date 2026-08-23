@@ -10,6 +10,7 @@ import ScWizardStep2Fields from '@/features/system-creators/components/ScWizardS
 import ScWizardStep3Relations from '@/features/system-creators/components/ScWizardStep3Relations.vue'
 import ScWizardStep4Access from '@/features/system-creators/components/ScWizardStep4Access.vue'
 import ScWizardStep5Review from '@/features/system-creators/components/ScWizardStep5Review.vue'
+import ScWizardStep6Layout from '@/features/system-creators/components/ScWizardStep6Layout.vue'
 import type { CreateScModule } from '@/types/system-creator'
 
 const authStore = useAuthStore()
@@ -35,6 +36,7 @@ const steps = [
   { title: 'Fields', component: markRaw(ScWizardStep2Fields) as Component },
   { title: 'Relations', component: markRaw(ScWizardStep3Relations) as Component },
   { title: 'Access', component: markRaw(ScWizardStep4Access) as Component },
+  { title: 'Layout', component: markRaw(ScWizardStep6Layout) as Component },
   { title: 'Review', component: markRaw(ScWizardStep5Review) as Component },
 ]
 
@@ -53,7 +55,7 @@ const canProceed = computed(() => {
 })
 
 function next() {
-  if (currentStep.value < 5) currentStep.value++
+  if (currentStep.value < 6) currentStep.value++
 }
 
 function back() {
@@ -95,8 +97,8 @@ onMounted(async () => {
 
       <NSpace justify="end">
         <NButton v-if="currentStep > 1" :disabled="generating" @click="back">Back</NButton>
-        <NButton v-if="currentStep < 5" type="primary" :disabled="!canProceed || generating" @click="next">Next</NButton>
-        <NButton v-if="currentStep === 5" type="primary" :loading="generating" :disabled="generating" @click="generate">
+        <NButton v-if="currentStep < 6" type="primary" :disabled="!canProceed || generating" @click="next">Next</NButton>
+        <NButton v-if="currentStep === 6" type="primary" :loading="generating" :disabled="generating" @click="generate">
           Generate Module
         </NButton>
       </NSpace>

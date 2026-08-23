@@ -19,7 +19,7 @@ const props = defineProps<{ modelValue: CreateScModule }>()
       <NDescriptionsItem label="Label">{{ modelValue.label }}</NDescriptionsItem>
       <NDescriptionsItem label="Menu Label">{{ modelValue.menuLabel }}</NDescriptionsItem>
       <NDescriptionsItem label="Route">
-        <NText code>/dashboard/{{ modelValue.name }}s</NText>
+        <NText code>/dashboard/sc/{{ modelValue.name }}</NText>
       </NDescriptionsItem>
       <NDescriptionsItem label="Access Level">
         <NTag :type="modelValue.accessLevel === 'public' ? 'success' : modelValue.accessLevel === 'admin' ? 'info' : 'warning'" size="small" bordered>
@@ -52,6 +52,30 @@ const props = defineProps<{ modelValue: CreateScModule }>()
         <NText code>{{ rel.name }}</NText>
         <NText depth="3">→</NText>
         <NText code>{{ rel.targetModule }}</NText>
+      </div>
+    </template>
+
+    <template v-if="modelValue.layoutConfig">
+      <NDivider>Layout Config</NDivider>
+      <div class="space-y-2">
+        <div v-if="modelValue.layoutConfig.browse">
+          <NText class="text-sm" strong>Browse:</NText>
+          <NText depth="3" class="text-xs ml-2">
+            {{ modelValue.layoutConfig.browse.columnOrder.length }} columns configured
+          </NText>
+        </div>
+        <div v-if="modelValue.layoutConfig.create">
+          <NText class="text-sm" strong>Create Form:</NText>
+          <NText depth="3" class="text-xs ml-2">
+            {{ modelValue.layoutConfig.create.layout }} layout, {{ modelValue.layoutConfig.create.sections.length }} sections
+          </NText>
+        </div>
+        <div v-if="modelValue.layoutConfig.update">
+          <NText class="text-sm" strong>Update Form:</NText>
+          <NText depth="3" class="text-xs ml-2">
+            {{ modelValue.layoutConfig.update.layout }} layout, {{ modelValue.layoutConfig.update.sections.length }} sections
+          </NText>
+        </div>
       </div>
     </template>
   </div>

@@ -27,12 +27,14 @@ import {
   Report,
   Settings,
   Cube,
+  Add,
 } from '@vicons/carbon'
 
 import { useAuthStore } from '@/stores/auth.store'
 import { useAuthorization } from '@/composables/useAuthorization'
 import { useSettingsStore } from '@/stores/settings.store'
 import { useDynamicModules } from '@/composables/useDynamicModules'
+import type { ScModule } from '@/types/system-creator'
 
 const router = useRouter()
 const route = useRoute()
@@ -75,6 +77,53 @@ function renderMenuLabel(label: string, routePath: string) {
       },
       label,
     )
+}
+
+function parseMenuLabel(menuLabel: string): { groups: string[]; label: string } {
+  const parts = menuLabel.split('_')
+  if (parts.length === 1) {
+    return { groups: [], label: parts[0] }
+  }
+  return {
+    groups: parts.slice(0, -1),
+    label: parts[parts.length - 1],
+  }
+}
+
+function buildDynamicMenu(modules: ScModule[]): MenuOption[] {
+  const topLevel: MenuOption[] = []
+  const groupMap: Record<string, MenuOption> = {}
+
+  for (const m of modules) {
+    const { groups, label } = parseMenuLabel(m.menuLabel)
+
+    if (groups.length === 0) {
+      topLevel.push({
+        label: renderMenuLabel(label, m.routePath),
+        key: `sc-${m.name}`,
+      })
+    } else {
+      let currentLevel = topLevel
+      for (const group of groups) {
+        if (!groupMap[group]) {
+          const groupOption: MenuOption = {
+            label: group.charAt(0).toUpperCase() + group.slice(1),
+            key: `group-${group}`,
+            children: [],
+          }
+          groupMap[group] = groupOption
+          currentLevel.push(groupOption)
+        }
+        currentLevel = groupMap[group].children!
+      }
+      currentLevel.push({
+        label: renderMenuLabel(label, m.routePath),
+        key: `sc-${m.name}`,
+      })
+    }
+  }
+
+  return topLevel
 }
 
 const menuOptions = computed<MenuOption[]>(() => {
@@ -148,22 +197,14 @@ const menuOptions = computed<MenuOption[]>(() => {
         {
           label: renderMenuLabel('System Creators', '/dashboard/system-creators'),
           key: 'system-creators',
+          icon: renderIcon(Add),
         },
       ],
     })
   }
 
-  if (registeredModules.value.length > 0) {
-    options.push({
-      label: 'Generated Modules',
-      key: 'generated-modules',
-      icon: renderIcon(Cube),
-      children: registeredModules.value.map((m) => ({
-        label: renderMenuLabel(m.menuLabel, m.routePath),
-        key: `sc-${m.name}`,
-      })),
-    })
-  }
+  const dynamicItems = buildDynamicMenu(registeredModules.value)
+  options.push(...dynamicItems)
 
   return options
 })

@@ -263,118 +263,87 @@ Tabel untuk menyimpan pengaturan aplikasi (key-value store).
 
 ---
 
-### 13. sc_modules (System Creators Registry)
+### 13. sc_modules (System Creators Registry) — REMOVED in v2
 
-Tabel untuk menyimpan metadata module yang dibuat oleh System Creators.
+**Status**: This table is no longer used. SC modules are now stored in JSON only.
 
-| Column | Type | Constraint | Description |
-|--------|------|-----------|-------------|
-| `id` | INTEGER | PK, AUTO_INCREMENT | ID unik module |
-| `name` | VARCHAR(100) | NOT NULL, UNIQUE | Module name (snake_case) |
-| `label` | VARCHAR(100) | NOT NULL | Display name (e.g., "Product") |
-| `routePath` | VARCHAR(255) | NOT NULL | Client route (e.g., "/dashboard/products") |
-| `menuLabel` | VARCHAR(100) | NOT NULL | Sidebar menu text (e.g., "Products") |
-| `accessLevel` | VARCHAR(20) | DEFAULT 'admin' | "public" / "admin" / "granular" |
-| `accessRoles` | TEXT | NULLABLE | JSON array of role names (for granular) |
-| `accessPermissions` | TEXT | NULLABLE | JSON array of permission names (for granular) |
-| `isActive` | BOOLEAN | DEFAULT 1 | Module active status |
-| `fieldsConfig` | TEXT | NOT NULL | JSON — full field definitions |
-| `relationsConfig` | TEXT | NULLABLE | JSON — relation definitions |
-| `createdAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu pembuatan |
-| `updatedAt` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Waktu update terakhir |
+See `docs/system-creators/database.md` for the new JSON registry format.
 
-**Indexes**:
-- `PRIMARY KEY` on `id`
-- `UNIQUE` on `name`
-
-**JSON Schema — fieldsConfig**:
-```json
-[
-  {
-    "name": "title",
-    "label": "Title",
-    "type": "text",
-    "required": true,
-    "unique": false,
-    "searchable": true,
-    "sortable": true,
-    "visible": true,
-    "defaultValue": null,
-    "maxLength": 255,
-    "minLength": null,
-    "placeholder": "Enter product title",
-    "helpText": null,
-    "options": null
-  },
-  {
-    "name": "category",
-    "label": "Category",
-    "type": "select",
-    "required": true,
-    "unique": false,
-    "searchable": true,
-    "sortable": true,
-    "visible": true,
-    "defaultValue": null,
-    "options": [
-      { "label": "Electronics", "value": "electronics" },
-      { "label": "Clothing", "value": "clothing" }
-    ]
-  }
-]
-```
-
-**JSON Schema — relationsConfig**:
-```json
-[
-  {
-    "name": "category",
-    "type": "many-to-one",
-    "targetModule": "category",
-    "joinTable": null
-  },
-  {
-    "name": "tags",
-    "type": "many-to-many",
-    "targetModule": "tag",
-    "joinTable": "product_tags"
-  }
-]
-```
+Previously stored module metadata in the database. Now replaced by `managements/sc-modules-registry.json`.
 
 ---
 
 ## Seed Data
 
+Database di-seed otomatis saat pertama kali server dijalankan (`SeederService.onModuleInit`). Proses seed hanya berjalan jika database masih kosong (tidak ada data users, guards, permissions, atau roles).
+
+### Default Super Admin
+
+| Field | Value |
+|-------|-------|
+| username | `admin` |
+| email | `admin@admin.com` |
+| password | `P455w0rd!!!` |
+| role | Super Admin |
+
 ### Users
 
-| id | firstName | lastName | username | email | password (bcrypt) |
-|----|-----------|----------|----------|-------|-------------------|
-| 1 | Super | Admin | admin | admin@admin.com | `$2b$10$...` (P455w0rd!!!) |
+| id | firstName | lastName | username | email | role |
+|----|-----------|----------|----------|-------|------|
+| 1 | Super | Admin | admin | admin@admin.com | Super Admin |
+| 2 | John | Editor | editor | editor@example.com | Editor |
+| 3 | Jane | Viewer | viewer | viewer@example.com | Viewer |
+| 4 | Bob | Manager | manager | manager@example.com | Manager |
+| 5 | Alice | Guest | guest | guest@example.com | Guest |
 
 ### Roles
 
-| id | roleName | description |
-|----|----------|-------------|
-| 1 | Super Admin | Akses penuh ke semua fitur |
-| 2 | Admin | Akses admin terbatas |
-| 3 | User | Akses dasar untuk user biasa |
+| id | roleName | description | guards | permissions |
+|----|----------|-------------|--------|-------------|
+| 1 | Super Admin | Akses penuh ke semua fitur | Full Access | Full Access, Activity Logs, System Logs |
+| 2 | Admin | Akses admin terbatas | Web Access | Read Write |
+| 3 | User | Akses dasar untuk user biasa | API Only | Read Only |
+| 4 | Editor | Akses edit user dan content | API Only | Read Write, User Management |
+| 5 | Viewer | Hanya melihat data | Read Only Guard | Read Only, Dashboard Read |
+| 6 | Manager | Akses management user dan role | Web Access, User Management Guard | Read Write, User Management, Role Management |
+| 7 | Guest | Akses terbatas hanya dashboard | Dashboard Only | Dashboard Read |
 
 ### Guards
 
-| id | guardName | description |
-|----|-----------|-------------|
-| 1 | Full Access | Izinkan semua URL |
-| 2 | Web Access | Hanya akses API, tolak admin routes |
-| 3 | API Only | Hanya akses API endpoints |
+| id | guardName | description | urls |
+|----|-----------|-------------|------|
+| 1 | Full Access | Izinkan semua URL | `/*` (allow) |
+| 2 | Web Access | Hanya akses API, tolak admin routes | `/api/*` (allow), `/api/admin/*` (deny) |
+| 3 | API Only | Hanya akses API endpoints | `/api/*` (allow) |
+| 4 | Admin Only | Hanya akses admin dan user management | `/api/admin/*` (allow), `/api/users/*` (allow), `/api/roles/*` (allow) |
+| 5 | Read Only Guard | Akses baca saja, tolak user dan role management | `/api/*` (allow), `/api/users` (deny), `/api/roles` (deny) |
+| 6 | User Management Guard | Hanya akses user management | `/api/users/*` (allow) |
+| 7 | Role Management Guard | Hanya akses role management | `/api/roles/*` (allow) |
+| 8 | Dashboard Only | Hanya akses profile, tolak semua management | `/api/auth/profile` (allow), `/api/users/*` (deny), `/api/roles/*` (deny), `/api/permissions/*` (deny), `/api/guards/*` (deny) |
 
 ### Permissions
 
-| id | permissionName | description |
-|----|----------------|-------------|
-| 1 | Full Access | Izinkan semua method dan URL |
-| 2 | Read Only | Hanya izinkan GET dan OPTIONS |
-| 3 | Read Write | Izinkan semua method CRUD |
+| id | permissionName | description | methods | urls |
+|----|----------------|-------------|---------|------|
+| 1 | Full Access | Izinkan semua method dan URL | `*` | `/*` |
+| 2 | Read Only | Hanya izinkan GET dan OPTIONS | `GET`, `OPTIONS` | `/*` |
+| 3 | Read Write | Izinkan semua method CRUD | `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS` | `/*` |
+| 4 | User Management | Izinkan CRUD user | `GET`, `POST`, `PUT`, `DELETE` | `/api/users/*` |
+| 5 | Role Management | Izinkan CRUD role | `GET`, `POST`, `PUT`, `DELETE` | `/api/roles/*` |
+| 6 | Guard Management | Izinkan CRUD guard | `GET`, `POST`, `PUT`, `DELETE` | `/api/guards/*` |
+| 7 | Permission Management | Izinkan CRUD permission | `GET`, `POST`, `PUT`, `DELETE` | `/api/permissions/*` |
+| 8 | Dashboard Read | Hanya baca profile | `GET` | `/api/auth/profile` |
+| 9 | Activity Logs | Akses melihat activity logs | `GET` | `/api/activity-logs/*` |
+| 10 | System Logs | Akses melihat system logs | `GET` | `/api/system-logs/*` |
+
+### Settings
+
+| key | value |
+|-----|-------|
+| app_name | MyApp |
+| app_favicon | /favicon.svg |
+| login_bg_gradient | #1e40af,#3b82f6,#6366f1 |
+| app_description | Sistem manajemen bisnis digital |
 
 ---
 
@@ -394,10 +363,9 @@ users ──────< users_roles >────── roles
                     v               v
               guard_urls    permission_methods
                             permission_urls
-
-sc_modules ─── (fields stored as JSON in fieldsConfig)
-               (relations stored as JSON in relationsConfig)
 ```
+
+**Note**: SC modules registry is stored in JSON file only (`managements/sc-modules-registry.json`), not in database.
 
 ### Cardinality
 
@@ -413,6 +381,8 @@ sc_modules ─── (fields stored as JSON in fieldsConfig)
 
 ### Generated Module Relationships
 
+See `docs/system-creators/database.md` for generated module table structures.
+
 | Relationship | TypeORM | Junction Table |
 |-------------|---------|----------------|
 | ManyToOne | `@ManyToOne` + `@JoinColumn` | None (FK on child entity) |
@@ -423,7 +393,7 @@ sc_modules ─── (fields stored as JSON in fieldsConfig)
 
 ## Database Total
 
-**13 tables** (12 built-in + 1 system creators registry):
+**12 tables** (built-in only):
 
 1. `users`
 2. `roles`
@@ -437,6 +407,5 @@ sc_modules ─── (fields stored as JSON in fieldsConfig)
 10. `permission_urls`
 11. `activity_logs`
 12. `settings`
-13. `sc_modules` (System Creators)
 
-**Note**: Generated modules create additional tables dynamically via TypeORM `synchronize: true`. Each generated module adds 1 entity table + optional junction tables for ManyToMany relations.
+**Note**: The `sc_modules` table (previously #13) has been removed in v2. SC modules are now stored in JSON only at `managements/sc-modules-registry.json`. Generated modules create additional tables dynamically via TypeORM `synchronize: true`. Each generated module adds 1 entity table + optional junction tables for ManyToMany relations.

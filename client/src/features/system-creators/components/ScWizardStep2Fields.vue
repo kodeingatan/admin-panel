@@ -26,6 +26,8 @@ const FIELD_TYPES = [
   { label: 'JSON', value: 'json' },
   { label: 'File', value: 'file' },
   { label: 'Image', value: 'image' },
+  { label: 'Select Relation', value: 'select-relation' },
+  { label: 'Multiple Select Relation', value: 'multiple-select-relation' },
 ]
 
 const expandedIndex = ref<number | null>(null)
@@ -220,6 +222,29 @@ function removeOption(fieldIndex: number, optIndex: number) {
             <template #icon><NIcon><Add /></NIcon></template>
             Add Option
           </NButton>
+        </div>
+
+        <div v-if="field.type === 'select-relation' || field.type === 'multiple-select-relation'" class="border-t pt-3 mt-2">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <NText class="text-xs block mb-1">Target Module</NText>
+              <NInput
+                :value="field.targetModule || ''"
+                placeholder="e.g. category"
+                size="small"
+                @update:value="(v) => updateField(i, 'targetModule', v)"
+              />
+            </div>
+            <div>
+              <NText class="text-xs block mb-1">Label Field</NText>
+              <NInput
+                :value="field.relationLabel || ''"
+                placeholder="e.g. name"
+                size="small"
+                @update:value="(v) => updateField(i, 'relationLabel', v)"
+              />
+            </div>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3 mt-3" v-if="['text', 'textarea', 'password'].includes(field.type)">

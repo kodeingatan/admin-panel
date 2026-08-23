@@ -1,4 +1,10 @@
-import { Controller, Get, Param, Res, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Res,
+  BadRequestException,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import { join, extname } from 'path';
 import { existsSync } from 'fs';

@@ -127,10 +127,14 @@ Sistem (group)
     └── Settings                  → /dashboard/settings
 Admin (group, Super Admin only)
     └── System Creators           → /dashboard/system-creators
-Generated Modules (group, dynamic, fetched from API)
-    ├── {Module Label 1}         → /dashboard/sc/{name1}
-    └── {Module Label 2}         → /dashboard/sc/{name2}
+{Dynamic generated modules}       → Based on menuLabel format
+    ├── {Module without group}    → /dashboard/sc/{name} (top-level)
+    └── {Group} (group)           → Nested group from menuLabel
+        └── {Module in group}     → /dashboard/sc/{name}
 ```
+
+**Menu Label Rules**: `{name}` = top-level, `{group}_{name}` = in group, `{g1}_{g2}_{name}` = nested groups.
+See `docs/system-creators/PRD.md` for full specification.
 
 ## Server (NestJS)
 
@@ -215,8 +219,7 @@ server/src/
 │   │   │   └── system-creators.controller.ts
 │   │   ├── services/
 │   │   │   ├── sc-registry.service.ts
-│   │   │   ├── sc-generator.service.ts
-│   │   │   └── sc-loader.service.ts
+│   │   │   └── sc-generator.service.ts
 │   │   ├── dto/
 │   │   │   ├── create-sc-module.dto.ts
 │   │   │   ├── update-sc-module.dto.ts
@@ -224,7 +227,7 @@ server/src/
 │   │   ├── entities/
 │   │   │   └── sc-module.entity.ts
 │   │   └── system-creators.module.ts
-│   └── generated/           # Auto-generated modules (created by System Creators)
+│   └── managements/           # Auto-generated modules (created by System Creators)
 │       ├── index.ts         # Barrel + dynamic loader
 │       ├── _dynamic-loader.ts
 │       └── sc_{name}/       # Per-module (e.g., sc_product)
@@ -254,7 +257,7 @@ server/src/
 - Shared: `src/common/`
 - Uploaded files: `server/storage/{subfolder}/` (gitignored) — subfolders: `settings`, `avatars`, `general`
 - File serving: `GET /api/storage/:subfolder/:filename` — public endpoint, serves binary with correct Content-Type
-- Generated modules: `src/modules/generated/sc_{name}/` — prefix `sc_` for System Creator modules
+- Generated modules: `src/modules/managements/sc_{name}/` — prefix `sc_` for System Creator modules
 - Generated modules compiled from .ts → .js at generation time, loaded via `require()` at startup
 
 **Auth API**:
@@ -277,7 +280,7 @@ server/src/
 | System Logs | `/api/system-logs` | (file-based) | System log viewer for log files |
 | Settings | `/api/settings` | Setting | Application settings (key-value store) |
 | Storage | `/api/storage` | (file-based) | File serving for uploaded images |
-| System Creators | `/api/system-creators` | ScModule | CRUD Generator — create/manage dynamic modules |
+| System Creators | `/api/system-creators` | (JSON registry) | CRUD Generator — create/manage dynamic modules |
 | Generated | `/api/generated/{name}` | (dynamic) | Auto-created CRUD endpoints per generated module |
 
 **RBAC Guard Chain** (Global):
@@ -293,16 +296,19 @@ server/src/
 | `@Roles(...roles)` | `common/decorators/roles.decorator.ts` | Require specific roles |
 | `@Permissions(...perms)` | `common/decorators/permissions.decorator.ts` | Require specific permissions |
 
-**Database**: SQLite via TypeORM — 13 tables total (users, roles, permissions, guards, settings, sc_modules, + 6 junction tables)
+**Database**: SQLite via TypeORM — 12 tables total (users, roles, permissions, guards, settings, + 6 junction tables)
 - See `docs/database.md` for full schema and `docs/PRD.md` for authorization flow
 
 **System Creators** (CRUD Generator):
 - Only Super Admin can access
-- Generates TypeScript files in `server/src/modules/generated/sc_{name}/`
+- Generates TypeScript files in `server/src/modules/managements/sc_{name}/`
 - Compiles .ts → .js via `ts.transpileModule()`
 - Server auto-restarts after generation
-- Registry stored in `sc_modules` table + JSON backup
-- See `docs/PRD.md` section 3.7 for full specification
+- Registry stored in JSON file only (`managements/sc-modules-registry.json`)
+- Menu label format determines sidebar grouping (`{group}_{name}`)
+- New field types: `select-relation`, `multiple-select-relation`
+- New wizard step: Layout Configuration (browse, create, update)
+- See `docs/system-creators/PRD.md` for full specification
 
 ## Storybook MCP
 
@@ -321,6 +327,6 @@ Start Storybook first (`npm run storybook` in `client/`) before using MCP featur
 - AccessDeniedAlert uses CSS transition animation (slide-in from right) — uses `v-show` not `v-if` to avoid layout shift
 - To re-seed database: delete `server/db.sqlite` then restart server (`npm run start:dev`)
 - Uploaded files stored in `server/storage/` (gitignored) — create subdirectories `settings/`, `avatars/`, `general/` as needed
-- Generated module files in `server/src/modules/generated/` — prefixed with `sc_` for System Creator modules
+- Generated module files in `server/src/modules/managements/` — prefixed with `sc_` for System Creator modules
 - After generating a module, server auto-restarts — expect ~2-3 second downtime
 - Dynamic routes (`/dashboard/sc/:moduleName`) — client fetches registry to build route map

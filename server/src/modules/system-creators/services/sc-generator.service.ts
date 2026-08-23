@@ -113,10 +113,6 @@ function toTsType(field: ScFieldConfigDto): string {
   return TS_TYPE_MAP[field.type] || 'string';
 }
 
-function dtoFieldName(field: ScFieldConfigDto): string {
-  return field.type === 'select-relation' ? `${field.name}_id` : field.name;
-}
-
 @Injectable()
 export class ScGeneratorService {
   private readonly logger = new Logger(ScGeneratorService.name);
@@ -390,10 +386,8 @@ export class ${Pascal}Controller {
       .map((f) => f.name);
     const allSortable = ['id', ...sortableFields, 'createdAt', 'updatedAt'];
 
-    const relationFields =
-      config.relations?.filter(
-        (r) => r.type === 'many-to-many' || r.type === 'one-to-many',
-      ) || [];
+    const relationFields = config.relations || [];
+    const allRelationNames = relationFields.map(r => r.name);
     const joinLeftSelects = relationFields
       .map((r) => `.leftJoinAndSelect('${name}.${r.name}', '${r.name}')`)
       .join('\n      ');
@@ -403,19 +397,19 @@ export class ${Pascal}Controller {
     const createFields = config.fields
       .filter((f) => f.type !== 'file' && f.type !== 'image')
       .map((f) => {
-        const fn = dtoFieldName(f);
         if (f.type === 'json')
-          return `      ${fn}: dto.${fn} ? JSON.stringify(dto.${fn}) : undefined,`;
+          return `      ${f.name}: dto.${f.name} ? JSON.stringify(dto.${f.name}) : undefined,`;
         if (f.type === 'multiple-select-relation')
           return `      ${f.name}: null,`;
-        return `      ${fn}: dto.${fn},`;
+        if (f.type === 'select-relation')
+          return `      ${f.name}_id: dto.${f.name},`;
+        return `      ${f.name}: dto.${f.name},`;
       })
       .join('\n');
 
     const createRelationSets = relationFieldDefs
       .filter(f => f.targetModule)
       .map((f) => {
-        const targetPascal = pascalCase(f.targetModule!);
         return `    if (dto.${f.name} && dto.${f.name}.length > 0) {
       const ${f.name}Entities = await this.${f.targetModule}Repo.findBy({ id: In(dto.${f.name}) });
       saved.${f.name} = ${f.name}Entities;
@@ -427,31 +421,43 @@ export class ${Pascal}Controller {
     const updateFields = config.fields
       .filter((f) => f.type !== 'file' && f.type !== 'image')
       .map((f) => {
-        const fn = dtoFieldName(f);
         if (f.type === 'json') {
-          return `    if (dto.${fn} !== undefined) mod.${fn} = dto.${fn} ? JSON.stringify(dto.${fn}) : undefined;`;
+          return `    if (dto.${f.name} !== undefined) mod.${f.name} = dto.${f.name} ? JSON.stringify(dto.${f.name}) : undefined;`;
         }
         if (f.type === 'multiple-select-relation') {
-          return `    if (dto.${fn} !== undefined) { const entities = await this.${f.targetModule}Repo.findBy({ id: In(dto.${fn}) }); mod.${f.name} = entities; }`;
+          return `    if (dto.${f.name} !== undefined) { const entities = await this.${f.targetModule}Repo.findBy({ id: In(dto.${f.name}) }); mod.${f.name} = entities; }`;
         }
         if (f.type === 'select-relation') {
-          return `    if (dto.${fn} !== undefined) (mod as any).${fn} = dto.${fn};`;
+          return `    if (dto.${f.name} !== undefined) mod.${f.name}_id = dto.${f.name};`;
         }
-        return `    if (dto.${fn}) mod.${fn} = dto.${fn};`;
+        return `    if (dto.${f.name} !== undefined) mod.${f.name} = dto.${f.name};`;
       })
       .join('\n');
 
-    const targetEntityImports = relationFieldDefs.length > 0
-      ? relationFieldDefs.filter(f => f.targetModule).map(f => {
-          const targetPascal = pascalCase(f.targetModule!);
-          return `import { ${targetPascal} } from '@/modules/managements/sc_${f.targetModule}/entities/${f.targetModule}.entity';`;
+    // Collect all relations that need repos injected (many-to-many fields + many-to-one from relations config)
+    const allRelationTargets = new Set<string>();
+    for (const f of config.fields) {
+      if (f.type === 'multiple-select-relation' && f.targetModule) {
+        allRelationTargets.add(f.targetModule);
+      }
+    }
+    for (const r of config.relations || []) {
+      if (r.type === 'many-to-one') {
+        allRelationTargets.add(r.targetModule);
+      }
+    }
+
+    const targetEntityImports = allRelationTargets.size > 0
+      ? Array.from(allRelationTargets).map(targetModule => {
+          const targetPascal = pascalCase(targetModule);
+          return `import { ${targetPascal} } from '@/modules/managements/sc_${targetModule}/entities/${targetModule}.entity';`;
         }).join('\n')
       : '';
 
-    const targetRepos = relationFieldDefs.length > 0
-      ? relationFieldDefs.filter(f => f.targetModule).map(f => {
-          const targetPascal = pascalCase(f.targetModule!);
-          return `    @InjectRepository(${targetPascal})\n    private readonly ${f.targetModule}Repo: Repository<${targetPascal}>,`;
+    const targetRepos = allRelationTargets.size > 0
+      ? Array.from(allRelationTargets).map(targetModule => {
+          const targetPascal = pascalCase(targetModule);
+          return `    @InjectRepository(${targetPascal})\n    private readonly ${targetModule}Repo: Repository<${targetPascal}>,`;
         }).join('\n')
       : '';
 
@@ -512,7 +518,7 @@ ${targetRepos ? targetRepos + '\n' : ''}    private readonly activityLogsService
   }
 
   async findOne(id: number) {
-    const mod = await this.repo.findOne({ where: { id }${relationFieldDefs.length > 0 ? `, relations: { ${relationFieldDefs.map(f => `${f.name}: true`).join(', ')} }` : ''} });
+    const mod = await this.repo.findOne({ where: { id }${allRelationNames.length > 0 ? `, relations: { ${allRelationNames.map(n => `${n}: true`).join(', ')} }` : ''} });
     if (!mod) throw new NotFoundException('${Pascal} not found');
     return mod;
   }
@@ -595,7 +601,6 @@ ${updateFields}
       const tsType = toTsType(f);
       const optional = f.required ? '' : '@IsOptional()\n  ';
       const nullable = f.required ? '' : '?';
-      const fieldName = dtoFieldName(f);
 
       for (const v of validators) {
         const match = v.match(/@(\w+)/);
@@ -603,7 +608,7 @@ ${updateFields}
       }
 
       fields.push(
-        `  ${optional}${validators.join('\n  ')}\n  ${fieldName}${nullable}: ${tsType};`,
+        `  ${optional}${validators.join('\n  ')}\n  ${f.name}${nullable}: ${tsType};`,
       );
     }
 

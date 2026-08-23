@@ -19,16 +19,16 @@ import { Guard } from '@/modules/guards/entities/guard.entity';
 import { GuardUrl } from '@/modules/guards/entities/guard-url.entity';
 import { ActivityLog } from '@/modules/activity-logs/entities/activity-log.entity';
 import { Setting } from '@/modules/settings/entities/setting.entity';
-import { ScModule } from '@/modules/system-creators/entities/sc-module.entity';
 import { AppController } from '@/app.controller';
 import { AppService } from '@/app.service';
 import { SeederService } from '@/common/services/seeder.service';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { RbacGuard } from '@/common/guards/rbac.guard';
-import { loadGeneratedModules } from '@/modules/generated';
-import { GeneratedModulesModule } from '@/modules/generated/generated-modules.module';
+import { loadGeneratedModules } from '@/modules/managements';
+import { GeneratedModulesModule } from '@/modules/managements/generated-modules.module';
 
-const { modules: generatedModules, entities: generatedEntities } = loadGeneratedModules();
+const { modules: generatedModules, entities: generatedEntities } =
+  loadGeneratedModules();
 
 @Module({
   imports: [
@@ -45,7 +45,6 @@ const { modules: generatedModules, entities: generatedEntities } = loadGenerated
         GuardUrl,
         ActivityLog,
         Setting,
-        ScModule,
         ...generatedEntities,
       ],
       synchronize: true,

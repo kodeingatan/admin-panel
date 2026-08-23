@@ -6,6 +6,7 @@ import {
   ValidateNested,
   Matches,
   IsBoolean,
+  IsObject,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -27,9 +28,24 @@ export class ScFieldConfigDto {
 
   @IsString()
   @IsIn([
-    'text', 'textarea', 'rich-text', 'number', 'boolean',
-    'date', 'datetime', 'email', 'phone', 'url',
-    'password', 'color', 'select', 'json', 'file', 'image',
+    'text',
+    'textarea',
+    'rich-text',
+    'number',
+    'boolean',
+    'date',
+    'datetime',
+    'email',
+    'phone',
+    'url',
+    'password',
+    'color',
+    'select',
+    'json',
+    'file',
+    'image',
+    'select-relation',
+    'multiple-select-relation',
   ])
   type: string;
 
@@ -80,6 +96,18 @@ export class ScFieldConfigDto {
   @IsOptional()
   @IsString()
   helpText?: string;
+
+  @IsOptional()
+  @IsString()
+  targetModule?: string;
+
+  @IsOptional()
+  @IsString()
+  relationField?: string;
+
+  @IsOptional()
+  @IsString()
+  relationLabel?: string;
 }
 
 export class ScRelationConfigDto {
@@ -96,6 +124,69 @@ export class ScRelationConfigDto {
   @IsOptional()
   @IsString()
   joinTable?: string;
+}
+
+export class ScLayoutFieldDto {
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  width?: string;
+
+  @IsOptional()
+  @IsString()
+  placeholder?: string;
+}
+
+export class ScLayoutSectionDto {
+  @IsString()
+  label: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ScLayoutFieldDto)
+  fields: ScLayoutFieldDto[];
+}
+
+export class ScFormLayoutDto {
+  @IsString()
+  @IsIn(['flex', 'grid'])
+  layout: string;
+
+  @IsOptional()
+  columns?: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ScLayoutSectionDto)
+  sections: ScLayoutSectionDto[];
+}
+
+export class ScBrowseLayoutDto {
+  @IsArray()
+  @IsString({ each: true })
+  columnOrder: string[];
+
+  @IsOptional()
+  columnWidths?: Record<string, string>;
+}
+
+export class ScLayoutConfigDto {
+  @IsOptional()
+  @IsObject()
+  @Type(() => ScBrowseLayoutDto)
+  browse?: ScBrowseLayoutDto;
+
+  @IsOptional()
+  @IsObject()
+  @Type(() => ScFormLayoutDto)
+  create?: ScFormLayoutDto;
+
+  @IsOptional()
+  @IsObject()
+  @Type(() => ScFormLayoutDto)
+  update?: ScFormLayoutDto;
 }
 
 export class CreateScModuleDto {
@@ -135,4 +226,9 @@ export class CreateScModuleDto {
   @IsOptional()
   @IsArray()
   accessPermissions?: string[];
+
+  @IsOptional()
+  @IsObject()
+  @Type(() => ScLayoutConfigDto)
+  layoutConfig?: ScLayoutConfigDto;
 }

@@ -43,14 +43,33 @@ function renderCellValue(field: ScFieldConfig, row: any) {
       const opt = field.options?.find((o) => o.value === val)
       return h(NTag, { size: 'small', bordered: false }, () => opt?.label || val)
     }
+    case 'select-relation': {
+      if (!val) return h(NText, { depth: 3 }, () => '-')
+      const displayField = field.relationLabel || 'name'
+      const displayVal = typeof val === 'object' ? (val[displayField] || val.name || `#${val.id}`) : `#${val}`
+      return h(NTag, { size: 'small', bordered: false }, () => String(displayVal))
+    }
+    case 'multiple-select-relation': {
+      if (!val || !Array.isArray(val) || val.length === 0) return h(NText, { depth: 3 }, () => '-')
+      const displayField = field.relationLabel || 'name'
+      return h(NSpace, { size: 4 }, () =>
+        val.map((item: any) => {
+          const label = typeof item === 'object' ? (item[displayField] || item.name || `#${item.id}`) : `#${item}`
+          return h(NTag, { size: 'small', bordered: false, key: item.id || item }, () => String(label))
+        })
+      )
+    }
     case 'password':
       return '••••••'
     case 'json':
       return h(NText, { code: true, depth: 3 }, () => typeof val === 'string' ? val.slice(0, 50) : JSON.stringify(val).slice(0, 50))
     case 'file':
       return h(NButton, { size: 'small', text: true, tag: 'a', href: val, target: '_blank' }, () => 'Download')
-    case 'image':
-      return h('img', { src: val, style: 'width:32px;height:32px;border-radius:4px;object-fit:cover;' })
+    case 'image': {
+      if (!val) return h(NText, { depth: 3 }, () => '-')
+      const src = val.startsWith('http') ? val : `/api/storage/general/${val}`
+      return h('img', { src, style: 'width:32px;height:32px;border-radius:4px;object-fit:cover;', onError: (e: Event) => { (e.target as HTMLImageElement).style.display = 'none' } })
+    }
     default:
       return String(val)
   }
@@ -58,14 +77,25 @@ function renderCellValue(field: ScFieldConfig, row: any) {
 
 const columns = computed(() => {
   const fields = props.module.fieldsConfig || []
-  const cols: any[] = fields
-    .filter((f) => f.visible)
-    .map((f) => ({
-      key: f.name,
-      title: f.label,
-      sortable: f.sortable,
-      render: (row: any) => renderCellValue(f, row),
-    }))
+
+  const fieldOrder = props.module.layoutConfig?.browse?.columnOrder
+  const sortedFields = fieldOrder
+    ? fields.filter((f) => f.visible).sort((a, b) => {
+        const aIdx = fieldOrder.indexOf(a.name)
+        const bIdx = fieldOrder.indexOf(b.name)
+        return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx)
+      })
+    : fields.filter((f) => f.visible)
+
+  const colWidths = props.module.layoutConfig?.browse?.columnWidths || {}
+
+  const cols: any[] = sortedFields.map((f) => ({
+    key: f.name,
+    title: f.label,
+    sortable: f.sortable,
+    width: colWidths[f.name] ? parseInt(colWidths[f.name]) : undefined,
+    render: (row: any) => renderCellValue(f, row),
+  }))
 
   cols.push({
     key: 'actions',

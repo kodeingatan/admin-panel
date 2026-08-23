@@ -35,7 +35,11 @@ export class SeederService implements OnModuleInit {
 
   async seed() {
     const userCount = await this.usersRepo.count();
-    if (userCount > 0) {
+    const guardCount = await this.guardsRepo.count();
+    const permissionCount = await this.permissionsRepo.count();
+    const roleCount = await this.rolesRepo.count();
+
+    if (userCount > 0 || guardCount > 0 || permissionCount > 0 || roleCount > 0) {
       this.logger.log('Database already seeded, skipping...');
       return;
     }

@@ -29,13 +29,16 @@ function buildEmptyForm() {
   const f: Record<string, any> = {}
   for (const field of props.module.fieldsConfig || []) {
     if (props.mode === 'edit' && props.item) {
+      const val = props.item[field.name]
       if (field.type === 'select-relation') {
-        f[field.name] = props.item[`${field.name}_id`] ?? null
+        f[field.name] = (val && typeof val === 'object') ? val.id : (val ?? null)
+      } else if (field.type === 'multiple-select-relation') {
+        f[field.name] = Array.isArray(val) ? val.map((item: any) => typeof item === 'object' ? item.id : item) : []
       } else {
-        f[field.name] = props.item[field.name] ?? null
+        f[field.name] = val ?? null
       }
     } else {
-      f[field.name] = field.defaultValue ?? (field.type === 'boolean' ? false : null)
+      f[field.name] = field.defaultValue ?? (field.type === 'boolean' ? false : (field.type === 'multiple-select-relation' ? [] : null))
     }
   }
   return f
@@ -82,12 +85,7 @@ async function handleSubmit() {
   try {
     const payload: Record<string, any> = {}
     for (const field of props.module.fieldsConfig || []) {
-      const value = form.value[field.name]
-      if (field.type === 'select-relation') {
-        payload[`${field.name}_id`] = value
-      } else {
-        payload[field.name] = value
-      }
+      payload[field.name] = form.value[field.name]
     }
     const url = `/generated/${props.module.name}`
     if (props.mode === 'create') {

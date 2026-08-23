@@ -1,4 +1,14 @@
-import { Controller, Get, Put, Body, Param, Post, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Body,
+  Param,
+  Post,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { SettingsService } from '@/modules/settings/services/settings.service';
@@ -8,7 +18,13 @@ import { Public } from '@/common/decorators/public.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { Permissions } from '@/common/decorators/permissions.decorator';
 
-const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+const ALLOWED_MIMES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+];
 
 @Controller('settings')
 export class SettingsController {
@@ -50,7 +66,9 @@ export class SettingsController {
       throw new BadRequestException('No file uploaded');
     }
     if (!ALLOWED_MIMES.includes(file.mimetype)) {
-      throw new BadRequestException('Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG');
+      throw new BadRequestException(
+        'Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG',
+      );
     }
     const url = this.storageService.uploadFile(file, 'settings');
     return { url };
