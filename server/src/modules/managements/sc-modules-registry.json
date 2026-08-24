@@ -43,11 +43,26 @@
     "routePath": "/dashboard/sc/posts",
     "menuLabel": "Content_Post",
     "accessLevel": "granular",
+    "accessRoles": "[\"Admin\",\"Super Admin\"]",
+    "accessPermissions": "[\"Post Management\"]",
     "isActive": true,
-    "fieldsConfig": "[{\"name\":\"title\",\"label\":\"Title\",\"type\":\"text\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"options\":[]},{\"name\":\"thumbnail\",\"label\":\"Thumbnail\",\"type\":\"image\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"options\":[]},{\"name\":\"content\",\"label\":\"Content\",\"type\":\"rich-text\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"options\":[]},{\"name\":\"category\",\"label\":\"category\",\"type\":\"select-relation\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"options\":[],\"targetModule\":\"category\",\"relationLabel\":\"Category\"},{\"name\":\"tags\",\"label\":\"Tags\",\"type\":\"multiple-select-relation\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"options\":[],\"targetModule\":\"tag\",\"relationLabel\":\"Tags\"}]",
+    "fieldsConfig": "[{\"name\":\"title\",\"label\":\"Title\",\"type\":\"text\",\"required\":true,\"unique\":false,\"searchable\":true,\"sortable\":true,\"visible\":true,\"maxLength\":\"255\"},{\"name\":\"thumbnail\",\"label\":\"Thumbnail\",\"type\":\"image\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true},{\"name\":\"content\",\"label\":\"Content\",\"type\":\"rich-text\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true},{\"name\":\"category\",\"label\":\"Category\",\"type\":\"select-relation\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"targetModule\":\"category\",\"relationLabel\":\"name\"},{\"name\":\"tags\",\"label\":\"Tags\",\"type\":\"multiple-select-relation\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"targetModule\":\"tag\",\"relationLabel\":\"name\"}]",
+    "relationsConfig": "[{\"name\":\"category\",\"type\":\"many-to-one\",\"targetModule\":\"category\"},{\"name\":\"tags\",\"type\":\"many-to-many\",\"targetModule\":\"tag\"}]",
+    "layoutConfig": "{\"browse\":{\"columnOrder\":[\"id\",\"title\",\"thumbnail\",\"category\",\"tags\",\"createdAt\"],\"columnWidths\":{\"id\":\"80px\",\"title\":\"200px\"}},\"create\":{\"layout\":\"grid\",\"columns\":2,\"sections\":[{\"label\":\"Basic Info\",\"fields\":[{\"name\":\"title\",\"width\":\"full\"},{\"name\":\"content\",\"width\":\"full\"},{\"name\":\"thumbnail\",\"width\":\"full\"},{\"name\":\"category\",\"width\":\"half\"},{\"name\":\"tags\",\"width\":\"half\"}]}]},\"update\":{\"layout\":\"grid\",\"columns\":2,\"sections\":[]}}",
+    "createdAt": "2026-08-23T07:35:51.268Z",
+    "updatedAt": "2026-08-23T09:14:13.780Z"
+  },
+  {
+    "id": 6,
+    "name": "test2",
+    "label": "T",
+    "routePath": "/dashboard/sc/test2",
+    "menuLabel": "Ts",
+    "accessLevel": "admin",
+    "isActive": true,
+    "fieldsConfig": "[{\"name\":\"test1\",\"label\":\"test1\",\"type\":\"text\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"options\":[]},{\"name\":\"test2\",\"label\":\"test2\",\"type\":\"select-relation\",\"required\":false,\"unique\":false,\"searchable\":false,\"sortable\":false,\"visible\":true,\"options\":[],\"targetModule\":\"category\",\"relationLabel\":\"name\"}]",
     "relationsConfig": "[]",
-    "layoutConfig": "{\"create\":{\"layout\":\"grid\",\"sections\":[{\"label\":\"General\",\"fields\":[{\"name\":\"title\",\"width\":\"full\"},{\"name\":\"thumbnail\",\"width\":\"full\"},{\"name\":\"content\",\"width\":\"full\"},{\"name\":\"category\",\"width\":\"full\"},{\"name\":\"tags\",\"width\":\"full\"}]}]},\"update\":{\"layout\":\"grid\",\"sections\":[{\"label\":\"General\",\"fields\":[{\"name\":\"title\",\"width\":\"full\"},{\"name\":\"thumbnail\",\"width\":\"full\"},{\"name\":\"content\",\"width\":\"full\"},{\"name\":\"category\",\"width\":\"full\"},{\"name\":\"tags\",\"width\":\"full\"}]}]}}",
-    "createdAt": "2026-08-23T05:39:32.865Z",
-    "updatedAt": "2026-08-23T05:39:32.865Z"
+    "createdAt": "2026-08-23T09:21:59.911Z",
+    "updatedAt": "2026-08-23T09:21:59.911Z"
   }
 ]

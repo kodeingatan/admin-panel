@@ -125,6 +125,31 @@ export class ScGeneratorService {
     const Pascal = pascalCase(name);
     const moduleDir = path.join(MANAGMENTS_DIR, `sc_${name}`);
 
+    // Auto-infer relations from field types if not provided
+    if (!config.relations) config.relations = [];
+    for (const f of config.fields) {
+      if (f.type === 'select-relation' && f.targetModule) {
+        const exists = config.relations.find((r) => r.name === f.name);
+        if (!exists) {
+          config.relations.push({
+            name: f.name,
+            type: 'many-to-one',
+            targetModule: f.targetModule,
+          });
+        }
+      }
+      if (f.type === 'multiple-select-relation' && f.targetModule) {
+        const exists = config.relations.find((r) => r.name === f.name);
+        if (!exists) {
+          config.relations.push({
+            name: f.name,
+            type: 'many-to-many',
+            targetModule: f.targetModule,
+          });
+        }
+      }
+    }
+
     const files: string[] = [];
 
     const templates: [string, string][] = [
@@ -170,8 +195,26 @@ export class ScGeneratorService {
         resolveJsonModule: true,
       },
     });
+
+    // Fix @/ path aliases → relative paths for Node.js require()
+    let compiledJs = result.outputText;
+    const fileDir = path.dirname(filePath);
+    const srcDir = path.join(process.cwd(), 'src');
+
+    compiledJs = compiledJs.replace(
+      /require\("@\/(.*?)"\)/g,
+      (_, importPath: string) => {
+        const targetAbsolute = path.join(srcDir, importPath);
+        let relativePath = path.relative(fileDir, targetAbsolute);
+        if (!relativePath.startsWith('.')) relativePath = './' + relativePath;
+        // Normalize to forward slashes for require()
+        relativePath = relativePath.replace(/\\/g, '/');
+        return `require("${relativePath}")`;
+      },
+    );
+
     const jsPath = filePath.replace(/\.ts$/, '.js');
-    fs.writeFileSync(jsPath, result.outputText);
+    fs.writeFileSync(jsPath, compiledJs);
   }
 
   private genEntity(
@@ -389,7 +432,7 @@ export class ${Pascal}Controller {
     const relationFields = config.relations || [];
     const allRelationNames = relationFields.map(r => r.name);
     const joinLeftSelects = relationFields
-      .map((r) => `.leftJoinAndSelect('${name}.${r.name}', '${r.name}')`)
+      .map((r) => `.leftJoinAndSelect('${name}.${r.name}', 'rel_${r.name}')`)
       .join('\n      ');
 
     const relationFieldDefs = config.fields.filter(f => f.type === 'multiple-select-relation');
