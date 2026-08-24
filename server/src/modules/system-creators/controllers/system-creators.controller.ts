@@ -9,6 +9,7 @@ import {
   Query,
   ParseIntPipe,
   Request,
+  Logger,
 } from '@nestjs/common';
 import { ScRegistryService } from '@/modules/system-creators/services/sc-registry.service';
 import { ScGeneratorService } from '@/modules/system-creators/services/sc-generator.service';
@@ -21,6 +22,8 @@ import { Public } from '@/common/decorators/public.decorator';
 
 @Controller('system-creators')
 export class SystemCreatorsController {
+  private readonly logger = new Logger(SystemCreatorsController.name);
+
   constructor(
     private readonly registryService: ScRegistryService,
     private readonly generatorService: ScGeneratorService,
@@ -68,8 +71,16 @@ export class SystemCreatorsController {
   @Delete(':id')
   @Permissions('System Creators', 'Full Access')
   @Roles('Super Admin')
-  remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    return this.registryService.remove(id, req);
+  async remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    const result = await this.registryService.remove(id, req);
+
+    // Auto-restart server setelah 500ms
+    setTimeout(() => {
+      this.logger.log('Server restarting after module deletion...');
+      process.exit(0);
+    }, 500);
+
+    return result;
   }
 
   @Post(':id/toggle')

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, onMounted, computed } from 'vue'
+import { h, ref, onMounted, computed } from 'vue'
 import { NTag, NSpace, NButton, NPopconfirm, NIcon, useMessage } from 'naive-ui'
 import { Add, TrashCan, View, Switcher } from '@vicons/carbon'
 import DataTable from '@/components/common/DataTable/DataTable.vue'
@@ -13,6 +13,7 @@ const emit = defineEmits<{
 
 const store = useSystemCreatorsStore()
 const message = useMessage()
+const deleting = ref(false)
 
 const columns = computed(() => [
   { key: 'id', title: 'ID', sortable: true, width: 60 },
@@ -77,8 +78,14 @@ const columns = computed(() => [
           NPopconfirm,
           { onPositiveClick: () => handleDelete(row.id) },
           {
-            trigger: () => h(NButton, { size: 'small', quaternary: true, type: 'error' }, { default: () => h(NIcon, null, { default: () => h(TrashCan) }) }),
-            default: () => `Delete module "${row.label}"?`,
+            trigger: () => h(NButton, {
+              size: 'small',
+              quaternary: true,
+              type: 'error',
+              loading: deleting.value,
+              disabled: deleting.value,
+            }, { default: () => h(NIcon, null, { default: () => h(TrashCan) }) }),
+            default: () => `Delete module "${row.label}" permanently? This will remove all files and cannot be undone.`,
           }
         ),
       ])
@@ -102,11 +109,14 @@ async function handleToggle(id: number) {
 }
 
 async function handleDelete(id: number) {
+  deleting.value = true
   try {
     await store.remove(id)
-    message.success('Module deleted')
+    message.success('Module deleted permanently')
   } catch {
     message.error('Failed to delete module')
+  } finally {
+    deleting.value = false
   }
 }
 
