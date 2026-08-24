@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
 import { computed, ref, watch, onMounted } from 'vue'
 import {
-  NDataTable, NInput, NButton, NSpace, NSpin, NEmpty, NPopover,
+  NDataTable, NInput, NButton, NSpace, NSpin, NPopover,
   NCheckbox, NSelect,
   type DataTableColumns, type PaginationProps, type DataTableSortState,
 } from 'naive-ui'
@@ -212,8 +212,6 @@ function resetFilters() {
         @update:sorter="handleSorterChange"
       />
     </NSpin>
-
-    <NEmpty v-if="!loading && data.length === 0" description="No data found" />
 
     <div v-if="total > 0" class="text-sm text-gray-500">
       Showing {{ (page - 1) * limit + 1 }}-{{ Math.min(page * limit, total) }} of {{ total }}
